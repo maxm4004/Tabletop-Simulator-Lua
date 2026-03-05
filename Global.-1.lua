@@ -72,8 +72,8 @@ ARMY1_URL = GITHUB_BASE_URL .. "francesi.json"
 ARMY2_URL = GITHUB_BASE_URL .. "inglesi.json"
 
 SPAWN_POS = {
-    [1] = {x=0, y=-33.57, z=-48.44},
-    [2] = {x=0, y=33.57, z=48.44}
+    [1] = {x=0, y=2.36, z=-39.53},
+    [2] = {x=0, y=2.36, z= 39.53}
 }
 
 -- ------------------------------------------------------------
@@ -809,6 +809,9 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
                 nickname = nickname .. "_" .. base.arma
             end
 
+            -- Legge rotazione Y dal template
+            local template_rot = template.getRotation()
+
             local clone = template.clone({
                 position = {
                     x = base.posizione.x + offset.x,
@@ -821,7 +824,7 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
             local b = base
             Wait.frames(function()
                 clone.setName(nickname)
-                clone.setRotation({x=b.rotazione.x, y=b.rotazione.y, z=b.rotazione.z})
+                clone.setRotation({x=b.rotazione.x, y=template_rot.y, z=b.rotazione.z})
                 clone.setPosition({
                     x = b.posizione.x + offset.x,
                     y = b.posizione.y,
@@ -849,6 +852,14 @@ function scanTavolo()
     esercito_1  = {}
     esercito_2  = {}
     wounds_data = {}
+
+    -- Reset pannelli
+    ARMY[1] = { player=nil, tag=nil, nome=nil, color=nil, pannello_guid=ARMY[1].pannello_guid }
+    ARMY[2] = { player=nil, tag=nil, nome=nil, color=nil, pannello_guid=ARMY[2].pannello_guid }
+    for slot = 1, 2 do
+        local obj = ARMY[slot].pannello_guid and getObjectFromGUID(ARMY[slot].pannello_guid)
+        if obj then obj.TextTool.setValue("ARMY " .. slot .. "\nIn attesa...") end
+    end
 
     local gruppi_1  = {}
     local gruppi_2  = {}
