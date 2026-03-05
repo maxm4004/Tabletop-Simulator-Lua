@@ -6,7 +6,7 @@
         {
             "tipo": "CinC", "nome_display": "Generale", "modificatore": null, "model": "FRA_CinC",
             "basi": [
-                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-2.92,"y":1.66,"z":-39.53},"rotazione":{"x":0,"y":0,"z":0}}
+                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-2.92,"y":1.66,"z":-41.49},"rotazione":{"x":0,"y":0,"z":0}}
             ]
         },
         {
