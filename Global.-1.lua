@@ -72,8 +72,8 @@ ARMY1_URL = GITHUB_BASE_URL .. "francesi.json"
 ARMY2_URL = GITHUB_BASE_URL .. "inglesi.json"
 
 SPAWN_POS = {
-    [1] = {x=0, y=2.36, z=-39.53},
-    [2] = {x=0, y=2.36, z= 39.53}
+    [1] = {x=0, y=2.36, z=-43.60},
+    [2] = {x=0, y=2.36, z= 43.60}
 }
 
 -- ------------------------------------------------------------
