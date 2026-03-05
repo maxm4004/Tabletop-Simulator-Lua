@@ -1,6 +1,6 @@
 -- ============================================================
 -- LIONHEART BOT - Tabletop Simulator
--- Versione 1.28 - Struttura ARMY[1/2], pannelli player
+-- Versione 1.28.02 - Struttura ARMY[1/2], pannelli player
 -- Comandi chat:
 --   !inizia      -> scansiona il tavolo
 --   !turno       -> avvia/avanza sequenza di gioco
@@ -65,12 +65,15 @@ PANNELLO_POS = {
 }
 
 -- Posizioni spawn eserciti
-ARMY1_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop_Simulator/refs/heads/main/ArmyJson/francesi.json"
-ARMY2_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop_Simulator/refs/heads/main/ArmyJson/inglesi.json"
+-- Base URL repository JSON
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/ArmyJson/"
+
+ARMY1_URL = GITHUB_BASE_URL .. "francesi.json"
+ARMY2_URL = GITHUB_BASE_URL .. "inglesi.json"
 
 SPAWN_POS = {
-    [1] = {x=0, y=2.36, z=-39.53},
-    [2] = {x=0, y=2.36, z= 39.53}
+    [1] = {x=0, y=-33.57, z=-48.44},
+    [2] = {x=0, y=33.57, z=48.44}
 }
 
 -- ------------------------------------------------------------
@@ -278,7 +281,7 @@ end
 
 -- ------------------------------------------------------------
 function onLoad()
-    log("[LIONHEART] Script caricato v1.28.01")
+    log("[LIONHEART] Script caricato v1.28.02")
     log("[LIONHEART]   !caricaArmy1 URL -> carica esercito 1 da JSON")
     log("[LIONHEART]   !caricaArmy2 URL -> carica esercito 2 da JSON")
     log("[LIONHEART]   !reveal      -> rivela entrambi gli eserciti")
@@ -777,8 +780,8 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
     contatori[unita.tipo] = (contatori[unita.tipo] or 0) + 1
     local unita_num = contatori[unita.tipo]
 
-    -- Offset spawn
-    local offset = SPAWN_POS[tonumber(slot)] or {x=0,y=0,z=0}
+    -- Offset spawn (CinC ha posizione assoluta, no offset)
+    local offset = (unita.tipo == "CinC") and {x=0,y=0,z=0} or (SPAWN_POS[tonumber(slot)] or {x=0,y=0,z=0})
 
     printToAll("[CARICA] " .. unita.tipo .. "_" .. unita_num
                .. " (" .. unita.nome_display .. ") x" .. #unita.basi, {r=0.8,g=0.8,b=0.8})
@@ -913,7 +916,7 @@ function scanTavolo()
     esercito_1 = gruppiToLista(gruppi_1, (ARMY[1].tag or "ARMY1"))
     esercito_2 = gruppiToLista(gruppi_2, (ARMY[2].tag or "ARMY2"))
 
-    printToAll("=== LIONHEART BOT v1.28.01 ===", {r=0.8,g=0.6,b=0.1})
+    printToAll("=== LIONHEART BOT v1.28.02 ===", {r=0.8,g=0.6,b=0.1})
     printToAll((ARMY[1].tag or "ARMY1") .. ": " .. #esercito_1 .. " unita", {r=0.9,g=0.2,b=0.2})
     printToAll((ARMY[2].tag or "ARMY2") .. ": " .. #esercito_2 .. " unita", {r=0.2,g=0.4,b=0.9})
 
