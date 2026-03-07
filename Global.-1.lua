@@ -1,6 +1,8 @@
 -- ============================================================
 -- LIONHEART BOT - Tabletop Simulator
--- Versione 1.28.02 - Struttura ARMY[1/2], pannelli player
+-- Versione 1.28.03 - Struttura ARMY[1/2], pannelli player
+VERSION = "v1.28.03"
+DEBUG   = false  -- false = controlli player attivi
 -- Comandi chat:
 --   !inizia      -> scansiona il tavolo
 --   !turno       -> avvia/avanza sequenza di gioco
@@ -12,8 +14,9 @@
 --   !stato       -> mostra stato battaglia
 --   !croce       -> mostra croce di riferimento sul tavolo
 --   !croce off   -> rimuove croce
---   !deploy      -> mostra separè e linee di schieramento sul verde
---   !deploy off  -> rimuove separè e linee di schieramento
+--   !deploy      -> carica eserciti e scansiona
+--   !linee       -> mostra linee di schieramento
+--   !linee off   -> rimuove linee di schieramento
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -44,13 +47,28 @@ TAVOLO_LZ = 68
 -- ------------------------------------------------------------
 VERDE_Y       = 2.36
 VERDE_Y_LINEE = 3.36  -- altezza linee deploy sopra il verde (Y + 1)
-VERDE_LX      = 48
+VERDE_LX      = 46
 VERDE_LZ      = 32.23
 DEPLOY_CM     = 8    -- 10 cm in unita TTS
 
--- GUID delle Scripting Zone di deploy
-ZONA_1_GUID = "ed72ac"
-ZONA_2_GUID = "fe1daa"
+-- GUID delle Hidden Zone (trovate dinamicamente per nome)
+ZONA_1_GUID = nil
+ZONA_2_GUID = nil
+
+-- ------------------------------------------------------------
+-- FUNZIONE: trovaZona(tag)
+-- Trova una Hidden/Scripting Zone per tag
+-- ------------------------------------------------------------
+function trovaZona(tag)
+    for _, obj in ipairs(getAllObjects()) do
+        local tags = obj.getTags()
+        for _, t in ipairs(tags) do
+            if t == tag then return obj.getGUID() end
+        end
+    end
+    printToAll("[ZONA] Non trovata con tag: " .. tag, {r=1,g=0.3,b=0.3})
+    return nil
+end
 
 -- Struttura eserciti
 ARMY = {
@@ -62,6 +80,12 @@ ARMY = {
 PANNELLO_POS = {
     [1] = {x=-60.92, y=1.66, z=-41.71},
     [2] = {x= 60.92, y=1.66, z= 41.71}
+}
+
+-- Associazione colore -> slot army
+ARMY_COLORS = {
+    ["Red"]   = 1,  -- Z negativa
+    ["Green"] = 2,  -- Z positiva
 }
 
 -- Posizioni spawn eserciti
@@ -121,12 +145,13 @@ iniziativa_tag = (ARMY[1].tag or "ARMY1")
 -- TABELLA DATI REGOLAMENTO
 -- ------------------------------------------------------------
 DATI_UNITA = {
-    AI  = { basi=3, fpb=4, dado_tiro_div=3   },
-    UI  = { basi=4, fpb=3, dado_tiro_div=3   },
-    SK  = { basi=4, fpb=2, dado_tiro_div=4   },
-    AC  = { basi=2, fpb=3, dado_tiro_div=nil },
-    UC  = { basi=2, fpb=3, dado_tiro_div=nil },
-    SKC = { basi=2, fpb=2, dado_tiro_div=nil },
+    AI   = { basi=3, fpb=4, dado_tiro_div=3   },
+    UI   = { basi=4, fpb=3, dado_tiro_div=3   },
+    SK   = { basi=4, fpb=2, dado_tiro_div=4   },
+    AC   = { basi=2, fpb=3, dado_tiro_div=nil },
+    UC   = { basi=2, fpb=3, dado_tiro_div=nil },
+    SKC  = { basi=2, fpb=2, dado_tiro_div=nil },
+    CinC = { basi=1, fpb=0, dado_tiro_div=nil },
 }
 
 -- Codici armi da tiro
@@ -159,11 +184,15 @@ linee_rettangolo  = false
 -- Aggiunge voci menu contestuale alle basi
 -- ------------------------------------------------------------
 function aggiungiMenuBase(obj)
-    local tipo = string.match(obj.getName(), "^([A-Z]+)")
+    local tipo = string.match(obj.getName(), "^([A-Za-z]+)")
     if not tipo or not DATI_UNITA[tipo] then return end
 
     obj.addContextMenuItem("Metti in colonna", function(player)
         mettInColonnaOggetto(obj, player)
+    end)
+
+    obj.addContextMenuItem("Allinea al fronte", function(player)
+        allineaAlFronte(player, obj)
     end)
 end
 
@@ -173,7 +202,7 @@ end
 function onObjectSpawn(obj)
     Wait.frames(function()
         aggiungiMenuBase(obj)
-    end, 5)
+    end, 30)
 end
 
 -- ------------------------------------------------------------
@@ -221,71 +250,153 @@ end
 
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnaPannelli()
--- Spawna i due pannelli informativi sul tavolo
+-- Crea i pannelli informativi come Global UI XML (2D, uguale per tutti)
 -- ------------------------------------------------------------
 function spawnaPannelli()
-    for slot = 1, 2 do
-        -- Cerca pannello esistente per nome
-        local existing = nil
-        for _, obj in ipairs(getAllObjects()) do
-            if obj.getName() == "PANNELLO_ARMY" .. slot then
-                existing = obj
-                break
-            end
-        end
-        if existing then
-            ARMY[slot].pannello_guid = existing.getGUID()
-        else
-            local pos = PANNELLO_POS[slot]
-            local rot = slot == 1 and {x=90,y=0,z=0} or {x=90,y=180,z=0}
-            local s = slot
-            spawnObject({
-                type = "3DText",
-                position = pos,
-                rotation = rot,
-                scale = {x=100, y=100, z=100},
-                callback_function = function(obj)
-                    obj.setName("PANNELLO_ARMY" .. s)
-                    obj.setColorTint({r=0.5,g=0.5,b=0.5})
-                    obj.TextTool.setValue("ARMY " .. s .. "\nIn attesa...")
-                    ARMY[s].pannello_guid = obj.getGUID()
-                end
-            })
-        end
-    end
+    local army1_name = ARMY1_URL and string.match(ARMY1_URL, "/([^/]+)%.json$") or "Army 1"
+    local army2_name = ARMY2_URL and string.match(ARMY2_URL, "/([^/]+)%.json$") or "Army 2"
+
+    UI.setXmlTable({
+        -- Banner centrale scelta colori
+        {
+            tag = "Panel",
+            attributes = {
+                id            = "banner_root",
+                rectAlignment = "MiddleCenter",
+                width         = "420",
+                height        = "110",
+                color         = "rgba(0,0,0,0.85)",
+                offsetXY      = "0 0",
+            },
+            children = {{
+                tag = "VerticalLayout",
+                attributes = { padding = "12 12 12 12", spacing = "6" },
+                children = {
+                    { tag = "Text", attributes = { text="SCEGLI IL TUO COLORE", fontSize="18", fontStyle="Bold", color="White", alignment="MiddleCenter" } },
+                    { tag = "Text", attributes = { text="Red  ->  Army 1  (" .. army1_name .. ")", fontSize="14", color="rgba(1,0.3,0.3,1)", alignment="MiddleCenter" } },
+                    { tag = "Text", attributes = { text="Green  ->  Army 2  (" .. army2_name .. ")", fontSize="14", color="rgba(0.3,1,0.3,1)", alignment="MiddleCenter" } },
+                }
+            }}
+        },
+        -- Pannello Army 1 (sinistra)
+        {
+            tag = "Panel",
+            attributes = {
+                id            = "pannello_root",
+                rectAlignment = "UpperLeft",
+                width         = "300",
+                height        = "200",
+                color         = "rgba(0,0,0,0.7)",
+                offsetXY      = "320 -100",
+            },
+            children = {{
+                tag = "VerticalLayout",
+                attributes = { padding = "8 8 8 8", spacing = "4" },
+                children = {
+                    { tag = "Text", attributes = { id="pan1_title",  text="ARMY 1",       fontSize="16", fontStyle="Bold", color="rgba(1,0.85,0.3,1)" } },
+                    { tag = "Text", attributes = { id="pan1_player", text="Player: ---",   fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan1_color",  text="Colore: ---",   fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan1_army",   text="Esercito: ---", fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan1_unita",  text="Unita: ---",    fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan1_fase",   text="Fase: ---",     fontSize="13", color="rgba(0.4,0.9,0.4,1)" } },
+                }
+            }}
+        },
+        -- Pannello Army 2 (destra)
+        {
+            tag = "Panel",
+            attributes = {
+                id            = "pannello2_root",
+                rectAlignment = "UpperRight",
+                width         = "300",
+                height        = "200",
+                color         = "rgba(0,0,0,0.7)",
+                offsetXY      = "-320 -100",
+            },
+            children = {{
+                tag = "VerticalLayout",
+                attributes = { padding = "8 8 8 8", spacing = "4" },
+                children = {
+                    { tag = "Text", attributes = { id="pan2_title",  text="ARMY 2",       fontSize="16", fontStyle="Bold", color="rgba(0.3,1,0.3,1)" } },
+                    { tag = "Text", attributes = { id="pan2_player", text="Player: ---",   fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan2_color",  text="Colore: ---",   fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan2_army",   text="Esercito: ---", fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan2_unita",  text="Unita: ---",    fontSize="13", color="White" } },
+                    { tag = "Text", attributes = { id="pan2_fase",   text="Fase: ---",     fontSize="13", color="rgba(0.4,0.9,0.4,1)" } },
+                }
+            }}
+        },
+    })
 end
 
 -- ------------------------------------------------------------
 -- FUNZIONE: aggiornaPannello(slot)
--- Aggiorna il testo del pannello per Army 1 o 2
+-- Aggiorna il testo del pannello UI per Army 1 o 2
 -- ------------------------------------------------------------
 function aggiornaPannello(slot)
-    local a = ARMY[slot]
-    local guid = a.pannello_guid
-    if not guid then return end
-    local obj = getObjectFromGUID(guid)
-    if not obj then return end
-
+    local a      = ARMY[slot]
+    local prefix = "pan" .. slot .. "_"
     local player = a.player or "---"
-    local tag    = a.tag    or "---"
-    local nome   = a.nome   or "---"
     local color  = a.color  or "---"
-    local testo  = "ARMY " .. slot .. "\n"
-                .. "Player: " .. player .. "\n"
-                .. "Colore: " .. color .. "\n"
-                .. "Tag:    " .. tag .. "\n"
-                .. "Esercito: " .. nome
-    obj.TextTool.setValue(testo)
-    obj.setColorTint({r=1, g=0.85, b=0.3})
+    local nome   = a.nome   or "---"
+
+    -- Conta unità attive
+    local esercito = slot == 1 and esercito_1 or esercito_2
+    local unita_attive = 0
+    for _, u in ipairs(esercito) do
+        if #u.basi > 0 then unita_attive = unita_attive + 1 end
+    end
+    local unita_str = (#esercito > 0) and (unita_attive .. "/" .. #esercito) or "---"
+
+    -- Fase corrente da tabella FASI
+    local fase_str = FASI[fase_corrente] and FASI[fase_corrente].nome or "---"
+
+    -- Colore titolo dal colore player TTS
+    local col_map = {
+        Red    = "rgba(1,0.2,0.2,1)",
+        Green  = "rgba(0.2,0.9,0.2,1)",
+        Blue   = "rgba(0.2,0.4,1,1)",
+        Orange = "rgba(1,0.6,0,1)",
+        Teal   = "rgba(0,0.8,0.8,1)",
+        Purple = "rgba(0.7,0.2,1,1)",
+        Pink   = "rgba(1,0.4,0.7,1)",
+        Yellow = "rgba(1,1,0,1)",
+        White  = "rgba(1,1,1,1)",
+        Grey   = "rgba(0.6,0.6,0.6,1)",
+    }
+    local col_str = col_map[color] or "rgba(1,0.85,0.3,1)"
+
+    UI.setAttribute(prefix .. "title",  "color", col_str)
+    UI.setAttribute(prefix .. "player", "text", "Player: " .. player)
+    UI.setAttribute(prefix .. "color",  "text", "Colore: " .. color)
+    UI.setAttribute(prefix .. "army",   "text", "Esercito: " .. nome)
+    UI.setAttribute(prefix .. "unita",  "text", "Unità: " .. unita_str)
+    UI.setAttribute(prefix .. "fase",   "text", "Fase: " .. fase_str)
+end
+
+-- ------------------------------------------------------------
+-- FUNZIONE: aggiornaBanner()
+-- Mostra/nasconde il banner di benvenuto
+-- Scompare quando Red e Green sono entrambi seduti
+-- ------------------------------------------------------------
+function aggiornaBanner()
+    local red_ok   = Player["Red"]   and Player["Red"].seated
+    local green_ok = Player["Green"] and Player["Green"].seated
+    local visible  = not (red_ok and green_ok)
+    UI.setAttribute("banner_root", "active", visible and "true" or "false")
+end
+
+-- ------------------------------------------------------------
+function onPlayerChangeColor(player_color)
+    Wait.frames(function() aggiornaBanner() end, 10)
 end
 
 -- ------------------------------------------------------------
 function onLoad()
-    log("[LIONHEART] Script caricato v1.28.02")
-    log("[LIONHEART]   !caricaArmy1 URL -> carica esercito 1 da JSON")
-    log("[LIONHEART]   !caricaArmy2 URL -> carica esercito 2 da JSON")
+    log("[LIONHEART] Script caricato " .. VERSION)
+    log("[LIONHEART]   !caricaArmy   -> carica esercito (slot determinato dal colore player)")
     log("[LIONHEART]   !reveal      -> rivela entrambi gli eserciti")
-    log("[LIONHEART]   !inizia      -> scansiona il tavolo")
+    log("[LIONHEART]   !deploy      -> carica eserciti e scansiona")
     log("[LIONHEART]   !turno       -> avvia turno")
     log("[LIONHEART]   !fase        -> avanza fase")
     log("[LIONHEART]   !wounds N    -> ferite sulla base selezionata")
@@ -296,15 +407,22 @@ function onLoad()
     log("[LIONHEART]   !listobj     -> lista tutti gli oggetti con nome")
     log("[LIONHEART]   !croce       -> croce di riferimento sul tavolo")
     log("[LIONHEART]   !croce off   -> rimuove croce")
-    log("[LIONHEART]   !deploy      -> linee di schieramento sul verde")
-    log("[LIONHEART]   !deploy off  -> rimuove linee di schieramento")
+    log("[LIONHEART]   !linee       -> linee di schieramento sul verde")
+    log("[LIONHEART]   !linee off   -> rimuove linee di schieramento")
     log("[LIONHEART]   Tasto 1      -> mostra/nasconde monitor fase")
+
+    -- Posizioni originali Hz (hardcoded)
+    HZ_POS = {
+        ["Hz1"] = {x=-0.04, y=5.39, z=-27.26},
+        ["Hz2"] = {x=-0.16, y=5.39, z= 27.79}
+    }
 
     -- Spawna pannelli informativi
     spawnaPannelli()
 
-    -- Rettangoli spawn sempre visibili
+    -- Rettangoli spawn sempre visibili, linee deploy no
     linee_rettangolo = true
+    linee_deploy     = false
     aggiornaLinee()
 
     -- Aggiunge menu contestuale a tutti gli oggetti gia presenti
@@ -322,23 +440,51 @@ function onChat(message, player)
     if not message or message == "" then return end
 
     -- !carica1 URL — carica esercito 1 da JSON
-    if message == "!caricaArmy1" then
-        local url = leggiUrlDaNotebook("Army1")
+    if message == "!caricaArmy" then
+        local slot = ARMY_COLORS[player.color]
+        if not slot then
+            printToAll("[LIONHEART] Colore " .. player.color .. " non associato a nessun esercito", {r=1,g=0.3,b=0.3})
+            return false
+        end
+        local url = leggiUrlDaNotebook("Army" .. slot)
         if url then
-            caricaEsercito(url, "1", player)
+            caricaEsercito(url, tostring(slot), player)
         else
-            printToAll("[LIONHEART] Notebook 'Army1' non trovato o vuoto", {r=1,g=0.3,b=0.3})
+            printToAll("[LIONHEART] Notecard 'Army" .. slot .. "' non trovata", {r=1,g=0.3,b=0.3})
         end
         return false
     end
 
-    if message == "!caricaArmy2" then
-        local url = leggiUrlDaNotebook("Army2")
-        if url then
-            caricaEsercito(url, "2", player)
+    if string.sub(message, 1, 8) == "!promote" then
+        local colore = string.match(message, "%S+%s+(%S+)")
+        if colore then
+            Player[colore].promote()
+            printToAll("[DEBUG] Promosso come " .. colore, {r=1,g=1,b=0})
         else
-            printToAll("[LIONHEART] Notebook 'Army2' non trovato o vuoto", {r=1,g=0.3,b=0.3})
+            printToAll("[DEBUG] Uso: !promote Red", {r=1,g=0.3,b=0.3})
         end
+        return false
+    end
+
+    if message == "!cercaHz" then
+        local trovate = 0
+        for _, obj in ipairs(getAllObjects()) do
+            local tags = obj.getTags()
+            for _, t in ipairs(tags) do
+                if t == "Hz1" or t == "Hz2" then
+                    printToAll("Hz trovata: nome=[" .. obj.getName() .. "] tag=" .. t .. " guid=" .. obj.getGUID() .. " pos=" .. obj.getPosition().x .. "," .. obj.getPosition().y .. "," .. obj.getPosition().z, {r=0,g=1,b=1})
+                    trovate = trovate + 1
+                end
+            end
+        end
+        if trovate == 0 then
+            printToAll("[Hz] Nessuna zona trovata con tag Hz1 o Hz2", {r=1,g=0.3,b=0.3})
+        end
+        return false
+    end
+
+    if message == "!restart" then
+        restart()
         return false
     end
 
@@ -347,8 +493,39 @@ function onChat(message, player)
         return false
     end
 
-    if message == "!inizia" then
-        scanTavolo()
+    if message == "!deploy" then
+        -- Verifica che i player siano seduti
+        if not DEBUG then
+            local red_ok   = Player["Red"]   and Player["Red"].seated
+            local green_ok = Player["Green"] and Player["Green"].seated
+            if not red_ok or not green_ok then
+                printToAll("[INIZIA] Entrambi i player devono essere seduti (Red e Green)", {r=1,g=0.3,b=0.3})
+                if not red_ok   then printToAll("  Red non seduto",   {r=1,g=0.3,b=0.3}) end
+                if not green_ok then printToAll("  Green non seduto", {r=1,g=0.3,b=0.3}) end
+                return false
+            end
+        end
+        -- Ripristina Hz
+        for _, tag in ipairs({"Hz1", "Hz2"}) do
+            local gz = trovaZona(tag)
+            if gz and HZ_POS and HZ_POS[tag] then
+                getObjectFromGUID(gz).setPosition(HZ_POS[tag])
+            end
+        end
+        -- Carica entrambi gli eserciti poi scansiona
+        local url1 = leggiUrlDaNotebook("Army1")
+        local url2 = leggiUrlDaNotebook("Army2")
+        if not url1 or not url2 then
+            printToAll("[INIZIA] Notecard Army1 o Army2 non trovata", {r=1,g=0.3,b=0.3})
+            return false
+        end
+        -- Mostra linee deploy
+        linee_deploy = true
+        aggiornaLinee()
+        caricaEsercito(url1, "1", Player["Red"])
+        caricaEsercito(url2, "2", Player["Green"])
+        -- Delay per attendere spawn prima di scansionare
+        Wait.time(function() scanTavolo() end, 5)
         return false
     end
 
@@ -432,12 +609,12 @@ function onChat(message, player)
         return false
     end
 
-    if message == "!deploy" then
+    if message == "!linee" then
         spawnaDeploy()
         return false
     end
 
-    if message == "!deploy off" then
+    if message == "!linee off" then
         rimuoviDeploy()
         return false
     end
@@ -495,14 +672,7 @@ function aggiornaLinee()
     if linee_deploy then
         local y = VERDE_Y_LINEE
 
-        -- Separè centrale (bianco)
-        table.insert(linee, {
-            points    = {{x=-VERDE_LX, y=y, z=0}, {x=VERDE_LX, y=y, z=0}},
-            color     = {r=1, g=1, b=1},
-            thickness = 0.25,
-        })
-
-        -- Linea deploy (ARMY[1].tag or "ARMY1") (rosso) — bordo nord
+        -- Linea deploy Army1 (rosso) — bordo nord
         local z1 = -(VERDE_LZ - DEPLOY_CM)
         table.insert(linee, {
             points    = {{x=-VERDE_LX, y=y, z=z1}, {x=VERDE_LX, y=y, z=z1}},
@@ -510,11 +680,11 @@ function aggiornaLinee()
             thickness = 0.25,
         })
 
-        -- Linea deploy (ARMY[2].tag or "ARMY2") (blu) — bordo sud
+        -- Linea deploy Army2 (verde) — bordo sud
         local z2 = (VERDE_LZ - DEPLOY_CM)
         table.insert(linee, {
             points    = {{x=-VERDE_LX, y=y, z=z2}, {x=VERDE_LX, y=y, z=z2}},
-            color     = {r=0.2, g=0.4, b=0.9},
+            color     = {r=0.2, g=0.8, b=0.2},
             thickness = 0.25,
         })
     end
@@ -594,7 +764,7 @@ function getBaseSelezionata(player)
     end
     local nickname = sel[1].getName()
     if wounds_data[nickname] == nil then
-        printToAll("[LIONHEART] Oggetto non valido: " .. nickname .. " — fai !inizia prima", {r=1,g=0.3,b=0.3})
+        printToAll("[LIONHEART] Oggetto non valido: " .. nickname .. " — fai !deploy prima", {r=1,g=0.3,b=0.3})
         return nil
     end
     return nickname
@@ -602,13 +772,13 @@ end
 
 -- ------------------------------------------------------------
 -- FUNZIONE: parsaNome(nickname)
--- Formato nuovo: AC1, AC1_S, UI7_BAL, UI15_I_ARCL
--- tipo = parte alfabetica iniziale, seq = numero dopo il tipo
+-- Formato: AC_1.1_S, UI_3.19_ARCL, SK_1.23_GIAV
+-- tipo = parte alfabetica, unita_num = numero dopo _, seq = numero dopo .
 -- ------------------------------------------------------------
 function parsaNome(nickname)
-    -- Estrai tipo (lettere iniziali) e seq (numero subito dopo)
-    local tipo, seq_str = string.match(nickname, "^([A-Z]+)(%d+)")
-    if not tipo or not seq_str then return nil end
+    -- Estrai tipo, unita_num, seq
+    local tipo, unita_str, seq_str = string.match(nickname, "^([A-Za-z]+)_(%d+)%.(%d+)")
+    if not tipo or not unita_str or not seq_str then return nil end
     if not DATI_UNITA[tipo] then return nil end
 
     local valore   = 0
@@ -616,7 +786,7 @@ function parsaNome(nickname)
     local arma     = nil
 
     -- Analizza i modificatori dopo il seq
-    local resto = string.sub(nickname, #tipo + #seq_str + 1)
+    local resto = string.sub(nickname, #tipo + #unita_str + #seq_str + 3) -- +3 per "_", ".", "_"
     for mod in string.gmatch(resto, "[^_]+") do
         if mod == "S"     then valore   = 1    end
         if mod == "I"     then valore   = -1   end
@@ -628,7 +798,7 @@ function parsaNome(nickname)
     return {
         tipo      = tipo,
         seq       = tonumber(seq_str),
-        unita_num = tonumber(seq_str),
+        unita_num = tonumber(unita_str),
         base_num  = 1,
         valore    = valore,
         lancieri  = lancieri,
@@ -636,6 +806,82 @@ function parsaNome(nickname)
         fpb       = d.fpb,
         basi_max  = d.basi,
     }
+end
+
+-- ------------------------------------------------------------
+-- FUNZIONE: allineaAlFronte(player, ref_obj)
+-- Allinea le basi selezionate alla posizione di ref_obj sul vettore fronte
+-- ------------------------------------------------------------
+function allineaAlFronte(player, ref_obj)
+    local p = type(player) == "string" and Player[player] or player
+    local sel = p.getSelectedObjects()
+    if not sel or #sel == 0 then
+        printToAll("[FRONTE] Seleziona le basi prima", {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    -- Trova rotazione Y maggioritaria (arrotondata a 5 gradi)
+    local conteggio = {}
+    for _, obj in ipairs(sel) do
+        local y = math.floor(obj.getRotation().y / 5 + 0.5) * 5
+        conteggio[y] = (conteggio[y] or 0) + 1
+    end
+    local rot_maggioritaria = nil
+    local max_count = 0
+    for y, c in pairs(conteggio) do
+        if c > max_count then
+            max_count = c
+            rot_maggioritaria = y
+        end
+    end
+
+    -- Allinea rotazione delle basi non conformi
+    for _, obj in ipairs(sel) do
+        local y = math.floor(obj.getRotation().y / 5 + 0.5) * 5
+        if y ~= rot_maggioritaria then
+            local rot = obj.getRotation()
+            obj.setRotation({x=rot.x, y=rot_maggioritaria, z=rot.z})
+            printToAll("[FRONTE] Base " .. obj.getName() .. " ruotata a " .. rot_maggioritaria .. "°", {r=1,g=0.8,b=0})
+        end
+    end
+
+    -- Calcola vettore fronte dalla rotazione maggioritaria
+    local rad = math.rad(rot_maggioritaria)
+    local dx  =  math.sin(rad)
+    local dz  = -math.cos(rad)
+
+    -- Componente dominante
+    local usa_z = math.abs(dz) >= math.abs(dx)
+
+    -- Trova la base di riferimento (più avanzata sull'asse dominante)
+    local ref_val = nil
+    for _, obj in ipairs(sel) do
+        local pos = obj.getPosition()
+        local val = usa_z and pos.z or pos.x
+        -- Army1 avanza verso Z positivo, Army2 verso Z negativo
+        local tags = obj.getTags()
+        local is_army2 = false
+        for _, t in ipairs(tags) do if t == "Army2" then is_army2 = true end end
+        if ref_val == nil then
+            ref_val = val
+        elseif is_army2 and val < ref_val then
+            ref_val = val
+        elseif not is_army2 and val > ref_val then
+            ref_val = val
+        end
+    end
+
+    -- Allinea tutte le basi sull'asse dominante
+    for _, obj in ipairs(sel) do
+        local pos = obj.getPosition()
+        if usa_z then
+            obj.setPosition({x=pos.x, y=pos.y, z=ref_val})
+        else
+            obj.setPosition({x=ref_val, y=pos.y, z=pos.z})
+        end
+    end
+
+    printToAll("[FRONTE] " .. #sel .. " basi allineate al fronte", {r=0.4,g=0.9,b=0.4})
 end
 
 -- ------------------------------------------------------------
@@ -679,17 +925,65 @@ function mettInColonna(player)
 end
 
 -- ------------------------------------------------------------
+-- FUNZIONE: restart()
+-- Torna all'inizio — cancella basi, ripristina Hz e pannelli
+-- ------------------------------------------------------------
+function restart()
+    -- Cancella tutte le basi spawnat (non i template)
+    local count = 0
+    for _, obj in ipairs(getAllObjects()) do
+        local tags = obj.getTags()
+        for _, tag in ipairs(tags) do
+            if tag == "Army1" or tag == "Army2" then
+                -- Salta i template (nickname non parsabile = template)
+                if parsaNome(obj.getName()) then
+                    obj.destruct()
+                    count = count + 1
+                end
+                break
+            end
+        end
+    end
+
+    ARMY[1] = { player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil }
+    ARMY[2] = { player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil }
+
+    -- Reset pannelli UI
+    for slot = 1, 2 do
+        local prefix = "pan" .. slot .. "_"
+        UI.setAttribute(prefix .. "player", "text", "Player: ---")
+        UI.setAttribute(prefix .. "color",  "text", "Colore: ---")
+        UI.setAttribute(prefix .. "army",   "text", "Esercito: ---")
+        UI.setAttribute(prefix .. "unita",  "text", "Unità: ---")
+        UI.setAttribute(prefix .. "fase",   "text", "Fase: ---")
+    end
+
+    -- Reset stato partita
+    esercito_1  = {}
+    esercito_2  = {}
+    wounds_data = {}
+    turno_corrente = 0
+    fase_corrente  = 1
+
+    -- Nascondi linee deploy
+    linee_deploy = false
+    aggiornaLinee()
+
+    printToAll("[RESET] Partita azzerata — pronto per nuovo setup", {r=0.9,g=0.5,b=0.1})
+end
+
+-- ------------------------------------------------------------
 -- FUNZIONE: reveal()
 -- Svuota le Hidden Zone — le basi diventano visibili a tutti
 -- ------------------------------------------------------------
 function reveal()
     local count = 0
-    for _, zona_guid in ipairs({ZONA_1_GUID, ZONA_2_GUID}) do
-        local zona = getObjectFromGUID(zona_guid)
+    for _, zona_nome in ipairs({"Hz1", "Hz2"}) do
+        local zona_guid = trovaZona(zona_nome)
+        local zona = zona_guid and getObjectFromGUID(zona_guid)
         if zona then
             local oggetti = zona.getObjects()
             for _, obj in ipairs(oggetti) do
-                -- Sposta leggermente l'oggetto fuori dalla zona
                 local pos = obj.getPosition()
                 obj.setPosition({x=pos.x, y=pos.y + 0.5, z=pos.z})
                 count = count + 1
@@ -749,24 +1043,40 @@ function caricaEsercito(url, slot, player)
             ARMY[1].player = player_name
             ARMY[1].color = player_color
             aggiornaPannello(1)
+            -- Assegna colore player alla Hidden Zone e ripristina posizione
+            local gz = trovaZona("Hz1")
+            if gz then
+                local zona = getObjectFromGUID(gz)
+                zona.setValue(player_color)
+                if HZ_POS and HZ_POS["Hz1"] then zona.setPosition(HZ_POS["Hz1"]) end
+            end
         else
             ARMY[2].tag = dati.tag
             ARMY[2].nome = dati.nome
             ARMY[2].player = player_name
             ARMY[2].color = player_color
             aggiornaPannello(2)
+            -- Assegna colore player alla Hidden Zone e ripristina posizione
+            local gz = trovaZona("Hz2")
+            if gz then
+                local zona = getObjectFromGUID(gz)
+                zona.setValue(player_color)
+                if HZ_POS and HZ_POS["Hz2"] then zona.setPosition(HZ_POS["Hz2"]) end
+            end
         end
 
-        local zona_guid = slot == "1" and ZONA_1_GUID or ZONA_2_GUID
-        local contatori = {}  -- contatore progressivo per tipo unita
+        local zona_nome = "HiddenZone" .. slot
+        local zona_guid = trovaZona(zona_nome)
+        local contatori = {}
+        local army_tag  = "Army" .. slot  -- Army1 o Army2
 
-        printToAll("[CARICA] Esercito: " .. dati.nome .. " | Tag: " .. dati.tag, {r=0.4,g=0.9,b=0.4})
+        printToAll("[CARICA] Esercito: " .. dati.nome .. " | Tag: " .. army_tag, {r=0.4,g=0.9,b=0.4})
 
         for _, unita in ipairs(dati.unita) do
-            generaUnita(unita, dati.tag, zona_guid, contatori, slot)
+            generaUnita(unita, army_tag, zona_guid, contatori, slot)
         end
 
-        printToAll("[CARICA] Completato — digita !inizia per scansionare", {r=0.4,g=0.9,b=0.4})
+        printToAll("[CARICA] Completato — digita !deploy per scansionare", {r=0.4,g=0.9,b=0.4})
     end)
 end
 
@@ -853,13 +1163,8 @@ function scanTavolo()
     esercito_2  = {}
     wounds_data = {}
 
-    -- Reset pannelli
-    ARMY[1] = { player=nil, tag=nil, nome=nil, color=nil, pannello_guid=ARMY[1].pannello_guid }
-    ARMY[2] = { player=nil, tag=nil, nome=nil, color=nil, pannello_guid=ARMY[2].pannello_guid }
-    for slot = 1, 2 do
-        local obj = ARMY[slot].pannello_guid and getObjectFromGUID(ARMY[slot].pannello_guid)
-        if obj then obj.TextTool.setValue("ARMY " .. slot .. "\nIn attesa...") end
-    end
+    -- Rivela entrambi gli eserciti
+    reveal()
 
     local gruppi_1  = {}
     local gruppi_2  = {}
@@ -869,10 +1174,9 @@ function scanTavolo()
         local tags    = obj.getTags()
         local fazione = nil
         for _, tag in ipairs(tags) do
-            if tag == (ARMY[1].tag or "ARMY1") then fazione = "1" end
-            if tag == (ARMY[2].tag or "ARMY2") then fazione = "2" end
+            if tag == "Army1" then fazione = "1" end
+            if tag == "Army2" then fazione = "2" end
         end
-
         if fazione then
             local nickname = obj.getName()
             if nickname ~= "" and not gia_visti[nickname] then
@@ -927,13 +1231,16 @@ function scanTavolo()
     esercito_1 = gruppiToLista(gruppi_1, (ARMY[1].tag or "ARMY1"))
     esercito_2 = gruppiToLista(gruppi_2, (ARMY[2].tag or "ARMY2"))
 
-    printToAll("=== LIONHEART BOT v1.28.02 ===", {r=0.8,g=0.6,b=0.1})
+    printToAll("=== LIONHEART BOT " .. VERSION .. " ===", {r=0.8,g=0.6,b=0.1})
     printToAll((ARMY[1].tag or "ARMY1") .. ": " .. #esercito_1 .. " unita", {r=0.9,g=0.2,b=0.2})
     printToAll((ARMY[2].tag or "ARMY2") .. ": " .. #esercito_2 .. " unita", {r=0.2,g=0.4,b=0.9})
 
     printToAll("--- " .. (ARMY[1].tag or "ARMY1") .. " ---", {r=0.9,g=0.2,b=0.2})
     for _, u in ipairs(esercito_1) do
-        local info = u.nome_display .. " | Basi: " .. #u.basi .. "/" .. u.basi_max .. " | Val: " .. u.valore
+        local val_str = ""
+        if u.valore == 1  then val_str = " | Superiore" end
+        if u.valore == -1 then val_str = " | Inferiore" end
+        local info = u.nome_display .. " | Basi: " .. #u.basi .. "/" .. u.basi_max .. val_str
         if u.lancieri then info = info .. " [LANC]" end
         if u.arma     then info = info .. " [" .. u.arma .. "]" end
         printToAll(info, {r=0.9,g=0.2,b=0.2})
@@ -941,13 +1248,20 @@ function scanTavolo()
 
     printToAll("--- " .. (ARMY[2].tag or "ARMY2") .. " ---", {r=0.2,g=0.4,b=0.9})
     for _, u in ipairs(esercito_2) do
-        local info = u.nome_display .. " | Basi: " .. #u.basi .. "/" .. u.basi_max .. " | Val: " .. u.valore
+        local val_str = ""
+        if u.valore == 1  then val_str = " | Superiore" end
+        if u.valore == -1 then val_str = " | Inferiore" end
+        local info = u.nome_display .. " | Basi: " .. #u.basi .. "/" .. u.basi_max .. val_str
         if u.lancieri then info = info .. " [LANC]" end
         if u.arma     then info = info .. " [" .. u.arma .. "]" end
         printToAll(info, {r=0.2,g=0.4,b=0.9})
     end
 
     printToAll("=== PRONTO ===", {r=0.4,g=0.9,b=0.4})
+
+    -- Aggiorna pannelli UI
+    aggiornaPannello(1)
+    aggiornaPannello(2)
 
     -- Resetta monitor se attivo
     turno_corrente = 0
@@ -1361,4 +1675,6 @@ function avanzaFase()
                {r=0.6,g=0.6,b=0.6})
 
     aggiornaMonitor()
+    aggiornaPannello(1)
+    aggiornaPannello(2)
 end
