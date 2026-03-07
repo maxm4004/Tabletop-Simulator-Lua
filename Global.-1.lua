@@ -466,6 +466,11 @@ function onChat(message, player)
         return false
     end
 
+    if message == "!verificaDeploy" then
+        verificaDeploy()
+        return false
+    end
+
     if message == "!cercaHz" then
         local trovate = 0
         for _, obj in ipairs(getAllObjects()) do
@@ -505,13 +510,6 @@ function onChat(message, player)
                 return false
             end
         end
-        -- Ripristina Hz
-        for _, tag in ipairs({"Hz1", "Hz2"}) do
-            local gz = trovaZona(tag)
-            if gz and HZ_POS and HZ_POS[tag] then
-                getObjectFromGUID(gz).setPosition(HZ_POS[tag])
-            end
-        end
         -- Carica entrambi gli eserciti poi scansiona
         local url1 = leggiUrlDaNotebook("Army1")
         local url2 = leggiUrlDaNotebook("Army2")
@@ -524,8 +522,11 @@ function onChat(message, player)
         aggiornaLinee()
         caricaEsercito(url1, "1", Player["Red"])
         caricaEsercito(url2, "2", Player["Green"])
-        -- Delay per attendere spawn prima di scansionare
-        Wait.time(function() scanTavolo() end, 5)
+        -- Delay per attendere spawn prima di verificare e scansionare
+        Wait.time(function()
+            -- verificaDeploy() -- disabilitato per ora
+            scanTavolo()
+        end, 5)
         return false
     end
 
@@ -973,7 +974,70 @@ function restart()
 end
 
 -- ------------------------------------------------------------
--- FUNZIONE: reveal()
+-- FUNZIONE: verificaDeploy()
+-- Controlla che le basi siano nelle Scripting Zone corrette
+-- Sz1 = Army1, Sz2 = Army2
+-- ------------------------------------------------------------
+function verificaDeploy()
+    local Z_NEAR, Z_FAR = 25.80, 32.88
+
+    local errori = { [1]={fuori={}, sbagliata={}}, [2]={fuori={}, sbagliata={}} }
+
+    for _, obj in ipairs(getAllObjects()) do
+        local nome = obj.getName()
+        local is_template = string.sub(nome, 1, 4) == "FRA_" or string.sub(nome, 1, 4) == "ENG_"
+        if not is_template and parsaNome(nome) then
+            local army_tag = nil
+            for _, t in ipairs(obj.getTags()) do
+                if t == "Army1" or t == "Army2" then army_tag = t break end
+            end
+            if army_tag then
+                local slot = tonumber(string.match(army_tag, "%d"))
+                local pos = obj.getPosition()
+                local z_abs = math.abs(pos.z)
+                local z_ok = z_abs >= Z_NEAR and z_abs <= Z_FAR
+                local z_sign_ok = (slot == 1 and pos.z < 0) or (slot == 2 and pos.z > 0)
+
+                if not z_ok then
+                    table.insert(errori[slot].fuori, nome)
+                elseif not z_sign_ok then
+                    table.insert(errori[slot].sbagliata, nome)
+                end
+            end
+        end
+    end
+
+    local totale = 0
+    for slot = 1, 2 do
+        local e = errori[slot]
+        local n = #e.fuori + #e.sbagliata
+        totale = totale + n
+        if n > 0 then
+            local nome_esercito = (ARMY[slot] and ARMY[slot].nome) or ("Army" .. slot)
+            printToAll("── Army " .. slot .. " (" .. nome_esercito .. ") ──", {r=1,g=0.8,b=0.2})
+            if #e.fuori > 0 then
+                printToAll("Fuori zona:", {r=1,g=0.5,b=0})
+                for _, n in ipairs(e.fuori) do
+                    printToAll("  " .. n, {r=1,g=0.7,b=0.3})
+                end
+            end
+            if #e.sbagliata > 0 then
+                printToAll("Zona sbagliata:", {r=1,g=0.3,b=0.3})
+                for _, n in ipairs(e.sbagliata) do
+                    printToAll("  " .. n, {r=1,g=0.4,b=0.4})
+                end
+            end
+        end
+    end
+
+    if totale == 0 then
+        printToAll("[DEPLOY] OK — tutte le basi nelle zone corrette!", {r=0.4,g=0.9,b=0.4})
+        return true
+    end
+    return false
+end
+
+
 -- Svuota le Hidden Zone — le basi diventano visibili a tutti
 -- ------------------------------------------------------------
 function reveal()
@@ -1043,26 +1107,18 @@ function caricaEsercito(url, slot, player)
             ARMY[1].player = player_name
             ARMY[1].color = player_color
             aggiornaPannello(1)
-            -- Assegna colore player alla Hidden Zone e ripristina posizione
+            -- Assegna colore player alla Hidden Zone
             local gz = trovaZona("Hz1")
-            if gz then
-                local zona = getObjectFromGUID(gz)
-                zona.setValue(player_color)
-                if HZ_POS and HZ_POS["Hz1"] then zona.setPosition(HZ_POS["Hz1"]) end
-            end
+            if gz then getObjectFromGUID(gz).setValue(player_color) end
         else
             ARMY[2].tag = dati.tag
             ARMY[2].nome = dati.nome
             ARMY[2].player = player_name
             ARMY[2].color = player_color
             aggiornaPannello(2)
-            -- Assegna colore player alla Hidden Zone e ripristina posizione
+            -- Assegna colore player alla Hidden Zone
             local gz = trovaZona("Hz2")
-            if gz then
-                local zona = getObjectFromGUID(gz)
-                zona.setValue(player_color)
-                if HZ_POS and HZ_POS["Hz2"] then zona.setPosition(HZ_POS["Hz2"]) end
-            end
+            if gz then getObjectFromGUID(gz).setValue(player_color) end
         end
 
         local zona_nome = "HiddenZone" .. slot
