@@ -1,6 +1,5 @@
 -- ============================================================
 -- LIONHEART BOT - Tabletop Simulator
--- Versione 1.28.04 - Struttura ARMY[1/2], pannelli player
 -- Comandi chat:
 --   !inizia      -> scansiona il tavolo
 --   !turno       -> avvia/avanza sequenza di gioco
@@ -16,7 +15,7 @@
 --   !linee       -> mostra linee di schieramento
 --   !linee off   -> rimuove linee di schieramento
 -- ============================================================
-VERSION = "v1.28.04"
+VERSION = "v1.31.00"
 DEBUG   = false  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
@@ -100,47 +99,22 @@ SPAWN_POS = {
 }
 
 -- ------------------------------------------------------------
--- MONITOR FASE
--- Pannello nero fisso con 2 testi 3DText (nord e sud)
--- Pannello: pos {-0.01, 56.12, 0.00} rot {0,90,0} scale {2.5,26.82,47.14}
--- ------------------------------------------------------------
-MONITOR_X      = -0.01
-MONITOR_Y      = 66
-MONITOR_Z      = 0
-MONITOR_OFFSET = 1.5   -- distanza testo dal pannello
-
-monitor_visibile = true
-monitor_guids    = {}
-monitor_schermo_guid = nil
-
-function onScriptingButtonDown(index, player_color)
-    if index == 1 then
-        toggleMonitor()
-    end
-end
-
-function toggleMonitor()
-    monitor_visibile = not monitor_visibile
-    local colore = monitor_visibile and {r=1, g=0.85, b=0.3} or {r=0, g=0, b=0}
-    for _, obj in ipairs(getAllObjects()) do
-        if obj.getName() == "MONITOR_NORD" or obj.getName() == "MONITOR_SUD" then
-            obj.TextTool.setFontColor(colore)
-        end
-    end
-    printToAll("[MONITOR] " .. (monitor_visibile and "Visibile" or "Nascosto"), {r=0.6,g=0.6,b=0.6})
-end
+pronto_red       = false   -- Red ha premuto PRONTO
+pronto_green     = false   -- Green ha premuto PRONTO
+deploy_fatto     = false   -- !deploy è stato eseguito almeno una volta
+segnalini_guids  = {}      -- sfere rosse basi fuori zona
 
 -- Sequenza fasi
 FASI = {
-    {nome="INIZIATIVA",  desc="Lancia 1D6 — chi vince sceglie se muovere primo o secondo",  turno_tts=false},
-    {nome="CARICHE",     desc="Dichiara le cariche — prima chi ha l'iniziativa",              turno_tts=true },
-    {nome="MOVIMENTO",   desc="Manovre e ZOC — prima chi ha l'iniziativa",                   turno_tts=true },
-    {nome="TIRO",        desc="Simultaneo — tira sempre al nemico piu vicino",               turno_tts=true },
-    {nome="MISCHIA",     desc="Combatti le mischie — prima chi ha l'iniziativa",             turno_tts=true },
-    {nome="MORALE",      desc="Test morale per le unita in crisi",                           turno_tts=false},
+    {nome="INIZIATIVA", desc="Lanciate entrambi 1D6 — chi vince sceglie se muovere primo o secondo",                                                          turno_tts=false},
+    {nome="MOVIMENTO",  desc="Prima muove chi ha l'iniziativa (prima i caricanti poi le altre), poi passa all'avversario",                                    turno_tts=true },
+    {nome="TIRO",       desc="Simultaneo — si tira sempre al nemico piu vicino, unita in bosco tirano solo entro 3cm dal bordo",                              turno_tts=false},
+    {nome="MISCHIE",    desc="Si combattono le mischie da cariche — testa morale se sotto il 50% delle figure. Esercito che perde >50% unita abbandona.", turno_tts=true },
 }
-fase_corrente  = 0
-iniziativa_tag = (ARMY[1].tag or "ARMY1")
+fase_corrente     = 0
+iniziativa_tag    = (ARMY[1].tag or "ARMY1")
+iniziativa_scelta = false  -- true quando il vincitore ha premuto il suo pulsante
+mano_tag          = nil    -- tag di chi sta muovendo ora (fasi con turno_tts)
 
 -- ------------------------------------------------------------
 -- TABELLA DATI REGOLAMENTO
@@ -262,7 +236,7 @@ function spawnaPannelli()
                 id            = "banner_root",
                 rectAlignment = "MiddleCenter",
                 width         = "420",
-                height        = "200",
+                height        = "240",
                 color         = "rgba(0,0,0,0.85)",
                 offsetXY      = "0 330",
             },
@@ -280,12 +254,44 @@ function spawnaPannelli()
                         onClick="onBtnAvanzaFase",
                         active="false"
                     }},
-                    { tag = "Button", attributes = { id="banner_btn_turno", text="► INIZIA TURNO", fontSize="14", fontStyle="Bold",
-                        color="rgba(0.6,0.4,0.1,1)", textColor="White",
-                        width="180", height="36",
-                        onClick="onBtnAvanzaFase",
+                    { tag = "Button", attributes = { id="banner_btn_deploy", text="► DEPLOY ESERCITI", fontSize="14", fontStyle="Bold",
+                        color="rgba(0.15,0.4,0.8,1)", textColor="White",
+                        width="200", height="36",
+                        onClick="onBtnDeploy",
                         active="false"
                     }},
+                    { tag = "Button", attributes = { id="banner_btn_mano", text="⇒ PASSA LA MANO", fontSize="14", fontStyle="Bold",
+                        color="rgba(0.5,0.2,0.7,1)", textColor="White",
+                        width="200", height="36",
+                        onClick="onBtnPassaMano",
+                        active="false"
+                    }},
+                    { tag = "Panel", attributes = { id="banner_pronti_row", active="false", preferredHeight="40" }, children = {
+                        { tag = "HorizontalLayout", attributes = { spacing="12", childAlignment="MiddleCenter" }, children = {
+                        { tag = "Button", attributes = { id="banner_btn_pronto_red",   text="[R] PRONTO", fontSize="13", fontStyle="Bold",
+                            color="rgba(0.7,0.15,0.15,1)", textColor="White",
+                            width="130", height="36",
+                            onClick="onBtnProntoRed"
+                        }},
+                        { tag = "Button", attributes = { id="banner_btn_pronto_green", text="[G] PRONTO", fontSize="13", fontStyle="Bold",
+                            color="rgba(0.15,0.6,0.15,1)", textColor="White",
+                            width="130", height="36",
+                            onClick="onBtnProntoGreen"
+                        }},
+                    }}}},
+                    { tag = "Panel", attributes = { id="banner_ini_row", active="false", preferredHeight="40" }, children = {
+                        { tag = "HorizontalLayout", attributes = { spacing="12", childAlignment="MiddleCenter" }, children = {
+                        { tag = "Button", attributes = { id="banner_btn_ini1", text="Army 1", fontSize="13", fontStyle="Bold",
+                            color="rgba(0.7,0.15,0.15,1)", textColor="White",
+                            width="130", height="36",
+                            onClick="onBtnIniziativa1"
+                        }},
+                        { tag = "Button", attributes = { id="banner_btn_ini2", text="Army 2", fontSize="13", fontStyle="Bold",
+                            color="rgba(0.15,0.6,0.15,1)", textColor="White",
+                            width="130", height="36",
+                            onClick="onBtnIniziativa2"
+                        }},
+                    }}}},
                 }
             }}
         },
@@ -360,7 +366,12 @@ function aggiornaPannello(slot)
     local unita_str = (#esercito > 0) and (unita_attive .. "/" .. #esercito) or "---"
 
     -- Fase corrente da tabella FASI
-    local fase_str = fase_corrente == 0 and "DEPLOY" or (FASI[fase_corrente] and FASI[fase_corrente].nome or "---")
+    local fase_str
+    if fase_corrente == 0 then
+        fase_str = turno_corrente == 0 and "DEPLOY" or "INIZIATIVA"
+    else
+        fase_str = FASI[fase_corrente] and FASI[fase_corrente].nome or "---"
+    end
 
     -- Colore titolo dal colore player TTS
     local col_map = {
@@ -391,19 +402,156 @@ end
 -- Scompare quando Red e Green sono entrambi seduti
 -- ------------------------------------------------------------
 function onBtnAvanzaFase(player, value, id)
-    if turno_corrente == 0 then
+    if fase_corrente >= #FASI then
         avviaTurno()
     else
         avanzaFase()
     end
 end
 
+function onBtnIniziativa1(player, value, id)
+    local tag = ARMY[1].tag or "ARMY1"
+    local nb  = ARMY[1].nome_breve or tag
+    iniziativa_tag    = tag
+    iniziativa_scelta = true
+    printToAll("[DEBUG] fase prima di avanzaFase: " .. tostring(fase_corrente), {r=1,g=1,b=0})
+    printToAll("Iniziativa: " .. nb, {r=1,g=0.8,b=0.2})
+    aggiornaPannello(1)
+    aggiornaPannello(2)
+    avanzaFase()
+end
+
+function onBtnIniziativa2(player, value, id)
+    local tag = ARMY[2].tag or "ARMY2"
+    local nb  = ARMY[2].nome_breve or tag
+    iniziativa_tag    = tag
+    iniziativa_scelta = true
+    printToAll("Iniziativa: " .. nb, {r=1,g=0.8,b=0.2})
+    aggiornaPannello(1)
+    aggiornaPannello(2)
+    avanzaFase()
+end
+
+function onBtnPassaMano(player, value, id)
+    -- Trova il tag dell'altro esercito
+    local altro_tag = nil
+    for slot = 1, 2 do
+        if ARMY[slot].tag ~= mano_tag then
+            altro_tag = ARMY[slot].tag
+        end
+    end
+    if altro_tag then
+        mano_tag = altro_tag
+        local nb = mano_tag
+        for slot = 1, 2 do
+            if ARMY[slot].tag == mano_tag then nb = ARMY[slot].nome_breve or mano_tag end
+        end
+        printToAll("-> Mano passata a: " .. nb, {r=0.4,g=0.9,b=0.4})
+        aggiornaBanner()
+    else
+        -- Entrambi hanno mosso — mostra AVANZA FASE
+        mano_tag = nil
+        aggiornaBanner()
+    end
+end
+    local c = type(player) == "string" and player or (player and player.color) or ""
+    if c ~= "Red" and c ~= "Green" then
+        if c ~= "" then
+            printToColor("[LIONHEART] Solo Red o Green possono fare il deploy.", c, {r=1,g=0.3,b=0.3})
+        end
+        return
+    end
+    -- Ricava oggetto Player dal colore
+    local p = Player[c]
+    if not p then return end
+    onChat("!deploy", p)
+end
+
+function onBtnProntoRed(player, value, id)
+    if player == nil or player.color ~= "Red" then return end
+    pronto_red = not pronto_red
+    local msg = pronto_red and "[R] Red: PRONTO!" or "[R] Red: non piu pronto."
+    printToAll(msg, {r=1,g=0.4,b=0.4})
+    aggiornaBanner()
+    verificaPronti()
+end
+
+function onBtnProntoGreen(player, value, id)
+    if player == nil or player.color ~= "Green" then return end
+    pronto_green = not pronto_green
+    local msg = pronto_green and "[G] Green: PRONTO!" or "[G] Green: non piu pronto."
+    printToAll(msg, {r=0.4,g=1,b=0.4})
+    aggiornaBanner()
+    verificaPronti()
+end
+
+function onBtnProntoGreen(player, value, id)
+    local color = (player ~= nil) and (type(player) == "string" and player or player.color) or "Green"
+    if color ~= "Green" then return end
+    pronto_green = not pronto_green
+    local msg = pronto_green and "[G] Green: PRONTO!" or "[G] Green: non piu pronto."
+    printToAll(msg, {r=0.4,g=1,b=0.4})
+    aggiornaBanner()
+    verificaPronti()
+end
+
+function verificaPronti()
+    if pronto_red and pronto_green then
+        printToAll("Entrambi pronti — verifico il deploy...", {r=0.9,g=0.8,b=0.1})
+        local ok, err = pcall(verificaDeploy)
+        if not ok then
+            printToAll("[ERRORE verificaDeploy] " .. tostring(err), {r=1,g=0,b=0})
+            pronto_red   = false
+            pronto_green = false
+            aggiornaBanner()
+            return
+        end
+        if not err then
+            printToAll("Correggi il posizionamento e premi di nuovo PRONTO!", {r=1,g=0.3,b=0.3})
+            pronto_red   = false
+            pronto_green = false
+            aggiornaBanner()
+            return
+        end
+        pronto_red   = false
+        pronto_green = false
+        Wait.frames(function()
+            avviaTurno()
+        end, 60)
+    end
+end
+
 function aggiornaBanner()
-    -- Durante il gioco (fase > 0) mostra info turno
-    if fase_corrente > 0 then
-        UI.setAttribute("banner_root",     "active", "true")
-        UI.setAttribute("banner_btn_fase",  "active", "true")
-        UI.setAttribute("banner_btn_turno", "active", "false")
+    -- Helper: nascondi tutti i pulsanti
+    local function resetBtn()
+        UI.setAttribute("banner_btn_fase",        "active", "false")
+        UI.setAttribute("banner_btn_turno",       "active", "false")
+        UI.setAttribute("banner_btn_deploy",      "active", "false")
+        UI.setAttribute("banner_btn_mano",        "active", "false")
+        UI.setAttribute("banner_pronti_row",      "active", "false")
+        UI.setAttribute("banner_ini_row",         "active", "false")
+    end
+
+    UI.setAttribute("banner_root", "active", "true")
+
+    -- STATO 1a: Fase INIZIATIVA (fase_corrente==1) — mostra pulsanti scelta iniziativa
+    if fase_corrente == 1 and not iniziativa_scelta then
+        resetBtn()
+        UI.setAttribute("banner_ini_row", "active", "true")
+        local nb1 = ARMY[1].nome_breve or ARMY[1].tag or "Army 1"
+        local nb2 = ARMY[2].nome_breve or ARMY[2].tag or "Army 2"
+        UI.setAttribute("banner_btn_ini1", "text", nb1)
+        UI.setAttribute("banner_btn_ini2", "text", nb2)
+        UI.setAttribute("banner_title", "text", "TURNO " .. turno_corrente)
+        UI.setAttribute("banner_army1", "text", "Fase: INIZIATIVA")
+        UI.setAttribute("banner_army2", "text", "")
+        UI.setAttribute("banner_desc",  "text", "Chi ha vinto il dado? Premi il tuo nome.")
+        return
+    end
+
+    -- STATO 1: Gioco in corso (fase > 0, non INIZIATIVA)
+    if fase_corrente > 0 and fase_corrente ~= 1 then
+        resetBtn()
         local fase = FASI[fase_corrente]
         local nb_ini = iniziativa_tag
         for slot = 1, 2 do
@@ -415,25 +563,59 @@ function aggiornaBanner()
         UI.setAttribute("banner_army1", "text", "Fase: " .. (fase and fase.nome or "---"))
         UI.setAttribute("banner_army2", "text", "Iniziativa: " .. nb_ini)
         UI.setAttribute("banner_desc",  "text", fase and fase.desc or "")
-        -- Cambia testo pulsante all'ultima fase
-        local btn_txt = fase_corrente >= #FASI and "► PROSSIMO TURNO" or "► AVANZA FASE"
-        UI.setAttribute("banner_btn_fase", "text", btn_txt)
+        -- Fasi con mano: mostra PASSA LA MANO o AVANZA FASE
+        if fase and fase.turno_tts and mano_tag ~= nil then
+            local nb_mano = mano_tag
+            for slot = 1, 2 do
+                if ARMY[slot].tag == mano_tag then nb_mano = ARMY[slot].nome_breve or mano_tag end
+            end
+            UI.setAttribute("banner_btn_mano", "active", "true")
+            UI.setAttribute("banner_btn_mano", "text", nb_mano .. " -> PASSA LA MANO")
+        else
+            local btn_txt = fase_corrente >= #FASI and "► PROSSIMO TURNO" or "► AVANZA FASE"
+            UI.setAttribute("banner_btn_fase", "active", "true")
+            UI.setAttribute("banner_btn_fase", "text", btn_txt)
+        end
         return
     end
 
-    -- Fase 0 = DEPLOY
-    UI.setAttribute("banner_btn_fase",  "active", "false")
-    UI.setAttribute("banner_btn_turno", "active", "true")
-    local red_ok   = Player["Red"]   and Player["Red"].seated
-    local green_ok = Player["Green"] and Player["Green"].seated
-    local visible  = not (red_ok and green_ok)
-    UI.setAttribute("banner_root",  "active", visible and "true" or "false")
-    UI.setAttribute("banner_title", "text", "SCEGLI IL TUO COLORE")
+    -- STATO 3: Deploy fatto, in attesa PRONTO
+    if deploy_fatto then
+        resetBtn()
+        UI.setAttribute("banner_pronti_row", "active", "true")
+        UI.setAttribute("banner_title", "text", "SCHIERA I TUOI ESERCITI")
+        local nb1 = ARMY[1] and ARMY[1].nome_breve or "Army 1"
+        local nb2 = ARMY[2] and ARMY[2].nome_breve or "Army 2"
+        UI.setAttribute("banner_army1", "text", "[R] " .. nb1)
+        UI.setAttribute("banner_army2", "text", "[G] " .. nb2)
+        UI.setAttribute("banner_desc",  "text", "Quando pronti premi il tuo pulsante PRONTO")
+        -- Aggiorna aspetto pulsanti in base allo stato
+        if pronto_red then
+            UI.setAttribute("banner_btn_pronto_red", "text",  "[R] IN ATTESA...")
+            UI.setAttribute("banner_btn_pronto_red", "color", "rgba(0.4,0.4,0.4,1)")
+        else
+            UI.setAttribute("banner_btn_pronto_red", "text",  "[R] PRONTO")
+            UI.setAttribute("banner_btn_pronto_red", "color", "rgba(0.7,0.15,0.15,1)")
+        end
+        if pronto_green then
+            UI.setAttribute("banner_btn_pronto_green", "text",  "[G] IN ATTESA...")
+            UI.setAttribute("banner_btn_pronto_green", "color", "rgba(0.4,0.4,0.4,1)")
+        else
+            UI.setAttribute("banner_btn_pronto_green", "text",  "[G] PRONTO")
+            UI.setAttribute("banner_btn_pronto_green", "color", "rgba(0.15,0.6,0.15,1)")
+        end
+        return
+    end
+
+    -- STATO 4: Inizio assoluto — solo pulsante DEPLOY
+    resetBtn()
+    UI.setAttribute("banner_btn_deploy", "active", "true")
+    UI.setAttribute("banner_title", "text", "LIONHEART")
     local nb1 = ARMY[1] and ARMY[1].nome_breve
     local nb2 = ARMY[2] and ARMY[2].nome_breve
-    UI.setAttribute("banner_army1", "text", "Red  ->  Army 1" .. (nb1 and "  (" .. nb1 .. ")" or ""))
-    UI.setAttribute("banner_army2", "text", "Green  ->  Army 2" .. (nb2 and "  (" .. nb2 .. ")" or ""))
-    UI.setAttribute("banner_desc",  "text", "")
+    UI.setAttribute("banner_army1", "text", "[R] Red  →  " .. (nb1 and nb1 or "Army 1"))
+    UI.setAttribute("banner_army2", "text", "[G] Green  →  " .. (nb2 and nb2 or "Army 2"))
+    UI.setAttribute("banner_desc",  "text", "Scegli il tuo colore e avvia il deploy")
 end
 
 -- ------------------------------------------------------------
@@ -459,7 +641,6 @@ function onLoad()
     log("[LIONHEART]   !croce off   -> rimuove croce")
     log("[LIONHEART]   !linee       -> linee di schieramento sul verde")
     log("[LIONHEART]   !linee off   -> rimuove linee di schieramento")
-    log("[LIONHEART]   Tasto 1      -> mostra/nasconde monitor fase")
 
     -- Posizioni originali Hz (hardcoded)
     HZ_POS = {
@@ -572,6 +753,8 @@ function onChat(message, player)
         aggiornaLinee()
         caricaEsercito(url1, "1", Player["Red"])
         caricaEsercito(url2, "2", Player["Green"])
+        deploy_fatto = true
+        aggiornaBanner()
         -- Delay per attendere spawn prima di verificare e scansionare
         Wait.time(function()
             -- verificaDeploy() -- disabilitato per ora
@@ -596,6 +779,53 @@ function onChat(message, player)
 
     if message == "!colonna" then
         mettInColonna(player)
+        return false
+    end
+
+    if message == "!hide" then
+        local slot = ARMY_COLORS[player.color]
+        if not slot then
+            printToAll("[HIDE] Colore " .. player.color .. " non associato a nessun esercito", {r=1,g=0.3,b=0.3})
+            return false
+        end
+        local nemico_color = slot == 1 and ARMY[2].color or ARMY[1].color
+        -- fallback: cerca l'altro colore tra Red e Green
+        if not nemico_color or nemico_color == "---" then
+            nemico_color = slot == 1 and "Green" or "Red"
+        end
+        local army_tag = "Army" .. slot
+        local count = 0
+        for _, obj in ipairs(getAllObjects()) do
+            for _, t in ipairs(obj.getTags()) do
+                if t == army_tag then
+                    obj.setInvisibleTo({nemico_color})
+                    count = count + 1
+                    break
+                end
+            end
+        end
+        printToAll("[HIDE] " .. count .. " basi nascoste a " .. nemico_color, {r=0.4,g=0.9,b=0.4})
+        return false
+    end
+
+    if message == "!show" then
+        local slot = ARMY_COLORS[player.color]
+        if not slot then
+            printToAll("[SHOW] Colore " .. player.color .. " non associato a nessun esercito", {r=1,g=0.3,b=0.3})
+            return false
+        end
+        local army_tag = "Army" .. slot
+        local count = 0
+        for _, obj in ipairs(getAllObjects()) do
+            for _, t in ipairs(obj.getTags()) do
+                if t == army_tag then
+                    obj.setInvisibleTo({})
+                    count = count + 1
+                    break
+                end
+            end
+        end
+        printToAll("[SHOW] " .. count .. " basi visibili a tutti", {r=0.4,g=0.9,b=0.4})
         return false
     end
 
@@ -1010,17 +1240,29 @@ function restart()
     end
 
     -- Reset stato partita
-    esercito_1  = {}
-    esercito_2  = {}
-    wounds_data = {}
+    esercito_1   = {}
+    esercito_2   = {}
+    wounds_data  = {}
     turno_corrente = 0
     fase_corrente  = 0
+    deploy_fatto      = false
+    pronto_red        = false
+    pronto_green      = false
+    iniziativa_scelta = false
+    mano_tag          = nil
+    -- Rimuovi sfere segnalino
+    for _, guid in ipairs(segnalini_guids) do
+        local o = getObjectFromGUID(guid)
+        if o then o.destruct() end
+    end
+    segnalini_guids = {}
     Turns.enable   = false
 
     -- Nascondi linee deploy
     linee_deploy = false
     aggiornaLinee()
 
+    aggiornaBanner()
     printToAll("[RESET] Partita azzerata — pronto per nuovo setup", {r=0.9,g=0.5,b=0.1})
 end
 
@@ -1034,7 +1276,15 @@ function verificaDeploy()
     local Z_NEAR = 25.67
     local Z_FAR  = 32.88
 
+    -- Rimuovi sfere segnalino precedenti
+    for _, guid in ipairs(segnalini_guids) do
+        local o = getObjectFromGUID(guid)
+        if o then o.destruct() end
+    end
+    segnalini_guids = {}
+
     local errori = { [1]={fuori={}, sbagliata={}}, [2]={fuori={}, sbagliata={}} }
+    local basi_errate = {}  -- {obj, nome} da segnalare con sfera
 
     -- Prefissi template dinamici dai tag esercito
     local prefissi_template = {}
@@ -1042,13 +1292,11 @@ function verificaDeploy()
         local tag = ARMY[slot].tag
         if tag then prefissi_template[tag .. "_"] = true end
     end
-    -- Fallback hardcoded se i tag non sono ancora caricati
     prefissi_template["FRA_"] = true
     prefissi_template["ENG_"] = true
 
     for _, obj in ipairs(getAllObjects()) do
         local nome = obj.getName()
-        -- Salta template
         local is_template = false
         for pfx, _ in pairs(prefissi_template) do
             if string.sub(nome, 1, #pfx) == pfx then is_template = true break end
@@ -1069,14 +1317,24 @@ function verificaDeploy()
 
                 if not z_ok or not x_ok then
                     table.insert(errori[slot].fuori, nome)
+                    table.insert(basi_errate, {obj=obj, pos=pos})
                 elseif not z_sign_ok then
                     table.insert(errori[slot].sbagliata, nome)
+                    table.insert(basi_errate, {obj=obj, pos=pos})
                 end
             end
         end
     end
 
+    -- Evidenzia basi errate con highlight rosso
+    for _, b in ipairs(basi_errate) do
+        if b and b.obj then
+            b.obj.highlightOn({r=1, g=0.1, b=0.1}, 15)
+        end
+    end
+
     local totale = 0
+    local basi_trovate = 0
     for slot = 1, 2 do
         local e = errori[slot]
         local n = #e.fuori + #e.sbagliata
@@ -1097,6 +1355,20 @@ function verificaDeploy()
                 end
             end
         end
+    end
+    basi_trovate = totale + (function()
+        local c = 0
+        for _, obj in ipairs(getAllObjects()) do
+            for _, t in ipairs(obj.getTags()) do
+                if t == "Army1" or t == "Army2" then c = c + 1 break end
+            end
+        end
+        return c
+    end)()
+
+    if basi_trovate == 0 then
+        printToAll("[DEPLOY] Nessuna base trovata — fai prima !deploy!", {r=1,g=0.3,b=0.3})
+        return false
     end
 
     if totale == 0 then
@@ -1271,6 +1543,12 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
                 })
                 clone.addTag(tag)
                 clone.setDescription(unita.nome_display)
+                -- Nasconde la base al giocatore nemico durante il deploy
+                local nemico_color = slot == "1" and ARMY[2].color or ARMY[1].color
+                if nemico_color and nemico_color ~= "---" then
+                    clone.setInvisibleTo({nemico_color})
+                end
+                clone.auto_raise = true
                 clone.setLock(false)
                 if b.ferite and b.ferite > 0 then
                     wounds_data[nickname] = b.ferite
@@ -1392,16 +1670,10 @@ function scanTavolo()
     aggiornaPannello(1)
     aggiornaPannello(2)
 
-    -- Resetta monitor se attivo
     turno_corrente = 0
-    fase_corrente  = 1
+    fase_corrente  = 0
     iniziativa_tag = (ARMY[1].tag or "ARMY1")
-    for _, obj in ipairs(getAllObjects()) do
-        if obj.getName() == "MONITOR_NORD" or obj.getName() == "MONITOR_SUD" then
-            obj.setValue("IN ATTESA\n\nDigita !turno\nper iniziare")
-            obj.TextTool.setFontColor({r=1, g=0.85, b=0.3})
-        end
-    end
+    aggiornaBanner()
 end
 
 -- ------------------------------------------------------------
@@ -1677,81 +1949,6 @@ function trovaNemicoVicino(unita, nemici)
 end
 
 -- ------------------------------------------------------------
--- FUNZIONE: testoPannello()
--- ------------------------------------------------------------
-function testoPannello()
-    local fase = FASI[fase_corrente]
-    local fase_nome = fase_corrente == 0 and "DEPLOY" or (fase and fase.nome or "---")
-    local fase_desc = fase_corrente == 0 and "Schiera le truppe nelle zone di deploy" or (fase and fase.desc or "")
-    return "TURNO " .. turno_corrente
-        .. "\n\nFASE: " .. fase_nome
-        .. "\n\n-> " .. iniziativa_tag
-        .. "\n\n" .. fase_desc
-end
-
--- ------------------------------------------------------------
--- FUNZIONE: aggiornaMonitor()
--- Aggiorna il testo su entrambi i lati del monitor
--- ------------------------------------------------------------
-function aggiornaMonitor()
-    local testo = testoPannello()
-    for _, obj in ipairs(getAllObjects()) do
-        if obj.getName() == "MONITOR_NORD" or obj.getName() == "MONITOR_SUD" then
-            obj.setValue(testo)
-            obj.TextTool.setFontColor({r=1, g=0.85, b=0.3})
-        end
-    end
-end
-
--- ------------------------------------------------------------
--- FUNZIONE: spawnaMonitor()
--- ------------------------------------------------------------
-function spawnaMonitor()
-    -- Rimuovi monitor esistenti cercando per nome
-    for _, obj in ipairs(getAllObjects()) do
-        if obj.getName() == "MONITOR_NORD" or obj.getName() == "MONITOR_SUD" then
-            obj.destruct()
-        end
-    end
-    monitor_guids = {}
-
-    local testo = testoPannello()
-
-    -- Testo lato nord
-    spawnObject({
-        type     = "3DText",
-        position = {x=MONITOR_X, y=MONITOR_Y, z=MONITOR_Z - MONITOR_OFFSET},
-        rotation = {x=0, y=0, z=0},
-        scale    = {x=20, y=20, z=20},
-        callback_function = function(obj)
-            obj.setName("MONITOR_NORD")
-            obj.setValue(testo)
-            obj.TextTool.setFontSize(120)
-            obj.TextTool.setFontColor({r=1, g=0.85, b=0.3})
-            obj.setLock(true)
-            table.insert(monitor_guids, obj.getGUID())
-        end
-    })
-
-    -- Testo lato sud
-    spawnObject({
-        type     = "3DText",
-        position = {x=MONITOR_X, y=MONITOR_Y, z=MONITOR_Z + MONITOR_OFFSET},
-        rotation = {x=0, y=180, z=0},
-        scale    = {x=20, y=20, z=20},
-        callback_function = function(obj)
-            obj.setName("MONITOR_SUD")
-            obj.setValue(testo)
-            obj.TextTool.setFontSize(120)
-            obj.TextTool.setFontColor({r=1, g=0.85, b=0.3})
-            obj.setLock(true)
-            table.insert(monitor_guids, obj.getGUID())
-        end
-    })
-
-    printToAll("[MONITOR] Attivo", {r=0.4,g=0.9,b=0.4})
-end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: playerTagToColor(tag)
 -- Restituisce il colore TTS dal tag esercito
@@ -1764,67 +1961,48 @@ function playerTagToColor(tag)
 end
 
 -- ------------------------------------------------------------
+-- ------------------------------------------------------------
 -- FUNZIONE: impostaTurnoTTS(fase)
--- Abilita/disabilita e imposta l'ordine del turno TTS
 -- ------------------------------------------------------------
 function impostaTurnoTTS(fase)
+    Turns.enable = false
     if not fase.turno_tts then
-        Turns.enable = false
+        mano_tag = nil
         return
     end
-
-    -- Ordine: chi ha iniziativa va primo
-    local color_ini    = playerTagToColor(iniziativa_tag)
-    local color_secondo = nil
+    -- Chi ha iniziativa va per primo
+    mano_tag = iniziativa_tag
+    local nb = mano_tag
     for slot = 1, 2 do
-        if ARMY[slot].color ~= color_ini and ARMY[slot].color ~= nil then
-            color_secondo = ARMY[slot].color
-        end
+        if ARMY[slot].tag == mano_tag then nb = ARMY[slot].nome_breve or mano_tag end
     end
-
-    local ordine = {}
-    if color_ini    then table.insert(ordine, color_ini)    end
-    if color_secondo then table.insert(ordine, color_secondo) end
-
-    Turns.enable      = true
-    Turns.type        = TurnType.Custom
-    Turns.order       = ordine
-    Turns.turn_color  = ordine[1]
+    printToAll("-> " .. nb .. " muove per primo", {r=0.4,g=0.9,b=0.4})
 end
 
 -- ------------------------------------------------------------
 -- FUNZIONE: avviaTurno()
 -- ------------------------------------------------------------
 function avviaTurno()
-    turno_corrente = turno_corrente + 1
-    fase_corrente  = 1
+    turno_corrente    = turno_corrente + 1
+    fase_corrente     = 1
+    iniziativa_scelta = false
+    Turns.enable      = false
+    linee_deploy      = false
+    aggiornaLinee()
 
-    -- Tiro iniziativa
-    local d1 = math.random(1, 6)
-    local d2 = math.random(1, 6)
-    while d1 == d2 do
-        d1 = math.random(1, 6)
-        d2 = math.random(1, 6)
+    -- Rivela tutte le basi a tutti i giocatori
+    for _, obj in ipairs(getAllObjects()) do
+        for _, t in ipairs(obj.getTags()) do
+            if t == "Army1" or t == "Army2" then
+                obj.setInvisibleTo({})
+                break
+            end
+        end
     end
 
-    local nb1 = ARMY[1].nome_breve or ARMY[1].tag or "Army1"
-    local nb2 = ARMY[2].nome_breve or ARMY[2].tag or "Army2"
-    iniziativa_tag = d1 > d2 and (ARMY[1].tag or "ARMY1") or (ARMY[2].tag or "ARMY2")
-    local ini_nome = d1 > d2 and nb1 or nb2
+    printToAll("=== TURNO " .. turno_corrente .. " === INIZIATIVA", {r=0.8,g=0.6,b=0.1})
+    printToAll("Lanciate entrambi 1D6 — chi vince sceglie se muovere primo o secondo.", {r=0.8,g=0.6,b=0.1})
 
-    printToAll("=== TURNO " .. turno_corrente .. " ===", {r=0.8,g=0.6,b=0.1})
-    printToAll("INIZIATIVA: " .. nb1 .. " tira " .. d1 .. "  |  " .. nb2 .. " tira " .. d2, {r=0.8,g=0.8,b=0.8})
-    printToAll("-> " .. ini_nome .. " ha l'iniziativa", {r=0.4,g=0.9,b=0.4})
-    printToAll("FASE 1: " .. FASI[1].nome .. " — " .. FASI[1].desc, {r=0.8,g=0.6,b=0.1})
-    printToAll("Digita !fase per avanzare", {r=0.6,g=0.6,b=0.6})
-
-    Turns.enable = false  -- INIZIATIVA e' simultanea
-
-    if #monitor_guids == 0 then
-        spawnaMonitor()
-    else
-        aggiornaMonitor()
-    end
     aggiornaBanner()
     aggiornaPannello(1)
     aggiornaPannello(2)
@@ -1836,6 +2014,12 @@ end
 function avanzaFase()
     if turno_corrente == 0 then
         printToAll("[LIONHEART] Digita prima !turno!", {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    -- Blocca se siamo in INIZIATIVA e il vincitore non ha ancora scelto
+    if fase_corrente == 1 and not iniziativa_scelta then
+        printToAll("[LIONHEART] Prima dichiara chi ha l'iniziativa!", {r=1,g=0.3,b=0.3})
         return
     end
 
@@ -1865,7 +2049,6 @@ function avanzaFase()
 
     impostaTurnoTTS(fase)
     aggiornaBanner()
-    aggiornaMonitor()
     aggiornaPannello(1)
     aggiornaPannello(2)
 end
