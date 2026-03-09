@@ -1,5 +1,7 @@
 -- ============================================================
 -- LIONHEART BOT - Tabletop Simulator
+VERSION = "v1.31.02"
+DEBUG   = false  -- false = controlli player attivi
 -- Comandi chat:
 --   !inizia      -> scansiona il tavolo
 --   !turno       -> avvia/avanza sequenza di gioco
@@ -15,8 +17,7 @@
 --   !linee       -> mostra linee di schieramento
 --   !linee off   -> rimuove linee di schieramento
 -- ============================================================
-VERSION = "v1.31.00"
-DEBUG   = false  -- false = controlli player attivi
+
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
 -- ------------------------------------------------------------
@@ -454,6 +455,8 @@ function onBtnPassaMano(player, value, id)
         aggiornaBanner()
     end
 end
+
+function onBtnDeploy(player, value, id)
     local c = type(player) == "string" and player or (player and player.color) or ""
     if c ~= "Red" and c ~= "Green" then
         if c ~= "" then
