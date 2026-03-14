@@ -1,6 +1,7 @@
 -- ============================================================
 -- LIONHEART BOT - Tabletop Simulator
-VERSION = "v1.31.02"
+-- Versione 1.28.03 - Struttura ARMY[1/2], pannelli player
+VERSION = "v1.32.07"
 DEBUG   = false  -- false = controlli player attivi
 -- Comandi chat:
 --   !inizia      -> scansiona il tavolo
@@ -110,12 +111,13 @@ FASI = {
     {nome="INIZIATIVA", desc="Lanciate entrambi 1D6 — chi vince sceglie se muovere primo o secondo",                                                          turno_tts=false},
     {nome="MOVIMENTO",  desc="Prima muove chi ha l'iniziativa (prima i caricanti poi le altre), poi passa all'avversario",                                    turno_tts=true },
     {nome="TIRO",       desc="Simultaneo — si tira sempre al nemico piu vicino, unita in bosco tirano solo entro 3cm dal bordo",                              turno_tts=false},
-    {nome="MISCHIE",    desc="Si combattono le mischie da cariche — testa morale se sotto il 50% delle figure. Esercito che perde >50% unita abbandona.", turno_tts=true },
+    {nome="MISCHIE",    desc="Si combattono le mischie da cariche — testa morale se sotto il 50% delle figure. Esercito che perde >50% unita abbandona.", turno_tts=false},
 }
 fase_corrente     = 0
 iniziativa_tag    = (ARMY[1].tag or "ARMY1")
 iniziativa_scelta = false  -- true quando il vincitore ha premuto il suo pulsante
 mano_tag          = nil    -- tag di chi sta muovendo ora (fasi con turno_tts)
+mano_passata      = false  -- true quando il secondo player ha già mosso
 
 -- ------------------------------------------------------------
 -- TABELLA DATI REGOLAMENTO
@@ -170,6 +172,57 @@ function aggiungiMenuBase(obj)
     obj.addContextMenuItem("Allinea al fronte", function(player)
         allineaAlFronte(player, obj)
     end)
+
+    -- Voce "Gittata" solo se la base ha un'arma da tiro nel nickname
+    local dati = parsaNome(obj.getName())
+    if dati and dati.arma and ARMI_TIRO[dati.arma] then
+        obj.addContextMenuItem("Gittata [" .. dati.arma .. "]", function(player)
+            mostraGittata(obj, dati.arma)
+        end)
+    end
+end
+
+-- ------------------------------------------------------------
+-- FUNZIONE: mostraGittata(obj, arma)
+-- Disegna un cerchio con raggio = gittata dell'arma attorno alla base
+-- Il cerchio rimane visibile per 10 secondi poi sparisce
+-- ------------------------------------------------------------
+function mostraGittata(obj, arma)
+    local info = ARMI_TIRO[arma]
+    if not info then return end
+    mostraGittataRaggio(obj, info.gittata, arma)
+end
+
+-- ------------------------------------------------------------
+-- FUNZIONE: mostraGittataRaggio(obj, lunghezza, label)
+-- Disegna una retta dal centro del fronte della base
+-- nella direzione di orientamento per 10 secondi
+-- ------------------------------------------------------------
+function mostraGittataRaggio(obj, lunghezza, label)
+    local pos  = obj.getPosition()
+    local rot  = obj.getRotation()
+
+    -- Direzione Z in base alla rotazione Y (0=verso Z-, 180=verso Z+)
+    local dir = 1
+    if rot.y < 90 or rot.y > 270 then dir = -1 end
+
+    local fx = pos.x
+    local fy = pos.y + 0.3
+    local fz = pos.z
+    local ez = fz + (lunghezza * dir)
+
+    Global.setVectorLines({{
+        points    = { {fx, fy, fz}, {fx, fy, ez} },
+        color     = { r=1, g=0.8, b=0.1 },
+        thickness = 0.15,
+    }})
+
+    local lbl = label and (" [" .. label .. "]") or ""
+    printToAll("Gittata" .. lbl .. ": " .. lunghezza, {r=1,g=0.8,b=0.1})
+
+    Wait.time(function()
+        aggiornaLinee()
+    end, 10)
 end
 
 -- ------------------------------------------------------------
@@ -246,11 +299,11 @@ function spawnaPannelli()
                 attributes = { padding = "12 12 12 12", spacing = "6" },
                 children = {
                     { tag = "Text",   attributes = { id="banner_title", text="SCEGLI IL TUO COLORE", fontSize="18", fontStyle="Bold", color="White", alignment="MiddleCenter" } },
-                    { tag = "Text",   attributes = { id="banner_army1", text="Red  ->  Army 1", fontSize="14", color="rgba(1,0.3,0.3,1)", alignment="MiddleCenter" } },
+                    { tag = "Text",   attributes = { id="banner_army1", text="Red  ->  Army 1", fontSize="14", color="White", alignment="MiddleCenter" } },
                     { tag = "Text",   attributes = { id="banner_army2", text="Green  ->  Army 2", fontSize="14", color="rgba(0.3,1,0.3,1)", alignment="MiddleCenter" } },
                     { tag = "Text",   attributes = { id="banner_desc",  text="", fontSize="12", color="rgba(0.8,0.8,0.8,1)", alignment="MiddleCenter" } },
                     { tag = "Button", attributes = { id="banner_btn_fase", text="► AVANZA FASE", fontSize="14", fontStyle="Bold",
-                        color="rgba(0.2,0.6,0.2,1)", textColor="White",
+                        color="rgba(0.15,0.4,0.8,1)", textColor="White",
                         width="180", height="36",
                         onClick="onBtnAvanzaFase",
                         active="false"
@@ -261,9 +314,9 @@ function spawnaPannelli()
                         onClick="onBtnDeploy",
                         active="false"
                     }},
-                    { tag = "Button", attributes = { id="banner_btn_mano", text="⇒ PASSA LA MANO", fontSize="14", fontStyle="Bold",
+                    { tag = "Button", attributes = { id="banner_btn_mano", text="FINE MOVIMENTO", fontSize="14", fontStyle="Bold",
                         color="rgba(0.5,0.2,0.7,1)", textColor="White",
-                        width="200", height="36",
+                        width="220", height="36",
                         onClick="onBtnPassaMano",
                         active="false"
                     }},
@@ -411,11 +464,10 @@ function onBtnAvanzaFase(player, value, id)
 end
 
 function onBtnIniziativa1(player, value, id)
-    local tag = ARMY[1].tag or "ARMY1"
-    local nb  = ARMY[1].nome_breve or tag
-    iniziativa_tag    = tag
+    -- Army1 ha vinto il dado e sceglie
+    iniziativa_tag    = ARMY[1].tag or "ARMY1"
     iniziativa_scelta = true
-    printToAll("[DEBUG] fase prima di avanzaFase: " .. tostring(fase_corrente), {r=1,g=1,b=0})
+    local nb = ARMY[1].nome_breve or iniziativa_tag
     printToAll("Iniziativa: " .. nb, {r=1,g=0.8,b=0.2})
     aggiornaPannello(1)
     aggiornaPannello(2)
@@ -423,10 +475,10 @@ function onBtnIniziativa1(player, value, id)
 end
 
 function onBtnIniziativa2(player, value, id)
-    local tag = ARMY[2].tag or "ARMY2"
-    local nb  = ARMY[2].nome_breve or tag
-    iniziativa_tag    = tag
+    -- Army2 ha vinto il dado e sceglie
+    iniziativa_tag    = ARMY[2].tag or "ARMY2"
     iniziativa_scelta = true
+    local nb = ARMY[2].nome_breve or iniziativa_tag
     printToAll("Iniziativa: " .. nb, {r=1,g=0.8,b=0.2})
     aggiornaPannello(1)
     aggiornaPannello(2)
@@ -434,25 +486,26 @@ function onBtnIniziativa2(player, value, id)
 end
 
 function onBtnPassaMano(player, value, id)
-    -- Trova il tag dell'altro esercito
-    local altro_tag = nil
-    for slot = 1, 2 do
-        if ARMY[slot].tag ~= mano_tag then
-            altro_tag = ARMY[slot].tag
+    if not mano_passata then
+        -- Primo FINE MOVIMENTO — passa all'avversario
+        mano_passata = true
+        local altro_tag = nil
+        for slot = 1, 2 do
+            if ARMY[slot].tag ~= mano_tag then altro_tag = ARMY[slot].tag end
         end
-    end
-    if altro_tag then
         mano_tag = altro_tag
         local nb = mano_tag
         for slot = 1, 2 do
             if ARMY[slot].tag == mano_tag then nb = ARMY[slot].nome_breve or mano_tag end
         end
-        printToAll("-> Mano passata a: " .. nb, {r=0.4,g=0.9,b=0.4})
+        printToAll("-> Ora muove: " .. (nb or "---"), {r=0.4,g=0.9,b=0.4})
         aggiornaBanner()
     else
-        -- Entrambi hanno mosso — mostra AVANZA FASE
-        mano_tag = nil
-        aggiornaBanner()
+        -- Secondo FINE MOVIMENTO — entrambi hanno mosso, avanza fase
+        mano_tag     = nil
+        mano_passata = false
+        printToAll("-> Movimento completato.", {r=0.4,g=0.9,b=0.4})
+        avanzaFase()
     end
 end
 
@@ -548,7 +601,7 @@ function aggiornaBanner()
         UI.setAttribute("banner_title", "text", "TURNO " .. turno_corrente)
         UI.setAttribute("banner_army1", "text", "Fase: INIZIATIVA")
         UI.setAttribute("banner_army2", "text", "")
-        UI.setAttribute("banner_desc",  "text", "Chi ha vinto il dado? Premi il tuo nome.")
+        UI.setAttribute("banner_desc",  "text", "Chi ha vinto il dado premi il tuo nome per prendere l'iniziativa, o quello avversario per passarla.")
         return
     end
 
@@ -564,20 +617,30 @@ function aggiornaBanner()
         end
         UI.setAttribute("banner_title", "text", "TURNO " .. turno_corrente)
         UI.setAttribute("banner_army1", "text", "Fase: " .. (fase and fase.nome or "---"))
-        UI.setAttribute("banner_army2", "text", "Iniziativa: " .. nb_ini)
+        local mostra_ini = (fase_corrente == 2)  -- solo MOVIMENTO
+        UI.setAttribute("banner_army2", "text", mostra_ini and ("Iniziativa: " .. nb_ini) or "")
         UI.setAttribute("banner_desc",  "text", fase and fase.desc or "")
         -- Fasi con mano: mostra PASSA LA MANO o AVANZA FASE
         if fase and fase.turno_tts and mano_tag ~= nil then
             local nb_mano = mano_tag
+            local col_mano = "rgba(0.5,0.2,0.7,1)"
             for slot = 1, 2 do
-                if ARMY[slot].tag == mano_tag then nb_mano = ARMY[slot].nome_breve or mano_tag end
+                if ARMY[slot].tag == mano_tag then
+                    nb_mano = ARMY[slot].nome_breve or mano_tag
+                    local c = ARMY[slot].color
+                    if c == "Red"   then col_mano = "rgba(0.8,0.1,0.1,1)" end
+                    if c == "Green" then col_mano = "rgba(0.1,0.6,0.1,1)" end
+                end
             end
             UI.setAttribute("banner_btn_mano", "active", "true")
-            UI.setAttribute("banner_btn_mano", "text", nb_mano .. " -> PASSA LA MANO")
+            UI.setAttribute("banner_btn_mano", "text",  nb_mano .. " — FINE MOVIMENTO")
+            UI.setAttribute("banner_btn_mano", "color", col_mano)
         else
-            local btn_txt = fase_corrente >= #FASI and "► PROSSIMO TURNO" or "► AVANZA FASE"
+            local btn_txt = fase_corrente >= #FASI and "► FINE TURNO" or "► AVANZA FASE"
+            local btn_col = fase_corrente >= #FASI and "rgba(0.15,0.4,0.8,1)" or "rgba(0.15,0.4,0.8,1)"
             UI.setAttribute("banner_btn_fase", "active", "true")
-            UI.setAttribute("banner_btn_fase", "text", btn_txt)
+            UI.setAttribute("banner_btn_fase", "text",  btn_txt)
+            UI.setAttribute("banner_btn_fase", "color", btn_col)
         end
         return
     end
@@ -867,6 +930,35 @@ function onChat(message, player)
             end
         end
         return false
+    end
+
+    if string.sub(message, 1, 5) == "!tiro" then
+        local sel = player.getSelectedObjects()
+        if not sel or #sel == 0 then
+            printToColor("[TIRO] Seleziona una base.", player.color, {r=1,g=0.3,b=0.3})
+            return
+        end
+        -- Controlla se c'è un valore manuale es: !tiro 30
+        local valore = tonumber(string.match(message, "!tiro%s+(%d+)"))
+        if valore then
+            -- Raggio manuale, usa la base selezionata come centro
+            mostraGittataRaggio(sel[1], valore)
+        else
+            -- Arma dal nickname
+            local trovato = false
+            for _, obj in ipairs(sel) do
+                local dati = parsaNome(obj.getName())
+                if dati and dati.arma and ARMI_TIRO[dati.arma] then
+                    mostraGittata(obj, dati.arma)
+                    trovato = true
+                    break
+                end
+            end
+            if not trovato then
+                printToColor("[TIRO] La base selezionata non ha armi da tiro.", player.color, {r=1,g=0.3,b=0.3})
+            end
+        end
+        return
     end
 
     if message == "!pos" then
@@ -1253,6 +1345,7 @@ function restart()
     pronto_green      = false
     iniziativa_scelta = false
     mano_tag          = nil
+    mano_passata      = false
     -- Rimuovi sfere segnalino
     for _, guid in ipairs(segnalini_guids) do
         local o = getObjectFromGUID(guid)
@@ -1970,11 +2063,13 @@ end
 function impostaTurnoTTS(fase)
     Turns.enable = false
     if not fase.turno_tts then
-        mano_tag = nil
+        mano_tag     = nil
+        mano_passata = false
         return
     end
     -- Chi ha iniziativa va per primo
-    mano_tag = iniziativa_tag
+    mano_tag     = iniziativa_tag
+    mano_passata = false
     local nb = mano_tag
     for slot = 1, 2 do
         if ARMY[slot].tag == mano_tag then nb = ARMY[slot].nome_breve or mano_tag end
@@ -2030,8 +2125,8 @@ function avanzaFase()
 
     if fase_corrente > #FASI then
         Turns.enable = false
-        printToAll("=== FINE TURNO " .. turno_corrente .. " — digita !turno per il prossimo ===", {r=0.4,g=0.9,b=0.4})
         fase_corrente = #FASI
+        aggiornaBanner()
         return
     end
 
