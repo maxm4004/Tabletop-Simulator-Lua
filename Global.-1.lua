@@ -19,7 +19,7 @@
 --   Pulsante "Centra"   -> sposta Ground al centro del Table
 --   Pulsante "Texture"  -> cicla la texture del Ground
 -- ============================================================
-VERSION = "v1.34.05"
+VERSION = "v1.34.07"
 DEBUG   = false  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
@@ -2285,6 +2285,12 @@ function spawnaCespugli()
     spawnaTipo("cespuglio", CESPUGLI_MAX)
 end
 -- ------------------------------------------------------------
+-- FUNZIONE: rimuoviCespugli()
+-- ------------------------------------------------------------
+function rimuoviCespugli()
+    rimuoviDecorativiPerTipo("cespuglio")
+end
+-- ------------------------------------------------------------
 -- FUNZIONE: rimuoviDecorativiPerTipo(tipo)
 -- ------------------------------------------------------------
 function rimuoviDecorativiPerTipo(tipo)
@@ -2369,21 +2375,6 @@ function groundCentra()
     local pos = table_obj.getPosition()
     ground_obj.setPosition({x=pos.x, y=pos.y+0.5, z=pos.z})
     printToAll("[GROUND] Centrato sul Table.", {r=0.4,g=0.9,b=0.4})
-end
--- ------------------------------------------------------------
--- FUNZIONE: groundCambiaTexture()
--- ------------------------------------------------------------
-function groundCambiaTexture()
-    local ground_obj = getByName("Ground")
-    if not ground_obj then printToAll("[GROUND] 'Ground' non trovato!", {r=1,g=0.3,b=0.3}) return end
-    caricaGroundTextures(function(catalogo)
-        local textures = catalogo.textures
-        ground_scala_salvata = ground_obj.getScale()
-        ground_texture_index = (ground_texture_index % #textures) + 1
-        ground_obj.setCustomObject({ image = textures[ground_texture_index].url })
-        ground_obj.reload()
-        printToAll("[GROUND] Texture " .. ground_texture_index .. "/" .. #textures, {r=0.4,g=0.9,b=0.4})
-    end)
 end
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnGroundButtons()
