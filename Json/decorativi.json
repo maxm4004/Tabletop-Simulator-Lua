@@ -1,0 +1,33 @@
+{
+    "versione": "1.0",
+    "decorativi": {
+        "cespuglio": {
+            "label": "Cespuglio",
+            "elementi": [
+                {
+                    "id": "cespuglio_1",
+                    "label": "Cespuglio Fitto",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/16578229185398745908/6713DC1F8F45B60B57466585E6F1E085F70400A6/",
+                    "scaleX": 0.88,
+                    "scaleY": 0.42,
+                    "scaleZ": 1.06,
+                    "peso": 3
+                }
+            ]
+        },
+        "bosco": {
+            "label": "Bosco",
+            "elementi": [
+                {
+                    "id": "bosco_1",
+                    "label": "Bosco Fitto",
+                    "url": "https://...",
+                    "scaleX": 2.0,
+                    "scaleY": 1.0,
+                    "scaleZ": 2.0,
+                    "peso": 2
+                }
+            ]
+        }
+    }
+}

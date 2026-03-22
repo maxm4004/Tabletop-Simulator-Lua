@@ -1,0 +1,80 @@
+{
+    "versione": "1.2",
+    "nome": "Francesi - Guerra dei 100 anni",
+    "nome-breve": "Francesi",
+    "tag": "FRA",
+    "unita": [
+        {
+            "tipo": "CinC", "nome_display": "Generale", "modificatore": null, "model": "FRA_CinC",
+            "basi": [
+                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-2.92,"y":1.66,"z":-40.00},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S", "model": null,
+            "basi": [
+                {"id":1,"seq":1,"model":"FRA_ACGen","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":2,"model":"FRA_AC1","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S", "model": null,
+            "basi": [
+                {"id":1,"seq":3,"model":"FRA_ACGen","arma":null,"ferite":0,"posizione":{"x":-13.6,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":4,"model":"FRA_AC1","arma":null,"ferite":0,"posizione":{"x":-13.6,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S", "model": "FRA_AC2",
+            "basi": [
+                {"id":1,"seq":5,"model":null,"arma":null,"ferite":0,"posizione":{"x":-7.2,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":6,"model":null,"arma":null,"ferite":0,"posizione":{"x":-7.2,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Genovesi", "modificatore": null, "model": "FRA_UI1",
+            "basi": [
+                {"id":1,"seq":7,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":8,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":9,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-4.86},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":4,"seq":10,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-7.29},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Genovesi", "modificatore": null, "model": "FRA_UI1",
+            "basi": [
+                {"id":1,"seq":11,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":12,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":13,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-4.86},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":4,"seq":14,"model":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-7.29},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Fanteria", "modificatore": "I", "model": "FRA_UI2",
+            "basi": [
+                {"id":1,"seq":15,"model":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":16,"model":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":17,"model":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-4.86},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":4,"seq":18,"model":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-7.29},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Fanteria", "modificatore": "I", "model": "FRA_UI2",
+            "basi": [
+                {"id":1,"seq":19,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":20,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":21,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-4.86},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":4,"seq":22,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-7.29},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        },
+        {
+            "tipo": "SK", "nome_display": "Bretoni", "modificatore": null, "model": "FRA_SK",
+            "basi": [
+                {"id":1,"seq":23,"model":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-0.0},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":24,"model":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-2.43},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":25,"model":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-4.86},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":4,"seq":26,"model":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-7.29},"rotazione":{"x":0,"y":0,"z":0}}
+            ]
+        }
+    ]
+}
