@@ -11,18 +11,18 @@
                     "scaleX": 0.88,
                     "scaleY": 0.42,
                     "scaleZ": 1.06,
-                    "posY": 3.36,
-                    "peso": 3
+                    "posY": 3.0,
+                    "peso": 2
                 },
                 {
                     "id": "cespuglio_2",
                     "label": "Cespuglio test",
                     "url": "https://steamusercontent-a.akamaihd.net/ugc/17973246506446567249/C6161ECC107053479F5353F1526FD68374664336/",
-                    "scaleX": 0.88,
-                    "scaleY": 0.42,
-                    "scaleZ": 1.06,
-                    "posY": 3.36,
-                    "peso": 3
+                    "scaleX": 0.28,
+                    "scaleY": 0.13,
+                    "scaleZ": 0.13,
+                    "posY": 3.0,
+                    "peso": 5
                 },
                 {
                     "id": "cespuglio_3",
@@ -31,8 +31,8 @@
                     "scaleX": 0.88,
                     "scaleY": 0.42,
                     "scaleZ": 1.06,
-                    "posY": 3.36,
-                    "peso": 3
+                    "posY": 3.0,
+                    "peso": 5
                 }
             ]
         },
@@ -46,7 +46,7 @@
                     "scaleX": 2.0,
                     "scaleY": 1.0,
                     "scaleZ": 2.0,
-                    "posY": 3.36,
+                    "posY": 3.0,
                     "peso": 2
                 }
             ]

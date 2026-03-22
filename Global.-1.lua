@@ -2240,7 +2240,7 @@ function spawnaDecorativo(elemento, q_index, tipo)
             Name      = "Custom_Assetbundle",
             Transform = {
                 posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
-                rotX=0, rotY=math.random(0,359), rotZ=0,
+                tX=0, rotY=math.random(0,359), rotZ=0,
                 scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
             },
             CustomAssetbundle = {
