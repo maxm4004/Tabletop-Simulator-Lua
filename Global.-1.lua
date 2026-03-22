@@ -1,6 +1,6 @@
 -- ============================================================
--- LIONHEART BOT - Tabletop Simulator
--- Comandi chat:
+--   LIONHEART BOT - Tabletop Simulator
+--   Comandi chat:
 --   !inizia      -> scansiona il tavolo
 --   !turno       -> avvia/avanza sequenza di gioco
 --   !fase        -> conferma fine fase e passa alla successiva
