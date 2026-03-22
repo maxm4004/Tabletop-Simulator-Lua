@@ -19,7 +19,7 @@
 --   Pulsante "Centra"   -> sposta Ground al centro del Table
 --   Pulsante "Texture"  -> cicla la texture del Ground
 -- ============================================================
-VERSION = "v1.34.03"
+VERSION = "v1.34.05"
 DEBUG   = false  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
@@ -2165,10 +2165,8 @@ function avanzaFase()
     aggiornaPannello(2)
 
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: getByName(name)
--- Helper generico: trova un oggetto per nome
 -- ------------------------------------------------------------
 function getByName(name)
     for _, obj in ipairs(getAllObjects()) do
@@ -2176,12 +2174,11 @@ function getByName(name)
     end
     return nil
 end
-
 -- ============================================================
 -- SPAWN ELEMENTI DECORATIVI
 -- ============================================================
 
-DECORATIVI_URL   = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/decorativi.json"
+DECORATIVI_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/decorativi.json"
 decorativi_catalog = nil
 CESPUGLI_MAX       = 4
 decorativi_guids   = {}
@@ -2198,7 +2195,6 @@ QUADRANTI = {
 
 -- ------------------------------------------------------------
 -- FUNZIONE: caricaCatalogoDecorativi(callback)
--- Scarica il JSON unico dei decorativi da GitHub
 -- ------------------------------------------------------------
 function caricaCatalogoDecorativi(callback)
     if decorativi_catalog then callback(decorativi_catalog) return end
@@ -2217,10 +2213,8 @@ function caricaCatalogoDecorativi(callback)
         callback(dati)
     end)
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: scegliElemento(elementi)
--- Sceglie un elemento random pesato
 -- ------------------------------------------------------------
 function scegliElemento(elementi)
     local peso_totale = 0
@@ -2233,10 +2227,8 @@ function scegliElemento(elementi)
     end
     return elementi[1]
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnaDecorativo(elemento, q_index)
--- Spawna un singolo elemento decorativo in un quadrante
 -- ------------------------------------------------------------
 function spawnaDecorativo(elemento, q_index, tipo)
     local q = QUADRANTI[q_index]
@@ -2266,10 +2258,8 @@ function spawnaDecorativo(elemento, q_index, tipo)
     obj.setName(elemento.id or tipo)
     table.insert(decorativi_guids, obj.getGUID())
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnaTipo(tipo, max)
--- Spawna elementi di un tipo specifico dal catalogo
 -- ------------------------------------------------------------
 function spawnaTipo(tipo, max)
     rimuoviDecorativiPerTipo(tipo)
@@ -2288,91 +2278,86 @@ function spawnaTipo(tipo, max)
         printToAll("[SCENARIO] " .. n .. " " .. (categoria.label or tipo) .. " spawnati!", {r=0.4,g=0.9,b=0.4})
     end)
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnaCespugli()
 -- ------------------------------------------------------------
 function spawnaCespugli()
     spawnaTipo("cespuglio", CESPUGLI_MAX)
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: rimuoviDecorativiPerTipo(tipo)
 -- ------------------------------------------------------------
 function rimuoviDecorativiPerTipo(tipo)
-    local rimasti = {}
-    for _, guid in ipairs(decorativi_guids) do
-        local o = getObjectFromGUID(guid)
-        if o then
-            local e_tipo = false
-            for _, t in ipairs(o.getTags()) do
-                if t == tipo then e_tipo = true end
+    for _, obj in ipairs(getAllObjects()) do
+        for _, t in ipairs(obj.getTags()) do
+            if t == tipo then
+                obj.destruct()
+                break
             end
-            if e_tipo then o.destruct() else table.insert(rimasti, guid) end
         end
     end
-    decorativi_guids = rimasti
+    -- Pulisce anche la lista guid (non più necessaria ma teniamo per coerenza)
+    decorativi_guids = {}
+    printToAll("[SCENARIO] " .. tipo .. " rimossi", {r=0.8,g=0.8,b=0.8})
 end
-
--- ------------------------------------------------------------
--- FUNZIONE: rimuoviCespugli()
--- ------------------------------------------------------------
-function rimuoviCespugli()
-    rimuoviDecorativiPerTipo("cespuglio")
-    printToAll("[SCENARIO] Cespugli rimossi", {r=0.8,g=0.8,b=0.8})
-end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: rimuoviTuttiDecorativi()
 -- ------------------------------------------------------------
 function rimuoviTuttiDecorativi()
-    for _, guid in ipairs(decorativi_guids) do
-        local o = getObjectFromGUID(guid)
-        if o then o.destruct() end
+    for _, obj in ipairs(getAllObjects()) do
+        for _, t in ipairs(obj.getTags()) do
+            if t == "Decorativo" then
+                obj.destruct()
+                break
+            end
+        end
     end
     decorativi_guids = {}
     printToAll("[SCENARIO] Tutti i decorativi rimossi", {r=0.8,g=0.8,b=0.8})
 end
-
--- ============================================================
--- GROUND — Custom Board "Ground" poggiato sul "Table"
--- ============================================================
-
-GROUND_TEXTURES = {
-    "https://steamusercontent-a.akamaihd.net/ugc/16291156491622840796/2586EE26B261EBF47BD90BDCE5A5356462381CE3/",
-    -- aggiungi altri URL qui:
-    -- "https://...",
-}
-ground_texture_index = 1
-ground_scala_salvata = nil
-
--- ------------------------------------------------------------
--- FUNZIONE: getByName(name)
--- ------------------------------------------------------------
-function getByName(name)
-    for _, obj in ipairs(getAllObjects()) do
-        if obj.getName() == name then return obj end
-    end
-    return nil
-end
-
 -- ============================================================
 -- GROUND — Custom Board "Ground" poggiato sul "Table"
 -- Questi funzioni vengono richiamate dai pulsanti sul Ground.
 -- Il Ground deve avere nome "Ground", il tavolino "Table".
 -- ============================================================
-
--- Lista texture da ciclare (aggiungi/rimuovi URL a piacere)
-
-GROUND_TEXTURES = {
-    "https://steamusercontent-a.akamaihd.net/ugc/16185502671077185662/4119A7DD986DC2360C5EFE095892961878983ED7/",
-    "https://steamusercontent-a.akamaihd.net/ugc/12149192964946594312/D1430AB610BBE5E77301BE6E68399813322A2D75/",
-    "https://steamusercontent-a.akamaihd.net/ugc/11865958637834133050/8DB45214E240A0EACF40F0A2212C697C932201A2/",
-    "https://steamusercontent-a.akamaihd.net/ugc/16744152655803267685/379C5F07F64BFC501B6DE128105B6D310F1969DA/",
-}
-
 ground_texture_index = 1  -- indice corrente nella lista
-
+ground_scala_salvata = nil
+ground_textures_catalog = nil
+GROUND_TEXTURES_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/ground_textures.json"
+-- ------------------------------------------------------------
+-- FUNZIONE: caricaGroundTextures()
+-- ------------------------------------------------------------
+function caricaGroundTextures(callback)
+    if ground_textures_catalog then callback(ground_textures_catalog) return end
+    WebRequest.get(GROUND_TEXTURES_URL, function(request)
+        if request.is_error then
+            printToAll("[GROUND] Errore download textures: " .. request.error, {r=1,g=0.3,b=0.3})
+            return
+        end
+        local ok, dati = pcall(JSON.decode, request.text)
+        if not ok or not dati then
+            printToAll("[GROUND] Errore parsing JSON textures", {r=1,g=0.3,b=0.3})
+            return
+        end
+        ground_textures_catalog = dati
+        callback(dati)
+    end)
+end
+-- ------------------------------------------------------------
+-- FUNZIONE: groundCambiaTexture()
+-- ------------------------------------------------------------
+function groundCambiaTexture()
+    local ground_obj = getByName("Ground")
+    if not ground_obj then printToAll("[GROUND] 'Ground' non trovato!", {r=1,g=0.3,b=0.3}) return end
+    caricaGroundTextures(function(catalogo)
+        local textures = catalogo.textures
+        ground_scala_salvata = ground_obj.getScale()
+        ground_texture_index = (ground_texture_index % #textures) + 1
+        ground_obj.setCustomObject({ image = textures[ground_texture_index].url })
+        ground_obj.reload()
+        printToAll("[GROUND] Texture " .. ground_texture_index .. "/" .. #textures, {r=0.4,g=0.9,b=0.4})
+    end)
+end
 -- ------------------------------------------------------------
 -- FUNZIONE: groundCentra()
 -- ------------------------------------------------------------
@@ -2387,30 +2372,21 @@ function groundCentra()
 end
 -- ------------------------------------------------------------
 -- FUNZIONE: groundCambiaTexture()
--- Cicla la texture del Custom Board "Ground"
--- Chiamata dal pulsante "Texture" sul Ground
 -- ------------------------------------------------------------
 function groundCambiaTexture()
     local ground_obj = getByName("Ground")
-
-    groundSettings()
-
-    if not ground_obj then
-        printToAll("[GROUND] Oggetto 'Ground' non trovato!", {r=1,g=0.3,b=0.3})
-        return
-    end
-    -- Avanza all'indice successivo (ciclico)
-    ground_texture_index = (ground_texture_index % #GROUND_TEXTURES) + 1
-    local url = GROUND_TEXTURES[ground_texture_index]
-    ground_obj.setCustomObject({ image = url })
-    ground_obj.reload()
-    printToAll("[GROUND] Texture " .. ground_texture_index .. "/" .. #GROUND_TEXTURES, {r=0.4,g=0.9,b=0.4})
+    if not ground_obj then printToAll("[GROUND] 'Ground' non trovato!", {r=1,g=0.3,b=0.3}) return end
+    caricaGroundTextures(function(catalogo)
+        local textures = catalogo.textures
+        ground_scala_salvata = ground_obj.getScale()
+        ground_texture_index = (ground_texture_index % #textures) + 1
+        ground_obj.setCustomObject({ image = textures[ground_texture_index].url })
+        ground_obj.reload()
+        printToAll("[GROUND] Texture " .. ground_texture_index .. "/" .. #textures, {r=0.4,g=0.9,b=0.4})
+    end)
 end
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnGroundButtons()
--- Crea i due pulsanti sul Ground — da chiamare UNA VOLTA
--- dopo aver rinominato l'oggetto "Ground" in TTS.
--- Uso: /execute groundSpawnaPulsanti()
 -- ------------------------------------------------------------
 function spawnGroundButtons()
 
@@ -2424,25 +2400,25 @@ function spawnGroundButtons()
     ground_obj.clearButtons()
 
     ground_obj.createButton({
-        label          = "Centra",
+        label          = "Centra Ground",
         click_function = "groundCentra",
         function_owner = Global,
         position       = {0, 0.5, -0.4},
         width          = 900,
         height         = 320,
-        font_size      = 220,
+        font_size      = 130,
         color          = {0.15, 0.4, 0.8},
         font_color     = {1, 1, 1},
     })
 
     ground_obj.createButton({
-        label          = "Texture",
+        label          = "Cambia Ground",
         click_function = "groundCambiaTexture",
         function_owner = Global,
         position       = {0, 1, 0.6},
         width          = 900,
         height         = 320,
-        font_size      = 220,
+        font_size      = 130,
         color          = {0.15, 0.5, 0.3},
         font_color     = {1, 1, 1},
     })
