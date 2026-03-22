@@ -2180,7 +2180,7 @@ end
 
 DECORATIVI_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/decorativi.json"
 decorativi_catalog = nil
-CESPUGLI_MAX       = 4
+CESPUGLI_MAX       = 20
 decorativi_guids   = {}
 
 CAMPO_LX = 40
@@ -2239,7 +2239,7 @@ function spawnaDecorativo(elemento, q_index, tipo)
         data = {
             Name      = "Custom_Assetbundle",
             Transform = {
-                posX=x, posY=VERDE_Y+1, posZ=z,
+                posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
                 rotX=0, rotY=math.random(0,359), rotZ=0,
                 scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
             },
@@ -2266,14 +2266,15 @@ function spawnaTipo(tipo, max)
     caricaCatalogoDecorativi(function(catalogo)
         local categoria = catalogo.decorativi[tipo]
         if not categoria then
-            printToAll("[SCENARIO] Tipo non trovato nel catalogo: " .. tipo, {r=1,g=0.3,b=0.3})
+            printToAll("[SCENARIO] Tipo non trovato: " .. tipo, {r=1,g=0.3,b=0.3})
             return
         end
         local elementi = categoria.elementi
-        local n = math.min(max or CESPUGLI_MAX, #QUADRANTI)
+        local n = max or CESPUGLI_MAX
         for i = 1, n do
+            local q_index = ((i - 1) % #QUADRANTI) + 1  -- cicla sui quadranti
             local elemento = scegliElemento(elementi)
-            spawnaDecorativo(elemento, i, tipo)
+            spawnaDecorativo(elemento, q_index, tipo)
         end
         printToAll("[SCENARIO] " .. n .. " " .. (categoria.label or tipo) .. " spawnati!", {r=0.4,g=0.9,b=0.4})
     end)

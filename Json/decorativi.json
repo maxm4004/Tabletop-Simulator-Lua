@@ -11,6 +11,7 @@
                     "scaleX": 0.88,
                     "scaleY": 0.42,
                     "scaleZ": 1.06,
+                    "posY": 3.36,
                     "peso": 3
                 },
                 {
@@ -20,6 +21,7 @@
                     "scaleX": 0.88,
                     "scaleY": 0.42,
                     "scaleZ": 1.06,
+                    "posY": 3.36,
                     "peso": 3
                 },
                 {
@@ -29,6 +31,7 @@
                     "scaleX": 0.88,
                     "scaleY": 0.42,
                     "scaleZ": 1.06,
+                    "posY": 3.36,
                     "peso": 3
                 }
             ]
@@ -43,6 +46,7 @@
                     "scaleX": 2.0,
                     "scaleY": 1.0,
                     "scaleZ": 2.0,
+                    "posY": 3.36,
                     "peso": 2
                 }
             ]
