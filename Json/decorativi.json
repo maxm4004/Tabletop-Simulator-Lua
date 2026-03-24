@@ -52,12 +52,27 @@
                 {
                     "id": "bosco_1",
                     "label": "Bosco Fitto",
-                    "url": "https://...",
-                    "scaleX": 2.0,
-                    "scaleY": 1.0,
-                    "scaleZ": 2.0,
-                    "posY": 3.0,
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/18006130759822698217/70D1218B276FF43732CD28672A3F5EF89CDCA812/",
+                    "scaleX": 1.65,
+                    "scaleY": 1.65,
+                    "scaleZ": 1.65,
+                    "posY": 2.70,
                     "peso": 2
+                }
+            ]
+        },
+        "collina": {
+            "label": "Collina",
+            "elementi": [
+                {
+                    "id": "hill_1",
+                    "label": "Hill",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/18006130759822698217/70D1218B276FF43732CD28672A3F5EF89CDCA812/",
+                    "scaleX": 1,
+                    "scaleY": 1,
+                    "scaleZ": 1,
+                    "posY": 2.90,
+                    "peso": 4
                 }
             ]
         }
