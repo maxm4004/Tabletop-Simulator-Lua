@@ -2321,7 +2321,8 @@ end
 -- FUNZIONE: spawnaCespugli()
 -- ------------------------------------------------------------
 function spawnaCespugli()
-    spawnaTipo("cespuglio", CESPUGLI_MAX)
+    spawnaTipo("collina", CESPUGLI_MAX)
+
 end
 -- ------------------------------------------------------------
 -- FUNZIONE: rimuoviCespugli()
