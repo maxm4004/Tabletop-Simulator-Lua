@@ -2321,7 +2321,9 @@ end
 -- FUNZIONE: spawnaCespugli()
 -- ------------------------------------------------------------
 function spawnaCespugli()
-    spawnaTipo("collina", CESPUGLI_MAX)
+    spawnaTipo("collina", 3)
+--    spawnaTipo("bosco", 2)    
+--    spawnaTipo("cespuglio", 10)
 
 end
 -- ------------------------------------------------------------
