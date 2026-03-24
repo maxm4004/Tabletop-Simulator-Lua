@@ -19,7 +19,7 @@
 --   Pulsante "Centra"   -> sposta Ground al centro del Table
 --   Pulsante "Texture"  -> cicla la texture del Ground
 -- ============================================================
-VERSION = "v1.34.07"
+VERSION = "v1.34.08"
 DEBUG   = false  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
@@ -1034,6 +1034,8 @@ function onChat(message, player)
     if message == "!cespugli" then spawnaCespugli() return false end
     if message == "!cespugli off" then rimuoviCespugli() return false end
     if message == "!decorativi off" then rimuoviTuttiDecorativi() return false end
+    if message == "!settori" then drawSettori() return false end
+    if message == "!settori off" then hideSettori() return false end
 
 end
 
@@ -1095,6 +1097,32 @@ function aggiornaLinee()
             {x=-46.18, y=y, z=37.55}
         }
         table.insert(linee, {points=pts2, color={r=1,g=0.8,b=0}, thickness=0.3})
+    end
+
+    if linee_settori then
+        local cols = 6
+        local rows = 5
+        local sx = (VERDE_LX * 2) / cols
+        local sz = (VERDE_LZ * 2) / rows
+        local y  = 3.5
+    
+        for c = 0, cols do
+            local x = -VERDE_LX + c * sx
+            table.insert(linee, {
+                points    = {{x, y, -VERDE_LZ}, {x, y, VERDE_LZ}},
+                color     = {r=0.2, g=0.8, b=0.8},
+                thickness = 0.1,
+            })
+        end
+    
+        for r = 0, rows do
+            local z = -VERDE_LZ + r * sz
+            table.insert(linee, {
+                points    = {{-VERDE_LX, y, z}, {VERDE_LX, y, z}},
+                color     = {r=0.2, g=0.8, b=0.8},
+                thickness = 0.1,
+            })
+        end
     end
 
     Global.setVectorLines(linee)
@@ -2183,16 +2211,23 @@ decorativi_catalog = nil
 CESPUGLI_MAX       = 20
 decorativi_guids   = {}
 
-CAMPO_LX = 40
-CAMPO_LZ = 22
+-- Genera griglia 6x5 = 30 settori
+SETTORI = {}
+local cols = 6
+local rows = 5
+local sx = 80 / cols  -- ~13.33
+local sz = 44 / rows  -- 8.8
 
-QUADRANTI = {
-    {xmin=-CAMPO_LX, xmax=-5, zmin=-CAMPO_LZ, zmax=-5},
-    {xmin=5,         xmax=CAMPO_LX, zmin=-CAMPO_LZ, zmax=-5},
-    {xmin=-CAMPO_LX, xmax=-5, zmin=5,          zmax=CAMPO_LZ},
-    {xmin=5,         xmax=CAMPO_LX, zmin=5,     zmax=CAMPO_LZ},
-}
-
+for r = 0, rows - 1 do
+    for c = 0, cols - 1 do
+        table.insert(SETTORI, {
+            xmin = -VERDE_LX + c * sx,
+            xmax = -VERDE_LX + (c + 1) * sx,
+            zmin = -VERDE_LZ + r * sz,
+            zmax = -VERDE_LZ + (r + 1) * sz,
+        })
+    end
+end
 -- ------------------------------------------------------------
 -- FUNZIONE: caricaCatalogoDecorativi(callback)
 -- ------------------------------------------------------------
@@ -2231,13 +2266,16 @@ end
 -- FUNZIONE: spawnaDecorativo(elemento, q_index)
 -- ------------------------------------------------------------
 function spawnaDecorativo(elemento, q_index, tipo)
-    local q = QUADRANTI[q_index]
+
+    local q = SETTORI[q_index]
     if not q then return end
+        
     local x = math.random(q.xmin, q.xmax)
-    local z = math.random(q.zmin, q.zmax)
+    local z = math.random(q.zmin, q.zmax) 
+
     local obj = spawnObjectData({
         data = {
-            Name      = "Custom_Assetbundle",
+            Name = "Custom_Assetbundle",
             Transform = {
                 posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
                 tX=0, rotY=math.random(0,359), rotZ=0,
@@ -2252,7 +2290,8 @@ function spawnaDecorativo(elemento, q_index, tipo)
             }
         }
     })
-    obj.setLock(true)
+
+    --obj.setLock(true)
     obj.addTag("Decorativo")
     obj.addTag(tipo)
     obj.setName(elemento.id or tipo)
@@ -2269,10 +2308,11 @@ function spawnaTipo(tipo, max)
             printToAll("[SCENARIO] Tipo non trovato: " .. tipo, {r=1,g=0.3,b=0.3})
             return
         end
+
         local elementi = categoria.elementi
         local n = max or CESPUGLI_MAX
         for i = 1, n do
-            local q_index = ((i - 1) % #QUADRANTI) + 1  -- cicla sui quadranti
+            local q_index = ((i - 1) % #SETTORI) + 1
             local elemento = scegliElemento(elementi)
             spawnaDecorativo(elemento, q_index, tipo)
         end
@@ -2375,6 +2415,8 @@ function groundCentra()
     if not ground_obj then printToAll("[GROUND] 'Ground' non trovato!", {r=1,g=0.3,b=0.3}) return end
     local pos = table_obj.getPosition()
     ground_obj.setPosition({x=pos.x, y=pos.y+0.5, z=pos.z})
+    ground_obj.setRotation({0, 0, 0})
+    ground_obj.setLock(true)
     printToAll("[GROUND] Centrato sul Table.", {r=0.4,g=0.9,b=0.4})
 end
 -- ------------------------------------------------------------
@@ -2388,6 +2430,11 @@ function spawnGroundButtons()
         return
     end
 
+    local pos = ground_obj.getPosition()
+    pos.x = 57.00
+    pos.y = 1.57
+    pos.z = -48.72
+
     -- Rimuovi pulsanti esistenti per evitare duplicati
     ground_obj.clearButtons()
 
@@ -2395,10 +2442,10 @@ function spawnGroundButtons()
         label          = "Centra Ground",
         click_function = "groundCentra",
         function_owner = Global,
-        position       = {0, 0.5, -0.4},
+        position       = {0, 0.5, -0.60},
         width          = 900,
-        height         = 320,
-        font_size      = 130,
+        height         = 150,
+        font_size      = 120,
         color          = {0.15, 0.4, 0.8},
         font_color     = {1, 1, 1},
     })
@@ -2407,13 +2454,39 @@ function spawnGroundButtons()
         label          = "Cambia Ground",
         click_function = "groundCambiaTexture",
         function_owner = Global,
-        position       = {0, 1, 0.6},
+        position       = {0, 0.5, 0},
         width          = 900,
-        height         = 320,
-        font_size      = 130,
-        color          = {0.15, 0.5, 0.3},
+        height         = 150,
+        font_size      = 120,
+        color          = {0.15, 0.5, 0},
+        font_color     = {1, 1, 1},
+    })
+
+    ground_obj.createButton({
+        label          = "Crea Cespugli",
+        click_function = "spawnaCespugli",
+        function_owner = Global,
+        position       = {0, 0.5, 0.60},
+        width          = 900,
+        height         = 150,
+        font_size      = 120,
+        color          = {0.9, 0, 0},
         font_color     = {1, 1, 1},
     })
 
     printToAll("[GROUND] Pulsanti creati!", {r=0.4,g=0.9,b=0.4})
+end
+
+linee_settori = false
+
+function drawSettori()
+    linee_settori = true
+    aggiornaLinee()
+    printToAll("[SETTORI] Griglia 6x5 visibile", {r=0.2,g=0.8,b=0.8})
+end
+
+function hideSettori()
+    linee_settori = false
+    aggiornaLinee()
+    printToAll("[SETTORI] Griglia nascosta", {r=0.8,g=0.8,b=0.8})
 end
