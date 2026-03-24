@@ -2215,8 +2215,8 @@ decorativi_guids   = {}
 SETTORI = {}
 local cols = 6
 local rows = 5
-local sx = 80 / cols  -- ~13.33
-local sz = 44 / rows  -- 8.8
+local sx = (VERDE_LX * 2) / cols
+local sz = (VERDE_LZ * 2) / rows
 
 for r = 0, rows - 1 do
     for c = 0, cols - 1 do
@@ -2308,13 +2308,11 @@ function spawnaTipo(tipo, max)
             printToAll("[SCENARIO] Tipo non trovato: " .. tipo, {r=1,g=0.3,b=0.3})
             return
         end
-
         local elementi = categoria.elementi
-        local n = max or CESPUGLI_MAX
+        local n = math.min(max or #SETTORI, #SETTORI)
         for i = 1, n do
-            local q_index = ((i - 1) % #SETTORI) + 1
             local elemento = scegliElemento(elementi)
-            spawnaDecorativo(elemento, q_index, tipo)
+            spawnaDecorativo(elemento, i, tipo)
         end
         printToAll("[SCENARIO] " .. n .. " " .. (categoria.label or tipo) .. " spawnati!", {r=0.4,g=0.9,b=0.4})
     end)
