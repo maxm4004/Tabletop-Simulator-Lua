@@ -19,7 +19,7 @@
 --   Pulsante "Centra"   -> sposta Ground al centro del Table
 --   Pulsante "Texture"  -> cicla la texture del Ground
 -- ============================================================
-VERSION = "v1.34.08"
+VERSION = "v1.34.09"
 DEBUG   = false  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
@@ -1031,12 +1031,10 @@ function onChat(message, player)
         return false
     end
 
-    if message == "!cespugli" then spawnaCespugli() return false end
-    if message == "!cespugli off" then rimuoviCespugli() return false end
-    if message == "!decorativi off" then rimuoviTuttiDecorativi() return false end
+    if message == "!scenario" then spawnaScenario() return false end
+    if message == "!scenario off" then rimuoviTuttiDecorativi() return false end
     if message == "!settori" then drawSettori() return false end
     if message == "!settori off" then hideSettori() return false end
-
 end
 
 -- ------------------------------------------------------------
@@ -2206,10 +2204,18 @@ end
 -- SPAWN ELEMENTI DECORATIVI
 -- ============================================================
 
-DECORATIVI_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/decorativi.json"
+DECORATIVI_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/elementiScenario.json"
 decorativi_catalog = nil
-CESPUGLI_MAX       = 20
 decorativi_guids   = {}
+
+-- Configurazione scenario: definisce quali elementi spawnare e quanti
+-- max: numero massimo di istanze (non può superare #SETTORI)
+-- attivo: se false viene ignorato
+ELEMENTI_CONFIG = {
+    { tipo="cespuglio", max=10, attivo=true  },
+    { tipo="collina",   max=4,  attivo=false },
+    { tipo="bosco",     max=4,  attivo=false },
+}
 
 -- Genera griglia 6x5 = 30 settori
 SETTORI = {}
@@ -2228,6 +2234,7 @@ for r = 0, rows - 1 do
         })
     end
 end
+
 -- ------------------------------------------------------------
 -- FUNZIONE: caricaCatalogoDecorativi(callback)
 -- ------------------------------------------------------------
@@ -2248,8 +2255,10 @@ function caricaCatalogoDecorativi(callback)
         callback(dati)
     end)
 end
+
 -- ------------------------------------------------------------
 -- FUNZIONE: scegliElemento(elementi)
+-- Selezione random pesata
 -- ------------------------------------------------------------
 function scegliElemento(elementi)
     local peso_totale = 0
@@ -2262,99 +2271,88 @@ function scegliElemento(elementi)
     end
     return elementi[1]
 end
--- ------------------------------------------------------------
--- FUNZIONE: spawnaDecorativo(elemento, q_index)
--- ------------------------------------------------------------
-function spawnaDecorativo(elemento, q_index, tipo)
 
-    local q = SETTORI[q_index]
+-- ------------------------------------------------------------
+-- FUNZIONE: spawnaElemento(elemento, settore_index, tipo)
+-- Spawna un singolo elemento in un settore
+-- ------------------------------------------------------------
+function spawnaElemento(elemento, settore_index, tipo)
+    local q = SETTORI[settore_index]
     if not q then return end
-        
+
     local x = math.random(q.xmin, q.xmax)
-    local z = math.random(q.zmin, q.zmax) 
+    local z = math.random(q.zmin, q.zmax)
 
     local obj = spawnObjectData({
         data = {
             Name = "Custom_Model",
             Transform = {
-                posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
-                rotX=0, rotY=math.random(0,359), rotZ=0,
+                posX=x, posY=elemento.posY or (VERDE_Y + 1), posZ=z,
+                rotX=0, rotY=math.random(0, 359), rotZ=0,
                 scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
             },
             CustomMesh = {
-                MeshURL      = elemento.url,
-                DiffuseURL   = elemento.diffuse or "",
-                NormalURL    = "",
-                ColliderURL  = "",
-                Convex       = true,
+                MeshURL       = elemento.url,
+                DiffuseURL    = elemento.diffuse or "",
+                NormalURL     = "",
+                ColliderURL   = "",
+                Convex        = true,
                 MaterialIndex = 0,
                 TypeIndex     = 0,
                 CastShadows   = true,
             }
         }
     })
---[[ 
-    local obj = spawnObjectData({
-        data = {
-            Name = "Custom_Assetbundle",
-            Transform = {
-                posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
-                tX=0, rotY=math.random(0,359), rotZ=0,
-                scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
-            },
-            CustomAssetbundle = {
-                AssetbundleURL          = elemento.url,
-                AssetbundleSecondaryURL = "",
-                MaterialIndex           = 0,
-                TypeIndex               = 0,
-                LoopingAnimationIndex   = 0,
-            }
-            
-        } 
-    })
-     --]]   
-     
-    --obj.setLock(true)
     obj.addTag("Decorativo")
     obj.addTag(tipo)
     obj.setName(elemento.id or tipo)
     table.insert(decorativi_guids, obj.getGUID())
 end
+
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnaTipo(tipo, max)
+-- Spawna N istanze di un tipo usando settori casuali non ripetuti
 -- ------------------------------------------------------------
 function spawnaTipo(tipo, max)
     rimuoviDecorativiPerTipo(tipo)
     caricaCatalogoDecorativi(function(catalogo)
         local categoria = catalogo.decorativi[tipo]
         if not categoria then
-            printToAll("[SCENARIO] Tipo non trovato: " .. tipo, {r=1,g=0.3,b=0.3})
+            printToAll("[SCENARIO] Tipo non trovato nel catalogo: " .. tipo, {r=1,g=0.3,b=0.3})
             return
         end
         local elementi = categoria.elementi
-        local n = math.min(max or #SETTORI, #SETTORI)
+        local n = math.min(max, #SETTORI)
+
+        -- Seleziona n settori casuali senza ripetizione
+        local indici = {}
+        for i = 1, #SETTORI do table.insert(indici, i) end
+        for i = #indici, 2, -1 do
+            local j = math.random(1, i)
+            indici[i], indici[j] = indici[j], indici[i]
+        end
+
         for i = 1, n do
             local elemento = scegliElemento(elementi)
-            spawnaDecorativo(elemento, i, tipo)
+            spawnaElemento(elemento, indici[i], tipo)
         end
         printToAll("[SCENARIO] " .. n .. " " .. (categoria.label or tipo) .. " spawnati!", {r=0.4,g=0.9,b=0.4})
     end)
 end
--- ------------------------------------------------------------
--- FUNZIONE: spawnaCespugli()
--- ------------------------------------------------------------
-function spawnaCespugli()
-    spawnaTipo("collina", 1)
---  spawnaTipo("bosco", 2)    
---  spawnaTipo("cespuglio", 10)
 
-end
 -- ------------------------------------------------------------
--- FUNZIONE: rimuoviCespugli()
+-- FUNZIONE: spawnaScenario()
+-- Spawna tutti gli elementi attivi in ELEMENTI_CONFIG
 -- ------------------------------------------------------------
-function rimuoviCespugli()
-    rimuoviDecorativiPerTipo("cespuglio")
+function spawnaScenario()
+    rimuoviTuttiDecorativi()
+    for _, cfg in ipairs(ELEMENTI_CONFIG) do
+        if cfg.attivo then
+            spawnaTipo(cfg.tipo, cfg.max)
+        end
+    end
 end
+
 -- ------------------------------------------------------------
 -- FUNZIONE: rimuoviDecorativiPerTipo(tipo)
 -- ------------------------------------------------------------
@@ -2367,10 +2365,10 @@ function rimuoviDecorativiPerTipo(tipo)
             end
         end
     end
-    -- Pulisce anche la lista guid (non più necessaria ma teniamo per coerenza)
     decorativi_guids = {}
     printToAll("[SCENARIO] " .. tipo .. " rimossi", {r=0.8,g=0.8,b=0.8})
 end
+
 -- ------------------------------------------------------------
 -- FUNZIONE: rimuoviTuttiDecorativi()
 -- ------------------------------------------------------------
@@ -2394,7 +2392,7 @@ end
 ground_texture_index = 1  -- indice corrente nella lista
 ground_scala_salvata = nil
 ground_textures_catalog = nil
-GROUND_TEXTURES_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/ground_textures.json"
+GROUND_TEXTURES_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/grounds.json"
 -- ------------------------------------------------------------
 -- FUNZIONE: caricaGroundTextures()
 -- ------------------------------------------------------------
@@ -2487,8 +2485,8 @@ function spawnGroundButtons()
     })
 
     ground_obj.createButton({
-        label          = "Crea Cespugli",
-        click_function = "spawnaCespugli",
+        label          = "Crea Scenario",
+        click_function = "spawnaScenario",
         function_owner = Global,
         position       = {0, 0.5, 0.60},
         width          = 900,
