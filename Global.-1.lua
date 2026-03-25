@@ -2275,10 +2275,10 @@ function spawnaDecorativo(elemento, q_index, tipo)
 
     local obj = spawnObjectData({
         data = {
-            Name = "Custom_Assetbundle",
+            Name = "Custom_Model",
             Transform = {
                 posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
-                tX=0, rotY=math.random(0,359), rotZ=0,
+                rotX=0, rotY=math.random(0,359), rotZ=0,
                 scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
             },
             CustomMesh = {
@@ -2291,16 +2291,29 @@ function spawnaDecorativo(elemento, q_index, tipo)
                 TypeIndex     = 0,
                 CastShadows   = true,
             }
---[[             CustomAssetbundle = {
+        }
+    })
+--[[ 
+    local obj = spawnObjectData({
+        data = {
+            Name = "Custom_Assetbundle",
+            Transform = {
+                posX=x, posY=elemento.posY or (VERDE_Y+1), posZ=z,
+                tX=0, rotY=math.random(0,359), rotZ=0,
+                scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
+            },
+            CustomAssetbundle = {
                 AssetbundleURL          = elemento.url,
                 AssetbundleSecondaryURL = "",
                 MaterialIndex           = 0,
                 TypeIndex               = 0,
                 LoopingAnimationIndex   = 0,
-            } --]]
-        }
+            }
+            
+        } 
     })
-
+     --]]   
+     
     --obj.setLock(true)
     obj.addTag("Decorativo")
     obj.addTag(tipo)
