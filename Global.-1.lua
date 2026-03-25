@@ -698,7 +698,7 @@ end
 -- ------------------------------------------------------------
 function onLoad()
     log("[LIONHEART] Script caricato " .. VERSION)
-    log("[LIONHEART]   !caricaArmy   -> carica esercito (slot determinato dal colore player)")
+--[[     log("[LIONHEART]   !caricaArmy   -> carica esercito (slot determinato dal colore player)")
     log("[LIONHEART]   !reveal      -> rivela entrambi gli eserciti")
     log("[LIONHEART]   !deploy      -> carica eserciti e scansiona")
     log("[LIONHEART]   !turno       -> avvia turno")
@@ -712,31 +712,34 @@ function onLoad()
     log("[LIONHEART]   !croce       -> croce di riferimento sul tavolo")
     log("[LIONHEART]   !croce off   -> rimuove croce")
     log("[LIONHEART]   !linee       -> linee di schieramento sul verde")
-    log("[LIONHEART]   !linee off   -> rimuove linee di schieramento")
+    log("[LIONHEART]   !linee off   -> rimuove linee di schieramento") --]]
 
-    groundSettings()
-    spawnaPannelli()
-    spawnGroundButtons()
+    --groundSettings()
+    --spawnaPannelli()
+    --spawnGroundButtons()
 
     -- Rettangoli spawn sempre visibili, linee deploy no
     linee_rettangolo = true
     linee_deploy     = false
-    aggiornaLinee()
+    --aggiornaLinee()
 
     -- Aggiunge menu contestuale a tutti gli oggetti gia presenti
     for _, obj in ipairs(getAllObjects()) do
-        aggiungiMenuBase(obj)
+        --aggiungiMenuBase(obj)
     end
-end
 
-    -- Ground settings
+    printToAll("FINE ONLOAD")
+
+end
+-- ------------------------------------------------------------
+-- FUNZIONE: groundSettings()
+-- ------------------------------------------------------------
 function groundSettings()
     local ground_obj = getByName("Ground")
     ground_obj.setPosition({x=0, y=0.5, z=0})
     ground_obj.setScale({x=5.86, y=4.05, z=3.95})
     ground_obj.setRotation({x=0, y=0, z=0})
 end    
-
 -- ------------------------------------------------------------
 -- FUNZIONE: onChat()
 -- ------------------------------------------------------------
@@ -1031,8 +1034,8 @@ function onChat(message, player)
         return false
     end
 
-    if message == "!scenario" then spawnaScenario() return false end
-    if message == "!scenario off" then rimuoviTuttiDecorativi() return false end
+    --if message == "!scenario" then spawnaScenario() return false end
+   -- if message == "!scenario off" then rimuoviTuttiDecorativi() return false end
     if message == "!settori" then drawSettori() return false end
     if message == "!settori off" then hideSettori() return false end
 end
@@ -2212,8 +2215,8 @@ decorativi_guids   = {}
 -- max: numero massimo di istanze (non può superare #SETTORI)
 -- attivo: se false viene ignorato
 ELEMENTI_CONFIG = {
-    { tipo="cespuglio", max=10, attivo=true  },
-    { tipo="collina",   max=4,  attivo=false },
+    { tipo="cespuglio", max=10, attivo=false  },
+    { tipo="collina",   max=4,  attivo=true },
     { tipo="bosco",     max=4,  attivo=false },
 }
 
