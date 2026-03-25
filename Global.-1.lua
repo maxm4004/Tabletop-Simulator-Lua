@@ -714,18 +714,20 @@ function onLoad()
     log("[LIONHEART]   !linee       -> linee di schieramento sul verde")
     log("[LIONHEART]   !linee off   -> rimuove linee di schieramento") --]]
 
-    --groundSettings()
-    --spawnaPannelli()
-    --spawnGroundButtons()
+    groundSettings()
+    spawnaPannelli()
+    spawnGroundButtons()
+    rimuoviTuttiDecorativi()
+
 
     -- Rettangoli spawn sempre visibili, linee deploy no
     linee_rettangolo = true
     linee_deploy     = false
-    --aggiornaLinee()
+    aggiornaLinee()
 
     -- Aggiunge menu contestuale a tutti gli oggetti gia presenti
     for _, obj in ipairs(getAllObjects()) do
-        --aggiungiMenuBase(obj)
+        aggiungiMenuBase(obj)
     end
 
     printToAll("FINE ONLOAD")
@@ -1034,8 +1036,8 @@ function onChat(message, player)
         return false
     end
 
-    --if message == "!scenario" then spawnaScenario() return false end
-   -- if message == "!scenario off" then rimuoviTuttiDecorativi() return false end
+    if message == "!scenario" then spawnaScenario() return false end
+    if message == "!scenario off" then rimuoviTuttiDecorativi() return false end
     if message == "!settori" then drawSettori() return false end
     if message == "!settori off" then hideSettori() return false end
 end
@@ -1699,8 +1701,6 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
         end
     end
 end
-
-
 -- ------------------------------------------------------------
 -- FUNZIONE: scanTavolo()
 -- ------------------------------------------------------------
@@ -2215,8 +2215,8 @@ decorativi_guids   = {}
 -- max: numero massimo di istanze (non può superare #SETTORI)
 -- attivo: se false viene ignorato
 ELEMENTI_CONFIG = {
-    { tipo="cespuglio", max=10, attivo=false  },
-    { tipo="collina",   max=4,  attivo=true },
+    { tipo="cespuglio", max=10, attivo=false },
+    { tipo="collina",   max=4,  attivo=true  },
     { tipo="bosco",     max=4,  attivo=false },
 }
 
