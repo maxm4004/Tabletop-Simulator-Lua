@@ -2281,13 +2281,23 @@ function spawnaDecorativo(elemento, q_index, tipo)
                 tX=0, rotY=math.random(0,359), rotZ=0,
                 scaleX=elemento.scaleX, scaleY=elemento.scaleY, scaleZ=elemento.scaleZ,
             },
-            CustomAssetbundle = {
+            CustomMesh = {
+                MeshURL      = elemento.url,
+                DiffuseURL   = elemento.diffuse or "",
+                NormalURL    = "",
+                ColliderURL  = "",
+                Convex       = true,
+                MaterialIndex = 0,
+                TypeIndex     = 0,
+                CastShadows   = true,
+            }
+--[[             CustomAssetbundle = {
                 AssetbundleURL          = elemento.url,
                 AssetbundleSecondaryURL = "",
                 MaterialIndex           = 0,
                 TypeIndex               = 0,
                 LoopingAnimationIndex   = 0,
-            }
+            } --]]
         }
     })
 
@@ -2321,9 +2331,9 @@ end
 -- FUNZIONE: spawnaCespugli()
 -- ------------------------------------------------------------
 function spawnaCespugli()
-spawnaTipo("collina", 1)
+    spawnaTipo("collina", 1)
 --  spawnaTipo("bosco", 2)    
---    spawnaTipo("cespuglio", 10)
+--  spawnaTipo("cespuglio", 10)
 
 end
 -- ------------------------------------------------------------
