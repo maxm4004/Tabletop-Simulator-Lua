@@ -1,79 +1,80 @@
-"versione": "1.0",
-"decorativi": {
-    "cespuglio": {
-        "label": "Cespuglio",
-        "elementi": [
-            {
-                "id": "cespuglio_1",
-                "label": "Cespuglio Fitto",
-                "url": "https://steamusercontent-a.akamaihd.net/ugc/1487830416936529705/373455891B2908E935605CA3A597EF507737794C/",
-                "scaleX": 0.88,
-                "scaleY": 0.42,
-                "scaleZ": 1.06,
-                "posY": 3.0,
-                "peso": 5
-            },
-            {
-                "id": "cespuglio_2",
-                "label": "Cespuglio test",
-                "url": "https://steamusercontent-a.akamaihd.net/ugc/1626318952222107559/3E0D114DB358726407FCE3744EE59C8A3B79E5EE/",
-                "scaleX": 0.28,
-                "scaleY": 0.13,
-                "scaleZ": 0.13,
-                "posY": 3.0,
-                "peso": 5
-            },
-            {
-                "id": "cespuglio_3",
-                "label": "Cespuglio test",
-                "url": "https://steamusercontent-a.akamaihd.net/ugc/1487830416936559888/C6AE302C3029F7988B158C0EC53A738981433FBD/",
-                "scaleX": 0.88,
-                "scaleY": 0.42,
-                "scaleZ": 1.06,
-                "posY": 3.0,
-                "peso": 5
-            },
-            {
-                "id": "cespuglio_4",
-                "label": "Cespuglio test",
-                "url": "https://steamusercontent-a.akamaihd.net/ugc/1487830416936560821/9CDA38236B60DFD2709CDE586AC6B2E3D781112E/",
-                "scaleX": 0.88,
-                "scaleY": 0.42,
-                "scaleZ": 1.06,
-                "posY": 3.0,
-                "peso": 5
-            }
-        ]
-    },
-    "bosco": {
-        "label": "Bosco",
-        "elementi": [
-            {
-                "id": "bosco_1",
-                "label": "Bosco Fitto",
-                "url": "https://steamusercontent-a.akamaihd.net/ugc/18006130759822698217/70D1218B276FF43732CD28672A3F5EF89CDCA812/",
-                "scaleX": 1.65,
-                "scaleY": 1.65,
-                "scaleZ": 1.65,
-                "posY": 2.70,
-                "peso": 2
-            }
-        ]
-    },
-    "collina": {
-        "label": "Collina",
-        "elementi": [
-            {
-                "id": "hill_1",
-                "label": "Hill",
-                "url": "https://steamusercontent-a.akamaihd.net/ugc/15880842181272309614/83E8A6B3C77FDD2E23CC8ED88A110A532719072C/",
-                "scaleX": 1,
-                "scaleY": 1,
-                "scaleZ": 1,
-                "posY": 2.90,
-                "peso": 4
-            }
-        ]
+{
+    "versione": "1.0",
+    "decorativi": {
+        "cespuglio": {
+            "label": "Cespuglio",
+            "elementi": [
+                {
+                    "id": "cespuglio_1",
+                    "label": "Cespuglio Fitto",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/1487830416936529705/373455891B2908E935605CA3A597EF507737794C/",
+                    "scaleX": 0.88,
+                    "scaleY": 0.42,
+                    "scaleZ": 1.06,
+                    "posY": 3.0,
+                    "peso": 5
+                },
+                {
+                    "id": "cespuglio_2",
+                    "label": "Cespuglio test",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/1626318952222107559/3E0D114DB358726407FCE3744EE59C8A3B79E5EE/",
+                    "scaleX": 0.28,
+                    "scaleY": 0.13,
+                    "scaleZ": 0.13,
+                    "posY": 3.0,
+                    "peso": 5
+                },
+                {
+                    "id": "cespuglio_3",
+                    "label": "Cespuglio test",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/1487830416936559888/C6AE302C3029F7988B158C0EC53A738981433FBD/",
+                    "scaleX": 0.88,
+                    "scaleY": 0.42,
+                    "scaleZ": 1.06,
+                    "posY": 3.0,
+                    "peso": 5
+                },
+                {
+                    "id": "cespuglio_4",
+                    "label": "Cespuglio test",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/1487830416936560821/9CDA38236B60DFD2709CDE586AC6B2E3D781112E/",
+                    "scaleX": 0.88,
+                    "scaleY": 0.42,
+                    "scaleZ": 1.06,
+                    "posY": 3.0,
+                    "peso": 5
+                }
+            ]
+        },
+        "bosco": {
+            "label": "Bosco",
+            "elementi": [
+                {
+                    "id": "bosco_1",
+                    "label": "Bosco Fitto",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/18006130759822698217/70D1218B276FF43732CD28672A3F5EF89CDCA812/",
+                    "scaleX": 1.65,
+                    "scaleY": 1.65,
+                    "scaleZ": 1.65,
+                    "posY": 2.70,
+                    "peso": 2
+                }
+            ]
+        },
+        "collina": {
+            "label": "Collina",
+            "elementi": [
+                {
+                    "id": "hill_1",
+                    "label": "Hill",
+                    "url": "https://steamusercontent-a.akamaihd.net/ugc/15880842181272309614/83E8A6B3C77FDD2E23CC8ED88A110A532719072C/",
+                    "scaleX": 1,
+                    "scaleY": 1,
+                    "scaleZ": 1,
+                    "posY": 2.90,
+                    "peso": 4
+                }
+            ]
+        }
     }
-}
 }

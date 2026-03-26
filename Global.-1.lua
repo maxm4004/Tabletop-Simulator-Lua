@@ -698,7 +698,7 @@ end
 -- ------------------------------------------------------------
 function onLoad()
     log("[LIONHEART] Script caricato " .. VERSION)
---[[     log("[LIONHEART]   !caricaArmy   -> carica esercito (slot determinato dal colore player)")
+    log("[LIONHEART]   !caricaArmy   -> carica esercito (slot determinato dal colore player)")
     log("[LIONHEART]   !reveal      -> rivela entrambi gli eserciti")
     log("[LIONHEART]   !deploy      -> carica eserciti e scansiona")
     log("[LIONHEART]   !turno       -> avvia turno")
@@ -712,14 +712,13 @@ function onLoad()
     log("[LIONHEART]   !croce       -> croce di riferimento sul tavolo")
     log("[LIONHEART]   !croce off   -> rimuove croce")
     log("[LIONHEART]   !linee       -> linee di schieramento sul verde")
-    log("[LIONHEART]   !linee off   -> rimuove linee di schieramento") --]]
-
+    log("[LIONHEART]   !linee off   -> rimuove linee di schieramento") 
+    
+    rimuoviTuttiDecorativi()
     groundSettings()
     spawnaPannelli()
     spawnGroundButtons()
-    rimuoviTuttiDecorativi()
-
-
+    
     -- Rettangoli spawn sempre visibili, linee deploy no
     linee_rettangolo = true
     linee_deploy     = false
@@ -729,9 +728,6 @@ function onLoad()
     for _, obj in ipairs(getAllObjects()) do
         aggiungiMenuBase(obj)
     end
-
-    printToAll("FINE ONLOAD")
-
 end
 -- ------------------------------------------------------------
 -- FUNZIONE: groundSettings()
@@ -2217,7 +2213,7 @@ decorativi_guids   = {}
 ELEMENTI_CONFIG = {
     { tipo="cespuglio", max=10, attivo=false },
     { tipo="collina",   max=4,  attivo=true  },
-    { tipo="bosco",     max=4,  attivo=false },
+    { tipo="bosco",     max=4,  attivo=true  },
 }
 
 -- Genera griglia 6x5 = 30 settori
@@ -2242,19 +2238,23 @@ end
 -- FUNZIONE: caricaCatalogoDecorativi(callback)
 -- ------------------------------------------------------------
 function caricaCatalogoDecorativi(callback)
+       
     if decorativi_catalog then callback(decorativi_catalog) return end
+    
     WebRequest.get(DECORATIVI_URL, function(request)
-        if request.is_error then
+    if request.is_error then
             printToAll("[SCENARIO] Errore download catalogo: " .. request.error, {r=1,g=0.3,b=0.3})
             return
-        end
-        local ok, dati = pcall(JSON.decode, request.text)
-        if not ok or not dati then
-            printToAll("[SCENARIO] Errore parsing JSON catalogo", {r=1,g=0.3,b=0.3})
-            return
-        end
-        decorativi_catalog = dati
-        printToAll("[SCENARIO] Catalogo caricato!", {r=0.4,g=0.9,b=0.4})
+    end
+    
+    local ok, dati = pcall(JSON.decode, request.text)
+    if not ok or not dati then
+        printToAll("[SCENARIO] Errore parsing JSON catalogo", {r=1,g=0.3,b=0.3})
+        return
+    end
+    
+    decorativi_catalog = dati
+    printToAll("[SCENARIO] Catalogo caricato!", {r=0.4,g=0.9,b=0.4})
         callback(dati)
     end)
 end
@@ -2317,14 +2317,23 @@ end
 -- Spawna N istanze di un tipo usando settori casuali non ripetuti
 -- ------------------------------------------------------------
 function spawnaTipo(tipo, max)
+
     rimuoviDecorativiPerTipo(tipo)
     caricaCatalogoDecorativi(function(catalogo)
-        local categoria = catalogo.decorativi[tipo]
-        if not categoria then
+
+    if not catalogo.decorativi[tipo] then
+        printToAll("nil")     
+    end
+
+    local categoria = nil
+    if not catalogo.decorativi[tipo] then
             printToAll("[SCENARIO] Tipo non trovato nel catalogo: " .. tipo, {r=1,g=0.3,b=0.3})
             return
-        end
-        local elementi = categoria.elementi
+    end
+
+    printToAll("3")    
+
+        local elementi = catalogo.decorativi[tipo].elementi
         local n = math.min(max, #SETTORI)
 
         -- Seleziona n settori casuali senza ripetizione
