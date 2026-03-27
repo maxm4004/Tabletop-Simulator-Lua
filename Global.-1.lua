@@ -19,7 +19,7 @@
 --   Pulsante "Centra"   -> sposta Ground al centro del Table
 --   Pulsante "Texture"  -> cicla la texture del Ground
 -- ============================================================
-VERSION = "v1.34.09"
+VERSION = "v1.34.10"
 DEBUG   = false  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
@@ -137,7 +137,8 @@ DATI_UNITA = {
 -- Codici armi da tiro
 ARMI_TIRO = {
     ARC  = { gittata=30 },
-    ARCL = { gittata=35 },
+    ARCL = { gittata=35
+ },
     BAL  = { gittata=35 },
     FROM = { gittata=20 },
     GIAV = { gittata=10 },
@@ -169,6 +170,10 @@ function aggiungiMenuBase(obj)
 
     obj.addContextMenuItem("Metti in colonna", function(player)
         mettInColonnaOggetto(obj, player)
+    end)
+
+    obj.addContextMenuItem("Metti in linea", function(player)
+        formazioneInLinea(player)
     end)
 
     obj.addContextMenuItem("Allinea al fronte", function(player)
@@ -1224,81 +1229,72 @@ function parsaNome(nickname)
         basi_max  = d.basi,
     }
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: allineaAlFronte(player, ref_obj)
--- Allinea le basi selezionate alla posizione di ref_obj sul vettore fronte
+-- Versione ottimizzata per modelli a due pezzi (Base + AssetBundle)
 -- ------------------------------------------------------------
 function allineaAlFronte(player, ref_obj)
     local p = type(player) == "string" and Player[player] or player
     local sel = p.getSelectedObjects()
-    if not sel or #sel == 0 then
-        printToAll("[FRONTE] Seleziona le basi prima", {r=1,g=0.3,b=0.3})
-        return
+    
+    -- 1. FILTRO: Solo le Basi (Custom Model), ignora le miniature sopra
+    local basi = {}
+    for _, obj in ipairs(sel) do
+        if (obj.hasTag("Army1") or obj.hasTag("Army2")) and obj.type == "Custom_Model" then
+            table.insert(basi, obj)
+        end
     end
 
-    -- Trova rotazione Y maggioritaria (arrotondata a 5 gradi)
+    if #basi < 2 then return end -- Inutile allineare meno di 2 basi
+
+    -- 2. CALCOLO ROTAZIONE (Media/Maggioranza)
     local conteggio = {}
-    for _, obj in ipairs(sel) do
+    for _, obj in ipairs(basi) do
         local y = math.floor(obj.getRotation().y / 5 + 0.5) * 5
         conteggio[y] = (conteggio[y] or 0) + 1
     end
-    local rot_maggioritaria = nil
-    local max_count = 0
-    for y, c in pairs(conteggio) do
-        if c > max_count then
-            max_count = c
-            rot_maggioritaria = y
-        end
-    end
+    local rot_magg = 0
+    local max_c = -1
+    for y, c in pairs(conteggio) do if c > max_c then max_c = c; rot_magg = y end end
 
-    -- Allinea rotazione delle basi non conformi
-    for _, obj in ipairs(sel) do
-        local y = math.floor(obj.getRotation().y / 5 + 0.5) * 5
-        if y ~= rot_maggioritaria then
-            local rot = obj.getRotation()
-            obj.setRotation({x=rot.x, y=rot_maggioritaria, z=rot.z})
-            printToAll("[FRONTE] Base " .. obj.getName() .. " ruotata a " .. rot_maggioritaria .. "°", {r=1,g=0.8,b=0})
-        end
-    end
-
-    -- Calcola vettore fronte dalla rotazione maggioritaria
-    local rad = math.rad(rot_maggioritaria)
-    local dx  =  math.sin(rad)
-    local dz  = -math.cos(rad)
-
-    -- Componente dominante
-    local usa_z = math.abs(dz) >= math.abs(dx)
-
-    -- Trova la base di riferimento (più avanzata sull'asse dominante)
+    -- 3. CALCOLO ASSE DEL FRONTE
+    -- Se guardi Nord/Sud (0/180°) l'asse del fronte è Z. Se guardi Est/Ovest (90/270°) è X.
+    local rad = math.rad(rot_magg)
+    local usa_z = math.abs(math.cos(rad)) >= math.abs(math.sin(rad))
+    
+    -- 4. TROVA LA COORDINATA DEL FRONTE (ref_val)
     local ref_val = nil
-    for _, obj in ipairs(sel) do
+    for _, obj in ipairs(basi) do
         local pos = obj.getPosition()
         local val = usa_z and pos.z or pos.x
-        -- Army1 avanza verso Z positivo, Army2 verso Z negativo
-        local tags = obj.getTags()
-        local is_army2 = false
-        for _, t in ipairs(tags) do if t == "Army2" then is_army2 = true end end
-        if ref_val == nil then
-            ref_val = val
-        elseif is_army2 and val < ref_val then
-            ref_val = val
-        elseif not is_army2 and val > ref_val then
-            ref_val = val
+        local is_army2 = obj.hasTag("Army2")
+
+        -- Avanzamento: Army1 verso Z+, Army2 verso Z- (o X+ / X-)
+        if ref_val == nil then ref_val = val
+        elseif is_army2 and val < ref_val then ref_val = val
+        elseif not is_army2 and val > ref_val then ref_val = val
         end
     end
 
-    -- Allinea tutte le basi sull'asse dominante
-    for _, obj in ipairs(sel) do
-        local pos = obj.getPosition()
+    -- 5. SPOSTAMENTO: QUI EVITIAMO L'IMPILAMENTO
+    for _, obj in ipairs(basi) do
+        local current_pos = obj.getPosition()
+        local current_rot = obj.getRotation()
+        
+        -- Forza la rotazione
+        obj.setRotation({x=current_rot.x, y=rot_magg, z=current_rot.z})
+        
+        -- SPOSTA SOLO L'ASSE DEL FRONTE
         if usa_z then
-            obj.setPosition({x=pos.x, y=pos.y, z=ref_val})
+            -- Se allineiamo sulla Z, NON TOCCARE LA X (mantiene la distanza tra le basi)
+            obj.setPosition({x = current_pos.x, y = current_pos.y, z = ref_val})
         else
-            obj.setPosition({x=ref_val, y=pos.y, z=pos.z})
+            -- Se allineiamo sulla X, NON TOCCARE LA Z
+            obj.setPosition({x = ref_val, y = current_pos.y, z = current_pos.z})
         end
     end
 
-    printToAll("[FRONTE] " .. #sel .. " basi allineate al fronte", {r=0.4,g=0.9,b=0.4})
+    broadcastToAll("✅ Fronte allineato per " .. #basi .. " basi", {0,1,0})
 end
 
 -- ------------------------------------------------------------
@@ -1340,6 +1336,63 @@ function mettInColonna(player)
 
     printToAll("[COLONNA] " .. #sel .. " basi allineate", {r=0.4,g=0.9,b=0.4})
 end
+-- ------------------------------------------------------------
+-- FUNZIONE: formazioneInLinea(player)
+-- Trasforma una colonna in una linea spalla a spalla
+-- ------------------------------------------------------------
+-- Spaziatura fissa (cambiala in base alla larghezza della tua base, es: 2 o 2.5)
+local SPAZIATURA = 2.0
+
+function formazioneInLinea(player)
+    local p = type(player) == "string" and Player[player] or player
+    local sel = p.getSelectedObjects()
+    
+    -- 1. PRENDI SOLO LE BASI (Filtro durissimo)
+    local basi = {}
+    for _, obj in ipairs(sel) do
+        -- Muoviamo solo i Custom Model (le basi) che hanno il tag Army
+        if obj.type == "Custom_Model" and (obj.hasTag("Army1") or obj.hasTag("Army2")) then
+            table.insert(basi, obj)
+        end
+    end
+
+    if #basi < 2 then return end
+
+    -- 2. ORDINA LE BASI
+    -- Le ordiniamo in base alla loro posizione attuale (da sinistra a destra rispetto alla visuale)
+    table.sort(basi, function(a, b) 
+        return a.getPosition().x < b.getPosition().x 
+    end)
+
+    -- 3. PUNTO DI PARTENZA (La prima base della colonna diventa il "capo riga")
+    local leader = basi[1]
+    local leaderPos = leader.getPosition()
+    local leaderRot = leader.getRotation()
+    
+    -- Calcoliamo il vettore "Destra" relativo a come è girata la base leader
+    local rad = math.rad(leaderRot.y)
+    local vDestra = {
+        x = math.cos(rad), 
+        z = -math.sin(rad)
+    }
+
+    -- 4. POSIZIONAMENTO
+    for i, obj in ipairs(basi) do
+        if i > 1 then
+            -- Sposta ogni base alla destra della precedente
+            local dist = (i - 1) * SPAZIATURA
+            obj.setRotation(leaderRot)
+            obj.setPosition({
+                x = leaderPos.x + (vDestra.x * dist),
+                y = leaderPos.y,
+                z = leaderPos.z + (vDestra.z * dist)
+            })
+        end
+    end
+
+    broadcastToAll("⚔️ Formazione in Linea: " .. #basi .. " basi.")
+end
+
 
 -- ------------------------------------------------------------
 -- FUNZIONE: restart()
@@ -2317,23 +2370,15 @@ end
 -- Spawna N istanze di un tipo usando settori casuali non ripetuti
 -- ------------------------------------------------------------
 function spawnaTipo(tipo, max)
-
     rimuoviDecorativiPerTipo(tipo)
     caricaCatalogoDecorativi(function(catalogo)
-
-    if not catalogo.decorativi[tipo] then
-        printToAll("nil")     
-    end
-
-    local categoria = nil
-    if not catalogo.decorativi[tipo] then
+        local categoria = catalogo.decorativi[tipo]
+        if not categoria then
             printToAll("[SCENARIO] Tipo non trovato nel catalogo: " .. tipo, {r=1,g=0.3,b=0.3})
             return
-    end
-
-    printToAll("3")    
-
-        local elementi = catalogo.decorativi[tipo].elementi
+        end
+        
+        local elementi = categoria.elementi
         local n = math.min(max, #SETTORI)
 
         -- Seleziona n settori casuali senza ripetizione
