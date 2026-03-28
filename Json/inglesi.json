@@ -7,13 +7,11 @@
         {
             "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
             "basi": [ 
-                {"id":1,"seq":1,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}}
-            ]
-        },
-        {
-            "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
-            "basi": [
-                {"id":1,"seq":2,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}}
+                {"id":1,"seq":10,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":2,"seq":11,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":3,"seq":12,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":4,"seq":13,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":5,"seq":14,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.63,"y":2.92,"z":8.63},"rotazione":{"x":0,"y":90,"z":0}}
             ]
         }
     ]
