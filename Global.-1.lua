@@ -20,7 +20,7 @@
 --   Pulsante "Texture"  -> cicla la texture del Ground
 -- ============================================================
 VERSION = "v1.34.10"
-DEBUG   = false  -- false = controlli player attivi
+DEBUG   = true  -- false = controlli player attivi
 -- ------------------------------------------------------------
 -- CONFIGURAZIONE PRE-PARTITA
 -- ------------------------------------------------------------
@@ -137,8 +137,7 @@ DATI_UNITA = {
 -- Codici armi da tiro
 ARMI_TIRO = {
     ARC  = { gittata=30 },
-    ARCL = { gittata=35
- },
+    ARCL = { gittata=35 },
     BAL  = { gittata=35 },
     FROM = { gittata=20 },
     GIAV = { gittata=10 },
@@ -168,16 +167,20 @@ function aggiungiMenuBase(obj)
     local tipo = string.match(obj.getName(), "^([A-Za-z]+)")
     if not tipo or not DATI_UNITA[tipo] then return end
 
-    obj.addContextMenuItem("Metti in colonna", function(player)
-        mettInColonnaOggetto(obj, player)
+    obj.addContextMenuItem("Forma colonna (su)", function(player)
+        formazione(player, "cl", "up")
     end)
 
-    obj.addContextMenuItem("Metti in linea", function(player)
-        formazioneInLinea(player)
+    obj.addContextMenuItem("Forma colonna (giu)", function(player)
+        formazione(player, "cl", "dn")
+    end)    
+
+    obj.addContextMenuItem("Forma linea (sin)", function(player)
+        formazione(player, "ln", "sin")
     end)
 
-    obj.addContextMenuItem("Allinea al fronte", function(player)
-        allineaAlFronte(player, obj)
+    obj.addContextMenuItem("Forma linea (dx)", function(player)
+        formazione(player, "ln", "dx")
     end)
 
     -- Voce "Gittata" solo se la base ha un'arma da tiro nel nickname
@@ -206,20 +209,26 @@ end
 -- nella direzione di orientamento per 10 secondi
 -- ------------------------------------------------------------
 function mostraGittataRaggio(obj, lunghezza, label)
-    local pos  = obj.getPosition()
-    local rot  = obj.getRotation()
+    local pos = obj.getPosition()
+    local fwd = obj.getTransformForward() -- Usa il fronte reale dell'oggetto
+    
+    local puntiArco = {}
+    local segmenti = 20
+    local altezzaMassima = 3 -- Altezza dell'arco al centro
 
-    -- Direzione Z in base alla rotazione Y (0=verso Z-, 180=verso Z+)
-    local dir = 1
-    if rot.y < 90 or rot.y > 270 then dir = -1 end
-
-    local fx = pos.x
-    local fy = pos.y + 0.3
-    local fz = pos.z
-    local ez = fz + (lunghezza * dir)
+    for i = 0, segmenti do
+        local t = i / segmenti
+        -- Calcolo posizione orizzontale
+        local px = pos.x + (fwd.x * lunghezza * t)
+        local pz = pos.z + (fwd.z * lunghezza * t)
+        -- Calcolo altezza parabola
+        local py = (pos.y + 0.3) + (4 * altezzaMassima * t * (1 - t))
+        
+        table.insert(puntiArco, {px, py, pz})
+    end
 
     Global.setVectorLines({{
-        points    = { {fx, fy, fz}, {fx, fy, ez} },
+        points    = puntiArco,
         color     = { r=1, g=0.8, b=0.1 },
         thickness = 0.15,
     }})
@@ -228,10 +237,9 @@ function mostraGittataRaggio(obj, lunghezza, label)
     printToAll("Gittata" .. lbl .. ": " .. lunghezza, {r=1,g=0.8,b=0.1})
 
     Wait.time(function()
-        aggiornaLinee()
+        Global.setVectorLines({})
     end, 10)
 end
-
 -- ------------------------------------------------------------
 -- FUNZIONE: onObjectSpawn(obj)
 -- ------------------------------------------------------------
@@ -244,50 +252,6 @@ function onObjectSpawn(obj)
         end
     end, 30)
 end
-
--- ------------------------------------------------------------
--- FUNZIONE: mettInColonnaOggetto(obj, player)
--- Versione single-object: mette in colonna l'unità dell'oggetto
--- ------------------------------------------------------------
-function mettInColonnaOggetto(obj, player)
-    -- Trova tutte le basi della stessa unità (stesso prefisso tipo_num)
-    local nome = obj.getName()
-    local prefisso = string.match(nome, "^([A-Z]+_%d+)")
-    if not prefisso then
-        printToAll("[COLONNA] Nickname non valido: " .. nome, {r=1,g=0.3,b=0.3})
-        return
-    end
-
-    local basi = {}
-    for _, o in ipairs(getAllObjects()) do
-        if string.match(o.getName(), "^" .. prefisso) then
-            table.insert(basi, o)
-        end
-    end
-
-    -- Ordina per Z
-    table.sort(basi, function(a, b)
-        return a.getPosition().z > b.getPosition().z
-    end)
-
-    local PROFONDITA = {AI=2.4,AC=2.4,UI=2.4,UC=2.4,SKC=2.4,SK=1.6}
-    local tipo = string.match(nome, "^([A-Z]+)")
-    local passo = PROFONDITA[tipo] or 2.4
-
-    local pos0 = basi[1].getPosition()
-    local x = pos0.x
-    local y = pos0.y
-    local z = pos0.z
-
-    for i, b in ipairs(basi) do
-        b.setPosition({x=x, y=y, z=z})
-        z = z - passo
-    end
-
-    printToAll("[COLONNA] " .. prefisso .. " — " .. #basi .. " basi allineate", {r=0.4,g=0.9,b=0.4})
-end
-
-
 -- ------------------------------------------------------------
 -- FUNZIONE: spawnaPannelli()
 -- Crea i pannelli informativi come Global UI XML (2D, uguale per tutti)
@@ -858,11 +822,6 @@ function onChat(message, player)
         return false
     end
 
-    if message == "!colonna" then
-        mettInColonna(player)
-        return false
-    end
-
     if message == "!hide" then
         local slot = ARMY_COLORS[player.color]
         if not slot then
@@ -1230,170 +1189,77 @@ function parsaNome(nickname)
     }
 end
 -- ------------------------------------------------------------
--- FUNZIONE: allineaAlFronte(player, ref_obj)
--- Versione ottimizzata per modelli a due pezzi (Base + AssetBundle)
--- ------------------------------------------------------------
-function allineaAlFronte(player, ref_obj)
-    local p = type(player) == "string" and Player[player] or player
-    local sel = p.getSelectedObjects()
-    
-    -- 1. FILTRO: Solo le Basi (Custom Model), ignora le miniature sopra
-    local basi = {}
-    for _, obj in ipairs(sel) do
-        if (obj.hasTag("Army1") or obj.hasTag("Army2")) and obj.type == "Custom_Model" then
-            table.insert(basi, obj)
-        end
-    end
-
-    if #basi < 2 then return end -- Inutile allineare meno di 2 basi
-
-    -- 2. CALCOLO ROTAZIONE (Media/Maggioranza)
-    local conteggio = {}
-    for _, obj in ipairs(basi) do
-        local y = math.floor(obj.getRotation().y / 5 + 0.5) * 5
-        conteggio[y] = (conteggio[y] or 0) + 1
-    end
-    local rot_magg = 0
-    local max_c = -1
-    for y, c in pairs(conteggio) do if c > max_c then max_c = c; rot_magg = y end end
-
-    -- 3. CALCOLO ASSE DEL FRONTE
-    -- Se guardi Nord/Sud (0/180°) l'asse del fronte è Z. Se guardi Est/Ovest (90/270°) è X.
-    local rad = math.rad(rot_magg)
-    local usa_z = math.abs(math.cos(rad)) >= math.abs(math.sin(rad))
-    
-    -- 4. TROVA LA COORDINATA DEL FRONTE (ref_val)
-    local ref_val = nil
-    for _, obj in ipairs(basi) do
-        local pos = obj.getPosition()
-        local val = usa_z and pos.z or pos.x
-        local is_army2 = obj.hasTag("Army2")
-
-        -- Avanzamento: Army1 verso Z+, Army2 verso Z- (o X+ / X-)
-        if ref_val == nil then ref_val = val
-        elseif is_army2 and val < ref_val then ref_val = val
-        elseif not is_army2 and val > ref_val then ref_val = val
-        end
-    end
-
-    -- 5. SPOSTAMENTO: QUI EVITIAMO L'IMPILAMENTO
-    for _, obj in ipairs(basi) do
-        local current_pos = obj.getPosition()
-        local current_rot = obj.getRotation()
-        
-        -- Forza la rotazione
-        obj.setRotation({x=current_rot.x, y=rot_magg, z=current_rot.z})
-        
-        -- SPOSTA SOLO L'ASSE DEL FRONTE
-        if usa_z then
-            -- Se allineiamo sulla Z, NON TOCCARE LA X (mantiene la distanza tra le basi)
-            obj.setPosition({x = current_pos.x, y = current_pos.y, z = ref_val})
-        else
-            -- Se allineiamo sulla X, NON TOCCARE LA Z
-            obj.setPosition({x = ref_val, y = current_pos.y, z = current_pos.z})
-        end
-    end
-
-    broadcastToAll("✅ Fronte allineato per " .. #basi .. " basi", {0,1,0})
-end
-
--- ------------------------------------------------------------
--- FUNZIONE: mettInColonna(player)
--- Posiziona le basi selezionate in colonna verso Z negativo
--- senza spazi, partendo dalla posizione della prima base
--- ------------------------------------------------------------
-function mettInColonna(player)
-    local sel = player.getSelectedObjects()
-    if not sel or #sel == 0 then
-        printToAll("[COLONNA] Seleziona le basi prima", {r=1,g=0.3,b=0.3})
-        return
-    end
-
-    -- Profondita base per tipo in unita TTS (1 cm = 0.8)
-    local PROFONDITA = {
-        AI=2.4, AC=2.4, UI=2.4, UC=2.4, SKC=2.4,
-        SK=1.6
-    }
-
-    -- Ordina per Z crescente (prima base = Z meno negativa)
-    table.sort(sel, function(a, b)
-        return a.getPosition().z > b.getPosition().z
-    end)
-
-    local pos0 = sel[1].getPosition()
-    local x = pos0.x
-    local y = pos0.y
-    local z = pos0.z
-
-    for i, obj in ipairs(sel) do
-        -- Ricava il tipo dal nickname (lettere iniziali)
-        local tipo = string.match(obj.getName(), "^([A-Z]+)")
-        local passo = PROFONDITA[tipo] or 2.4
-
-        obj.setPosition({x=x, y=y, z=z})
-        z = z - passo
-    end
-
-    printToAll("[COLONNA] " .. #sel .. " basi allineate", {r=0.4,g=0.9,b=0.4})
-end
--- ------------------------------------------------------------
 -- FUNZIONE: formazioneInLinea(player)
 -- Trasforma una colonna in una linea spalla a spalla
 -- ------------------------------------------------------------
--- Spaziatura fissa (cambiala in base alla larghezza della tua base, es: 2 o 2.5)
-local SPAZIATURA = 2.0
-
-function formazioneInLinea(player)
+function formazione(player, tipo, lato)
+   
     local p = type(player) == "string" and Player[player] or player
     local sel = p.getSelectedObjects()
-    
-    -- 1. PRENDI SOLO LE BASI (Filtro durissimo)
+
+    -- PRENDI SOLO LE BASI (Filtro durissimo)
     local basi = {}
     for _, obj in ipairs(sel) do
-        -- Muoviamo solo i Custom Model (le basi) che hanno il tag Army
-        if obj.type == "Custom_Model" and (obj.hasTag("Army1") or obj.hasTag("Army2")) then
+        if (obj.hasTag("Army1") or obj.hasTag("Army2")) then
             table.insert(basi, obj)
         end
     end
 
-    if #basi < 2 then return end
+    if #basi < 2 then
+        printToAll("Non ci sono abbastanza basi selezionate per eseguire la formazione.")
+        return
+    end
 
-    -- 2. ORDINA LE BASI
-    -- Le ordiniamo in base alla loro posizione attuale (da sinistra a destra rispetto alla visuale)
-    table.sort(basi, function(a, b) 
-        return a.getPosition().x < b.getPosition().x 
+    -- ORDINA LE BASI
+    table.sort(basi, function(a, b)
+        return a.getPosition().x < b.getPosition().x
     end)
 
-    -- 3. PUNTO DI PARTENZA (La prima base della colonna diventa il "capo riga")
-    local leader = basi[1]
-    local leaderPos = leader.getPosition()
-    local leaderRot = leader.getRotation()
-    
-    -- Calcoliamo il vettore "Destra" relativo a come è girata la base leader
-    local rad = math.rad(leaderRot.y)
-    local vDestra = {
-        x = math.cos(rad), 
-        z = -math.sin(rad)
-    }
+    local leader = sel[1]
+    print("Leader: "..leader.getName())
+    if not leader then
+        printToAll("Errore: Leader non definito.")
+        return
+    end
 
-    -- 4. POSIZIONAMENTO
+    -- 5. POSIZIONAMENTO
+    local k = 0
     for i, obj in ipairs(basi) do
-        if i > 1 then
-            -- Sposta ogni base alla destra della precedente
-            local dist = (i - 1) * SPAZIATURA
-            obj.setRotation(leaderRot)
-            obj.setPosition({
-                x = leaderPos.x + (vDestra.x * dist),
-                y = leaderPos.y,
-                z = leaderPos.z + (vDestra.z * dist)
-            })
+        if(obj.getName() != leader.getName()) then 
+            k = k + 1
+            local nuovaPos = calcolaNuovaPosizione(leader.getPosition(), leader.getRotation(), k, tipo, lato)
+            obj.setPosition(nuovaPos)
+            obj.setRotation(leader.getRotation())
         end
     end
 
-    broadcastToAll("⚔️ Formazione in Linea: " .. #basi .. " basi.")
+    printToAll("⚔️ Formazione in Linea: " .. #basi .. " basi.")
 end
 
+function calcolaNuovaPosizione(posLeader, rotLeader, moltiplicatore, tipo, lato)
 
+    local SPAZIATURA_ORIZ_4X3 = 3.18
+    local SPAZIATURA_VERT_4X3 = 2.32
+
+    local rad = math.rad(rotLeader.y)
+    
+    -- Calcolo del vettore di direzione (lungo l'asse laterale del leader)
+    local offset = (tipo == "ln" and SPAZIATURA_ORIZ_4X3 or SPAZIATURA_VERT_4X3) * moltiplicatore
+    
+    if tipo == "ln" then 
+        if lato == "dx" then
+            return {x = posLeader.x + (math.sin(rad) * offset), y = posLeader.y, z = posLeader.z + (math.cos(rad) * offset)}
+        else 
+            return {x = posLeader.x - (math.sin(rad) * offset), y = posLeader.y, z = posLeader.z - (math.cos(rad) * offset)}
+        end    
+    else 
+        if lato == "up" then
+            return {x = posLeader.x - (math.cos(rad) * offset),y = posLeader.y,z = posLeader.z + (math.sin(rad) * offset)}
+        else 
+            return {x = posLeader.x + (math.cos(rad) * offset),y = posLeader.y,z = posLeader.z - (math.sin(rad) * offset)}
+        end    
+    end    
+end
 -- ------------------------------------------------------------
 -- FUNZIONE: restart()
 -- Torna all'inizio — cancella basi, ripristina Hz e pannelli
