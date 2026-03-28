@@ -5,13 +5,77 @@
     "tag": "ENG",
     "unita": [
         {
+            "tipo": "CinC", "nome_display": "Generale", "modificatore": null, "model": "ENG_CinC",
+            "basi": [
+                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-0.54,"y":1.66,"z":40.00},"rotazione":{"x":0,"y":180,"z":0}}
+            ]
+        },
+        {
+            "tipo": "AC", "nome_display": "Cavalieri", "modificatore": null, "model": null,
+            "basi": [
+                {"id":1,"seq":1,"model":"ENG_ACGen","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":0.0},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":2,"seq":2,"model":"ENG_AC1","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":2.43},"rotazione":{"x":0,"y":90,"z":0}}
+            ]
+        },
+        {
             "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
             "basi": [ 
-                {"id":1,"seq":10,"model":null,"arma":null,"ferite":0,"posizione":{"x":-22.58,"y":2.92,"z":43.40},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":2,"seq":11,"model":null,"arma":null,"ferite":0,"posizione":{"x":-22.58,"y":2.92,"z":52.94},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":3,"seq":12,"model":null,"arma":null,"ferite":0,"posizione":{"x":-22.58,"y":2.92,"z":46.58},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":4,"seq":13,"model":null,"arma":null,"ferite":0,"posizione":{"x":-22.58,"y":2.92,"z":49.76},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":5,"seq":14,"model":null,"arma":null,"ferite":0,"posizione":{"x":-22.58,"y":2.92,"z":56.12},"rotazione":{"x":0,"y":180,"z":0}}
+                {"id":1,"seq":3,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":46.84},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":2,"seq":4,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":52.01},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":3,"seq":5,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":54.32},"rotazione":{"x":0,"y":90,"z":0}}
+            ]
+        },
+        {
+            "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
+            "basi": [
+                {"id":1,"seq":6,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":46.84},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":2,"seq":7,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":52.01},"rotazione":{"x":0,"y":90,"z":0}},
+                {"id":3,"seq":8,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":54.32},"rotazione":{"x":0,"y":90,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null, "model": "ENG_UI1",
+            "basi": [
+                {"id":1,"seq":9,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":0.0},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":2,"seq":10,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":2.43},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":3,"seq":11,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":4.86},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":4,"seq":12,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":7.29},"rotazione":{"x":0,"y":180,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null, "model": "ENG_UI1",
+            "basi": [
+                {"id":1,"seq":13,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":0.0},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":2,"seq":14,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":2.43},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":3,"seq":15,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":4.86},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":4,"seq":16,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":7.29},"rotazione":{"x":0,"y":180,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null, "model": "ENG_UI1",
+            "basi": [
+                {"id":1,"seq":17,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":0.0},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":2,"seq":18,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":2.43},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":3,"seq":19,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":4.86},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":4,"seq":20,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":7.29},"rotazione":{"x":0,"y":180,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Billmen", "modificatore": null, "model": "ENG_UI2",
+            "basi": [
+                {"id":1,"seq":21,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":0.0},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":2,"seq":22,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":2.43},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":3,"seq":23,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":4.86},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":4,"seq":24,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":7.29},"rotazione":{"x":0,"y":180,"z":0}}
+            ]
+        },
+        {
+            "tipo": "UI", "nome_display": "Billmen", "modificatore": null, "model": "ENG_UI2",
+            "basi": [
+                {"id":1,"seq":25,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":0.0},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":2,"seq":26,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":2.43},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":3,"seq":27,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":4.86},"rotazione":{"x":0,"y":180,"z":0}},
+                {"id":4,"seq":28,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":7.29},"rotazione":{"x":0,"y":180,"z":0}}
             ]
         }
     ]
