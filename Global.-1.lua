@@ -1000,6 +1000,7 @@ function onChat(message, player)
     if message == "!scenario off" then rimuoviTuttiDecorativi() return false end
     if message == "!settori" then drawSettori() return false end
     if message == "!settori off" then hideSettori() return false end
+    if message == "!clear" then for i = 0, 120 do print("") end end
 end
 
 -- ------------------------------------------------------------
@@ -1543,6 +1544,7 @@ end
 -- nickname: tipo_unitanum.baseid_mod_arma
 -- ------------------------------------------------------------
 function generaUnita(unita, tag, zona_guid, contatori, slot)
+
     -- Incrementa contatore per questo tipo
     contatori[unita.tipo] = (contatori[unita.tipo] or 0) + 1
     local unita_num = contatori[unita.tipo]
@@ -1591,7 +1593,7 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
             local b = base
             Wait.frames(function()
                 clone.setName(nickname)
-                clone.setRotation({x=b.rotazione.x, y=template_rot.y, z=b.rotazione.z})
+                --clone.setRotation({x=b.rotazione.x, y=template_rot.y, z=b.rotazione.z})
                 clone.setPosition({
                     x = b.posizione.x + offset.x,
                     y = b.posizione.y,
