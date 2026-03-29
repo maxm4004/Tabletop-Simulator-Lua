@@ -53,24 +53,20 @@ VERDE_LX      = 46
 VERDE_LZ      = 32.23
 DEPLOY_CM     = 8    -- 10 cm in unita TTS
 
--- GUID delle Hidden Zone (trovate dinamicamente per nome)
-ZONA_1_GUID = nil
-ZONA_2_GUID = nil
-
 -- ------------------------------------------------------------
 -- FUNZIONE: trovaZona(tag)
 -- Trova una Hidden/Scripting Zone per tag
 -- ------------------------------------------------------------
-function trovaZona(tag)
-    for _, obj in ipairs(getAllObjects()) do
-        local tags = obj.getTags()
-        for _, t in ipairs(tags) do
-            if t == tag then return obj.getGUID() end
-        end
-    end
-    printToAll("[ZONA] Non trovata con tag: " .. tag, {r=1,g=0.3,b=0.3})
-    return nil
-end
+-- function trovaZona(tag)
+--     for _, obj in ipairs(getAllObjects()) do
+--         local tags = obj.getTags()
+--         for _, t in ipairs(tags) do
+--             if t == tag then return obj.getGUID() end
+--         end
+--     end
+--     printToAll("[ZONA] Non trovata con tag: " .. tag, {r=1,g=0.3,b=0.3})
+--     return nil
+-- end
 
 -- Struttura eserciti
 ARMY = {
@@ -747,22 +743,22 @@ function onChat(message, player)
         return false
     end
 
-    if message == "!cercaHz" then
-        local trovate = 0
-        for _, obj in ipairs(getAllObjects()) do
-            local tags = obj.getTags()
-            for _, t in ipairs(tags) do
-                if t == "Hz1" or t == "Hz2" then
-                    printToAll("Hz trovata: nome=[" .. obj.getName() .. "] tag=" .. t .. " guid=" .. obj.getGUID() .. " pos=" .. obj.getPosition().x .. "," .. obj.getPosition().y .. "," .. obj.getPosition().z, {r=0,g=1,b=1})
-                    trovate = trovate + 1
-                end
-            end
-        end
-        if trovate == 0 then
-            printToAll("[Hz] Nessuna zona trovata con tag Hz1 o Hz2", {r=1,g=0.3,b=0.3})
-        end
-        return false
-    end
+    -- if message == "!cercaHz" then
+    --     local trovate = 0
+    --     for _, obj in ipairs(getAllObjects()) do
+    --         local tags = obj.getTags()
+    --         for _, t in ipairs(tags) do
+    --             if t == "Hz1" or t == "Hz2" then
+    --                 printToAll("Hz trovata: nome=[" .. obj.getName() .. "] tag=" .. t .. " guid=" .. obj.getGUID() .. " pos=" .. obj.getPosition().x .. "," .. obj.getPosition().y .. "," .. obj.getPosition().z, {r=0,g=1,b=1})
+    --                 trovate = trovate + 1
+    --             end
+    --         end
+    --     end
+    --     if trovate == 0 then
+    --         printToAll("[Hz] Nessuna zona trovata con tag Hz1 o Hz2", {r=1,g=0.3,b=0.3})
+    --     end
+    --     return false
+    -- end
 
     if message == "!restart" then
         restart()
@@ -1266,7 +1262,7 @@ end
 -- Torna all'inizio — cancella basi, ripristina Hz e pannelli
 -- ------------------------------------------------------------
 function restart()
-    -- Cancella tutte le basi spawnat (non i template)
+    -- Cancella tutte le basi spawnate (non i template)
     local count = 0
     for _, obj in ipairs(getAllObjects()) do
         local tags = obj.getTags()
@@ -1438,22 +1434,22 @@ end
 
 -- Svuota le Hidden Zone — le basi diventano visibili a tutti
 -- ------------------------------------------------------------
-function reveal()
-    local count = 0
-    for _, zona_nome in ipairs({"Hz1", "Hz2"}) do
-        local zona_guid = trovaZona(zona_nome)
-        local zona = zona_guid and getObjectFromGUID(zona_guid)
-        if zona then
-            local oggetti = zona.getObjects()
-            for _, obj in ipairs(oggetti) do
-                local pos = obj.getPosition()
-                obj.setPosition({x=pos.x, y=pos.y + 0.5, z=pos.z})
-                count = count + 1
-            end
-        end
-    end
-    printToAll("[REVEAL] " .. count .. " basi rivelate — buona battaglia!", {r=0.4,g=0.9,b=0.4})
-end
+-- function reveal()
+--     local count = 0
+--     for _, zona_nome in ipairs({"Hz1", "Hz2"}) do
+--         local zona_guid = trovaZona(zona_nome)
+--         local zona = zona_guid and getObjectFromGUID(zona_guid)
+--         if zona then
+--             local oggetti = zona.getObjects()
+--             for _, obj in ipairs(oggetti) do
+--                 local pos = obj.getPosition()
+--                 obj.setPosition({x=pos.x, y=pos.y + 0.5, z=pos.z})
+--                 count = count + 1
+--             end
+--         end
+--     end
+--     printToAll("[REVEAL] " .. count .. " basi rivelate — buona battaglia!", {r=0.4,g=0.9,b=0.4})
+-- end
 
 -- ------------------------------------------------------------
 -- FUNZIONE: leggiUrlDaNotebook(nome)
@@ -1508,8 +1504,8 @@ function caricaEsercito(url, slot, player)
             aggiornaPannello(1)
             aggiornaBanner()
             -- Assegna colore player alla Hidden Zone
-            local gz = trovaZona("Hz1")
-            if gz then getObjectFromGUID(gz).setValue(player_color) end
+            --local gz = trovaZona("Hz1")
+            --if gz then getObjectFromGUID(gz).setValue(player_color) end
         else
             ARMY[2].tag = dati.tag
             ARMY[2].nome = dati.nome
@@ -1519,19 +1515,19 @@ function caricaEsercito(url, slot, player)
             aggiornaPannello(2)
             aggiornaBanner()
             -- Assegna colore player alla Hidden Zone
-            local gz = trovaZona("Hz2")
-            if gz then getObjectFromGUID(gz).setValue(player_color) end
+            --local gz = trovaZona("Hz2")
+            --if gz then getObjectFromGUID(gz).setValue(player_color) end
         end
 
-        local zona_nome = "HiddenZone" .. slot
-        local zona_guid = trovaZona(zona_nome)
+        --local zona_nome = "HiddenZone" .. slot
+        --local zona_guid = trovaZona(zona_nome)
         local contatori = {}
         local army_tag  = "Army" .. slot  -- Army1 o Army2
 
         printToAll("[CARICA] Esercito: " .. dati.nome .. " | Tag: " .. army_tag, {r=0.4,g=0.9,b=0.4})
 
         for _, unita in ipairs(dati.unita) do
-            generaUnita(unita, army_tag, zona_guid, contatori, slot)
+            generaUnita(unita, army_tag, contatori, slot)
         end
 
         printToAll("[CARICA] Completato — digita !deploy per scansionare", {r=0.4,g=0.9,b=0.4})
@@ -1539,11 +1535,11 @@ function caricaEsercito(url, slot, player)
 end
 
 -- ------------------------------------------------------------
--- FUNZIONE: generaUnita(unita, tag, zona_guid, contatori)
+-- FUNZIONE: generaUnita(unita, tag, contatori)
 -- Clona il template per ogni base — model: base.model > unita.model > unita.tipo
 -- nickname: tipo_unitanum.baseid_mod_arma
 -- ------------------------------------------------------------
-function generaUnita(unita, tag, zona_guid, contatori, slot)
+function generaUnita(unita, tag, contatori, slot)
 
     -- Incrementa contatore per questo tipo
     contatori[unita.tipo] = (contatori[unita.tipo] or 0) + 1
@@ -1593,7 +1589,7 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
             local b = base
             Wait.frames(function()
                 clone.setName(nickname)
-                --clone.setRotation({x=b.rotazione.x, y=template_rot.y, z=b.rotazione.z})
+                clone.setRotation({x=b.rotazione.x, y=template_rot.y, z=b.rotazione.z})
                 clone.setPosition({
                     x = b.posizione.x + offset.x,
                     y = b.posizione.y,
@@ -1604,7 +1600,7 @@ function generaUnita(unita, tag, zona_guid, contatori, slot)
                 -- Nasconde la base al giocatore nemico durante il deploy
                 local nemico_color = slot == "1" and ARMY[2].color or ARMY[1].color
                 if nemico_color and nemico_color ~= "---" then
-                    clone.setInvisibleTo({nemico_color})
+                    --clone.setInvisibleTo({nemico_color})
                 end
                 clone.auto_raise = true
                 clone.setLock(false)
@@ -1625,9 +1621,6 @@ function scanTavolo()
     esercito_1  = {}
     esercito_2  = {}
     wounds_data = {}
-
-    -- Rivela entrambi gli eserciti
-    reveal()
 
     local gruppi_1  = {}
     local gruppi_2  = {}
