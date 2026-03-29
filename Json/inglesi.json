@@ -20,17 +20,17 @@
         {
             "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
             "basi": [ 
-                {"id":1,"seq":3,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":46.84},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":2,"seq":4,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":52.01},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":3,"seq":5,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":54.32},"rotazione":{"x":0,"y":180,"z":0}}
+                {"id":1,"seq":3,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":46.84},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":4,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":52.01},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":5,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":54.32},"rotazione":{"x":0,"y":0,"z":0}}
             ]
         },
         {
             "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
             "basi": [
-                {"id":1,"seq":6,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":46.84},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":2,"seq":7,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":52.01},"rotazione":{"x":0,"y":180,"z":0}},
-                {"id":3,"seq":8,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":54.32},"rotazione":{"x":0,"y":180,"z":0}}
+                {"id":1,"seq":6,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":46.84},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":2,"seq":7,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":52.01},"rotazione":{"x":0,"y":0,"z":0}},
+                {"id":3,"seq":8,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.05,"y":2.36,"z":54.32},"rotazione":{"x":0,"y":0,"z":0}}
             ]
         },
         {
