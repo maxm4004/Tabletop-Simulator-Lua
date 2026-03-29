@@ -1503,9 +1503,6 @@ function caricaEsercito(url, slot, player)
             ARMY[1].color = player_color
             aggiornaPannello(1)
             aggiornaBanner()
-            -- Assegna colore player alla Hidden Zone
-            --local gz = trovaZona("Hz1")
-            --if gz then getObjectFromGUID(gz).setValue(player_color) end
         else
             ARMY[2].tag = dati.tag
             ARMY[2].nome = dati.nome
@@ -1514,13 +1511,8 @@ function caricaEsercito(url, slot, player)
             ARMY[2].color = player_color
             aggiornaPannello(2)
             aggiornaBanner()
-            -- Assegna colore player alla Hidden Zone
-            --local gz = trovaZona("Hz2")
-            --if gz then getObjectFromGUID(gz).setValue(player_color) end
         end
 
-        --local zona_nome = "HiddenZone" .. slot
-        --local zona_guid = trovaZona(zona_nome)
         local contatori = {}
         local army_tag  = "Army" .. slot  -- Army1 o Army2
 
@@ -1577,24 +1569,56 @@ function generaUnita(unita, tag, contatori, slot)
             -- Legge rotazione Y dal template
             local template_rot = template.getRotation()
 
-            local clone = template.clone({
-                position = {
-                    x = base.posizione.x + offset.x,
-                    y = base.posizione.y,
-                    z = base.posizione.z + offset.z
-                },
-            })
-            clone.setLock(true)
+            -- local clone = template.clone({
+            --     position = {
+            --         x = base.posizione.x + offset.x,
+            --         y = base.posizione.y,
+            --         z = base.posizione.z + offset.z
+            --     },
+            -- })
+
+            local clone = template.clone()
+
+            -- if unita.nome_display == "Cavalieri Montati" then
+            --         clone = template.clone({
+            --             position = {
+            --                 x = 0,
+            --                 y = 2.92,
+            --                 z = 0,
+            --             },
+            --         })
+            --  else 
+                    -- clone = template.clone({
+                    --     position = {
+                    --         x = base.posizione.x,
+                    --         y = base.posizione.y,
+                    --         z = base.posizione.z,
+                    --     },
+                    -- })
+            --  end
+
+
+
+            --clone.setLock(true)
 
             local b = base
             Wait.frames(function()
                 clone.setName(nickname)
+                clone.setDescription(unita.nome_display)
                 clone.setRotation({x=b.rotazione.x, y=template_rot.y, z=b.rotazione.z})
+                
                 clone.setPosition({
-                    x = b.posizione.x + offset.x,
-                    y = b.posizione.y,
-                    z = b.posizione.z + offset.z
-                })
+                    x = base.posizione.x + offset.x,
+                    y = base.posizione.y,
+                    z = base.posizione.z + offset.z
+                    
+                    -- x = b.posizione.x + offset.x,
+                    -- y = b.posizione.y,
+                    -- z = b.posizione.z + offset.z
+                 })
+                 --if unita.nome_display == "Cavalieri Montati" then
+                 print(nickname .. " - " .. base.posizione.x .. "," .. base.posizione.y .. "," .. base.posizione.z)
+                 --end 
                 clone.addTag(tag)
                 clone.setDescription(unita.nome_display)
                 -- Nasconde la base al giocatore nemico durante il deploy
