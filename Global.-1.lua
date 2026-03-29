@@ -1740,6 +1740,8 @@ function trovaOggettoPerNome(nickname)
     return nil
 end
 
+
+
 -- ------------------------------------------------------------
 -- FUNZIONE: trovaBase(nome_base)
 -- ------------------------------------------------------------
