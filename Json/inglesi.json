@@ -7,7 +7,7 @@
         {
             "tipo": "CinC", "nome_display": "Generale", "modificatore": null, "model": "ENG_CinC",
             "basi": [
-                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-0.54,"y":1.66,"z":40.00}}
+                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-0.54,"y":2.36,"z":39.82}}
             ]
         },
         {
