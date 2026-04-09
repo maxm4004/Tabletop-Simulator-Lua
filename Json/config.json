@@ -1,0 +1,23 @@
+{
+    "versione": "1.0",
+    "visualizzazione_ferite": "tint",
+    "colore_bersaglio_tiro": [0.4, 0.8, 1],
+    "deploy_cm": 8,
+    "army1_url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/francesi.json",
+    "army2_url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/inglesi.json",
+    "spawn_pos": {
+        "1": { "x": 0, "y": 2.36, "z": -47.00 },
+        "2": { "x": 0, "y": 2.36, "z":  47.00 }
+    },
+    "verde": {
+        "y":       2.36,
+        "y_linee": 3.36,
+        "lx":      46,
+        "lz":      32.23
+    },
+    "tavolo": {
+        "y":  3.35,
+        "lx": 90,
+        "lz": 68
+    }
+}

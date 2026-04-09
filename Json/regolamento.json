@@ -1,0 +1,42 @@
+{
+    "versione": "1.0",
+    "fasi": [
+        {
+            "nome": "INIZIATIVA",
+            "desc": "Lanciate entrambi 1D6 — chi vince sceglie se muovere primo o secondo",
+            "turno_tts": false
+        },
+        {
+            "nome": "MOVIMENTO",
+            "desc": "Prima muove chi ha l'iniziativa (prima i caricanti poi le altre), poi passa all'avversario",
+            "turno_tts": true
+        },
+        {
+            "nome": "TIRO",
+            "desc": "Simultaneo — si tira sempre al nemico piu vicino, unita in bosco tirano solo entro 3cm dal bordo",
+            "turno_tts": false
+        },
+        {
+            "nome": "MISCHIE",
+            "desc": "Si combattono le mischie da cariche — testa morale se sotto il 50% delle figure. Esercito che perde >50% unita abbandona.",
+            "turno_tts": false
+        }
+    ],
+    "dati_unita": {
+        "AI":   { "basi": 3, "fpb": 4, "dado_tiro_div": 3   },
+        "UI":   { "basi": 4, "fpb": 3, "dado_tiro_div": 3   },
+        "SK":   { "basi": 4, "fpb": 2, "dado_tiro_div": 4   },
+        "AC":   { "basi": 2, "fpb": 3, "dado_tiro_div": null },
+        "UC":   { "basi": 2, "fpb": 3, "dado_tiro_div": null },
+        "SKC":  { "basi": 2, "fpb": 2, "dado_tiro_div": null },
+        "CinC": { "basi": 1, "fpb": 0, "dado_tiro_div": null }
+    },
+    "armi_tiro": {
+        "ARCL": { "gittata": 27.5, "valore_visualizzato": 35, "angolo": 45 },
+        "BAL":  { "gittata": 27.5, "valore_visualizzato": 35, "angolo": 45 },
+        "ARC":  { "gittata": 23.4, "valore_visualizzato": 30, "angolo": 45 },
+        "FROM": { "gittata": 15.6, "valore_visualizzato": 20, "angolo": 45 },
+        "GIAV": { "gittata": 7.8,  "valore_visualizzato": 10, "angolo": 45 },
+        "HAN":  { "gittata": 7.8,  "valore_visualizzato": 10, "angolo": 45 }
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "versione": "1.0",
+    "REGOLAMENTO_URL": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/regolamento.json",
+    "CONFIG_URL": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/config.json",
+    "ARMY1_URL": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/francesi.json",
+    "ARMY2_URL": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/inglesi.json",
+    "ELEMENTI_SCENARIO_URL": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/elementiScenario.json",
+    "GROUNDS_URL": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/grounds.json"  
+}
