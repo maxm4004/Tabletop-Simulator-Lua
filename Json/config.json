@@ -3,8 +3,6 @@
     "visualizzazione_ferite": "tint",
     "colore_bersaglio_tiro": [0.4, 0.8, 1],
     "deploy_cm": 8,
-    "army1_url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/francesi.json",
-    "army2_url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/inglesi.json",
     "spawn_pos": {
         "1": { "x": 0, "y": 2.36, "z": -47.00 },
         "2": { "x": 0, "y": 2.36, "z":  47.00 }
