@@ -2,6 +2,7 @@
     "versione": "1.0",
     "visualizzazione_ferite": "tint",
     "colore_bersaglio_tiro": [0.4, 0.8, 1],
+    "posizionamento_su_tavolo": false,
     "deploy_cm": 8,
     "spawn_pos": {
         "1": { "x": 0, "y": 2.36, "z": -47.00 },
@@ -10,7 +11,7 @@
     "verde": {
         "y":       2.36,
         "y_linee": 3.36,
-        "lx":      46,
+        "lx":      50,
         "lz":      32.23
     },
     "tavolo": {
