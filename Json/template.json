@@ -1,0 +1,72 @@
+{
+    "versione": "1.0",
+    "modelli": 
+    [
+        {
+            "CustomMesh": {
+                "ColliderURL": "",
+                "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+                "Material": 3,
+                "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                "Type": 0
+            },
+            "Name": "Custom_Model",
+            "Nickname": "ENG_UI2"
+        },
+        {
+            "CustomMesh": {
+                "ColliderURL": "",
+                "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+                "Material": 3,
+                "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                "Type": 0
+            },
+            "Name": "Custom_Model",
+            "Nickname": "ENG_UI1"
+        },
+        {
+            "CustomMesh": {
+                "ColliderURL": "",
+                "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+                "Material": 3,
+                "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                "Type": 0
+            },
+            "Name": "Custom_Model",
+            "Nickname": "ENG_AI1"
+        },
+        {
+            "CustomMesh": {
+                "ColliderURL": "",
+                "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+                "Material": 3,
+                "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                "Type": 0
+            },
+            "Name": "Custom_Model",
+            "Nickname": "ENG_AC1"
+        },
+        {
+            "CustomMesh": {
+                "ColliderURL": "",
+                "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+                "Material": 3,
+                "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                "Type": 0
+            },
+            "Name": "Custom_Model",
+            "Nickname": "ENG_ACGen"
+        },
+        {
+            "CustomMesh": {
+                "ColliderURL": "",
+                "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+                "Material": 3,
+                "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                "Type": 0
+            },
+            "Name": "Custom_Model",
+            "Nickname": "ENG_CinC"
+        }
+    ]
+ }
