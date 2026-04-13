@@ -1,81 +1,90 @@
 {
-    "versione": "1.2",
+    "versione": "1.4",
     "nome": "Inglesi - Guerra dei 100 anni",
-    "nome_display": "Inglesi",
+    "nome-breve": "Inglesi",
     "tag": "ENG",
     "unita": [
         {
-            "tipo": "CinC", "nome_display": "Generale", "modificatore": null, "model": "ENG_CinC",
+            "tipo": "CinC", "nome_display": "Generale", "modificatore": null,
+            "model": "ENG_CinC", "guid": "4530ef",
             "basi": [
-                {"id":1,"seq":0,"model":null,"arma":null,"ferite":0,"posizione":{"x":-0.54,"y":2.36,"z":-5.18}}
+                {"id":1,"seq":0,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-0.54,"y":2.36,"z":-5.18}}
             ]
         },
         {
-            "tipo": "AC", "nome_display": "Cavalieri", "modificatore": null, "model": null,
+            "tipo": "AC", "nome_display": "Cavalieri", "modificatore": null,
+            "model": null, "guid": null,
             "basi": [
-                {"id":1,"seq":1,"model":"ENG_ACGen","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":0.0}},
-                {"id":2,"seq":2,"model":"ENG_AC1","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":2.43}}
+                {"id":1,"seq":1,"model":"ENG_ACGen","guid":"62c7d4","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":0.0}},
+                {"id":2,"seq":2,"model":"ENG_AC1","guid":"d3b1df","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":2.43}}
             ]
         },
         {
-            "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
+            "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S",
+            "model": "ENG_AI1", "guid": "6fd36b",
             "basi": [
-                {"id":1,"seq":3,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":0.0}},
-                {"id":2,"seq":4,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":2.43}},
-                {"id":3,"seq":5,"model":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":4.86}}
+                {"id":1,"seq":3,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":0.0}},
+                {"id":2,"seq":4,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":2.43}},
+                {"id":3,"seq":5,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.16,"y":2.36,"z":4.86}}
             ]
         },
         {
-            "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S", "model": "ENG_AI1",
+            "tipo": "AI", "nome_display": "Cavalieri Smontati", "modificatore": "S",
+            "model": "ENG_AI1", "guid": "6fd36b",
             "basi": [
-                {"id":1,"seq":6,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.21,"y":2.36,"z":0.0}},
-                {"id":2,"seq":7,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.21,"y":2.36,"z":2.43}},
-                {"id":3,"seq":8,"model":null,"arma":null,"ferite":0,"posizione":{"x":-13.21,"y":2.36,"z":4.86}}
+                {"id":1,"seq":6,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-13.21,"y":2.36,"z":0.0}},
+                {"id":2,"seq":7,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-13.21,"y":2.36,"z":2.43}},
+                {"id":3,"seq":8,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-13.21,"y":2.36,"z":4.86}}
             ]
         },
         {
-            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null, "model": "ENG_UI1",
+            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null,
+            "model": "ENG_UI1", "guid": "01c1c1",
             "basi": [
-                {"id":1,"seq":9,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":0.0}},
-                {"id":2,"seq":10,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":2.43}},
-                {"id":3,"seq":11,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":4.86}},
-                {"id":4,"seq":12,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":7.29}}
+                {"id":1,"seq":9,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":0.0}},
+                {"id":2,"seq":10,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":2.43}},
+                {"id":3,"seq":11,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":4.86}},
+                {"id":4,"seq":12,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":7.29}}
             ]
         },
         {
-            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null, "model": "ENG_UI1",
+            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null,
+            "model": "ENG_UI1", "guid": "01c1c1",
             "basi": [
-                {"id":1,"seq":13,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":0.0}},
-                {"id":2,"seq":14,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":2.43}},
-                {"id":3,"seq":15,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":4.86}},
-                {"id":4,"seq":16,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":7.29}}
+                {"id":1,"seq":13,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":0.0}},
+                {"id":2,"seq":14,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":2.43}},
+                {"id":3,"seq":15,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":4.86}},
+                {"id":4,"seq":16,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":7.29}}
             ]
         },
         {
-            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null, "model": "ENG_UI1",
+            "tipo": "UI", "nome_display": "Longbowmen", "modificatore": null,
+            "model": "ENG_UI1", "guid": "01c1c1",
             "basi": [
-                {"id":1,"seq":17,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":0.0}},
-                {"id":2,"seq":18,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":2.43}},
-                {"id":3,"seq":19,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":4.86}},
-                {"id":4,"seq":20,"model":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":7.29}}
+                {"id":1,"seq":17,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":0.0}},
+                {"id":2,"seq":18,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":2.43}},
+                {"id":3,"seq":19,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":4.86}},
+                {"id":4,"seq":20,"model":null,"guid":null,"arma":"ARCL","ferite":0,"posizione":{"x":12.0,"y":2.36,"z":7.29}}
             ]
         },
         {
-            "tipo": "UI", "nome_display": "Billmen", "modificatore": null, "model": "ENG_UI2",
+            "tipo": "UI", "nome_display": "Billmen", "modificatore": null,
+            "model": "ENG_UI2", "guid": "842eb3",
             "basi": [
-                {"id":1,"seq":21,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":0.0}},
-                {"id":2,"seq":22,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":2.43}},
-                {"id":3,"seq":23,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":4.86}},
-                {"id":4,"seq":24,"model":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":7.29}}
+                {"id":1,"seq":21,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":0.0}},
+                {"id":2,"seq":22,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":2.43}},
+                {"id":3,"seq":23,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":4.86}},
+                {"id":4,"seq":24,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":7.29}}
             ]
         },
         {
-            "tipo": "UI", "nome_display": "Billmen", "modificatore": null, "model": "ENG_UI2",
+            "tipo": "UI", "nome_display": "Billmen", "modificatore": null,
+            "model": "ENG_UI2", "guid": "842eb3",
             "basi": [
-                {"id":1,"seq":25,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":0.0}},
-                {"id":2,"seq":26,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":2.43}},
-                {"id":3,"seq":27,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":4.86}},
-                {"id":4,"seq":28,"model":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":7.29}}
+                {"id":1,"seq":25,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":0.0}},
+                {"id":2,"seq":26,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":2.43}},
+                {"id":3,"seq":27,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":4.86}},
+                {"id":4,"seq":28,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":24.8,"y":2.36,"z":7.29}}
             ]
         }
     ]
