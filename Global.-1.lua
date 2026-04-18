@@ -713,7 +713,11 @@ end
 -- FUNZIONE: aggiornaLinee()
 -- ============================================================
 function aggiornaLinee()
+   
+    print("aggiornaLinee")
+
     local linee = {}
+
     if linee_croce then
         table.insert(linee, { points={{x=-TAVOLO_LX,y=TAVOLO_Y,z=0},{x=TAVOLO_LX,y=TAVOLO_Y,z=0}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
         table.insert(linee, { points={{x=0,y=TAVOLO_Y,z=-TAVOLO_LZ},{x=0,y=TAVOLO_Y,z=TAVOLO_LZ}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
@@ -850,83 +854,85 @@ function clear() for i=0,120 do print("") end end
 -- ============================================================
 -- FUNZIONE: restart()
 -- ============================================================
-function restart()
+    function restart()
 
-    for _, obj in ipairs(getAllObjects()) do
-        for _, tag in ipairs(obj.getTags()) do
-            if tag == "Army1" or tag == "Army2" then
-                if parsaNome(obj.getName()) then
-                    obj.destruct()
+        for _, obj in ipairs(getAllObjects()) do
+            for _, tag in ipairs(obj.getTags()) do
+                if tag == "Army1" or tag == "Army2" then
+                    if parsaNome(obj.getName()) then
+                        obj.destruct()
+                    end
+                    break
                 end
-                break
             end
         end
-    end
 
-    ARMY[1] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
-    ARMY[2] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
+        ARMY[1] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
+        ARMY[2] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
 
-    esercito_1 = {}
-    esercito_2 = {}
-    wounds_data = {}
+        esercito_1 = {}
+        esercito_2 = {}
+        wounds_data = {}
 
-    turno_corrente = 0
-    fase_corrente = 0
+        turno_corrente = 0
+        fase_corrente = 0
 
-    Army1DeployDone = false
-    Army2DeployDone = false
-    pronto_red = false
-    pronto_green = false
-    iniziativa_scelta = false
-    mano_tag = nil
-    mano_passata = false
+        Army1DeployDone = false
+        Army2DeployDone = false
+        pronto_red = false
+        pronto_green = false
+        iniziativa_scelta = false
+        mano_tag = nil
+        mano_passata = false
 
-    for _, guid in ipairs(segnalini_guids) do
-        local o = getObjectFromGUID(guid)
-        if o then
-            o.destruct()
+        for _, guid in ipairs(segnalini_guids) do
+            local o = getObjectFromGUID(guid)
+            if o then
+                o.destruct()
+            end
         end
-    end
 
-    segnalini_guids = {}
-    Turns.enable = false
-    linee_deploy = false
+        segnalini_guids = {}
+        Turns.enable = false
+        linee_deploy = false
 
-    if ENGINE then
-        ENGINE.phase = "SITTING"
-        ENGINE.state = {
-            Army1Click = false,
-            Army2Click = false
-        }
-    end
 
-    colorArmy1 = "Grey"
-    colorArmy2 = "Grey"
 
-    UI.setAttribute("army1", "color", "Grey")
-    UI.setAttribute("army2", "color", "Grey")
-
-    UI.setAttribute("btnArmy1", "active", "true")
-    UI.setAttribute("btnArmy2", "active", "true")
-    UI.setAttribute("btnScelta", "active", "true")
-
-    UI.setAttribute("panelBtnUp", "active", "true")
-    UI.setAttribute("panelBtnDown", "active", "true")
-    UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
-    UI.setAttribute("panelBtnDown", "offsetXY", "0 266")
-
-    for _, p in pairs(Player.getPlayers()) do
-        if p.color == "Red" or p.color == "Green" or p.color == "White" then
-           --   p.changeColor("Grey")
+        if ENGINE then
+            ENGINE.phase = "SITTING"
+            ENGINE.state = {
+                Army1Click = false,
+                Army2Click = false
+            }
         end
+
+        colorArmy1 = "Grey"
+        colorArmy2 = "Grey"
+
+        UI.setAttribute("army1", "color", "Grey")
+        UI.setAttribute("army2", "color", "Grey")
+
+        UI.setAttribute("btnArmy1", "active", "true")
+        UI.setAttribute("btnArmy2", "active", "true")
+        UI.setAttribute("btnScelta", "active", "true")
+
+        UI.setAttribute("panelBtnUp", "active", "true")
+        UI.setAttribute("panelBtnDown", "active", "true")
+        UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
+        UI.setAttribute("panelBtnDown", "offsetXY", "0 266")
+
+        for _, p in pairs(Player.getPlayers()) do
+            if p.color == "Red" or p.color == "Green" or p.color == "White" then
+                p.changeColor("Grey")
+            end
+        end
+
+        updateCenterPanel()
+        aggiornaLinee()
+        clear()
+
+        printToAll("[RESET] Partita azzerata — pronto per nuovo setup", {r=0.9, g=0.5, b=0.1})
     end
-
-    updateCenterPanel()
-    aggiornaLinee()
-    clear()
-
-    printToAll("[RESET] Partita azzerata — pronto per nuovo setup", {r=0.9, g=0.5, b=0.1})
-end
 -- ============================================================
 -- FUNZIONE: impostaTurnoTTS()
 -- ============================================================
@@ -1398,189 +1404,6 @@ end
 -- ================================================================================================================================================
 --                                                              REFACTORING FASI
 -- ================================================================================================================================================
-function onLoad()
-
-    print("onLoad")
-
-    COND = {
-        BOTH_ARMIES_READY = "both_armies_ready",
-        CONFIRM_PRESSED   = "confirm_pressed",
-        AUTO_PASS         = "auto_pass"
-    }
-
-    local phases_json = [[
-        {
-          "SITTING": {
-            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK","CONFIRM"],
-            "render": "3BtnClick",
-            "transitions": [
-              {
-                "to": "DEPLOY",
-                "conditions": ["both_armies_ready", "confirm_pressed"]
-              }
-            ]
-          },
-          "DEPLOY": {
-            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
-            "render": "2BtnClick",
-            "transitions": [
-              {
-                "to": "READY",
-                "conditions": ["both_armies_ready"]
-              }
-            ]
-          },
-          "READY": {
-            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
-            "render": "2BtnClick",
-            "transitions": [
-              {
-                "to": "ARMY_CHECK",
-                "conditions": ["both_armies_ready"]
-              }
-            ]
-          },
-          "ARMY_CHECK": {
-            "allowedActions": ["CONFIRM"],
-            "render": "1BtnClick",
-            "transitions": [
-              {
-                "to": "INITIATIVE",
-                "conditions": ["confirm_pressed"]
-              }
-            ]
-          },     
-            "INITIATIVE": {
-            "allowedActions": [],
-            "render": "1BtnClick",
-            "transitions": []
-          }
-        }
-        ]]
-        
-        local decoded = JSON.decode(phases_json)
-
-        if not decoded then
-            error("JSON decode FALLITO")
-        end
-        
-        -- se è array usa [1], se è oggetto usa diretto
-        local phasesData = decoded[1] or decoded
-        
-        ENGINE = {
-            phase = "SITTING",
-            state = {
-                Army1Click = false,
-                Army2Click = false
-            },
-            phases = phasesData
-        }
-
-        engine_validatePhases()
-
-    UI.setAttribute("btnArmy1", "active", "true")
-    UI.setAttribute("btnArmy2", "active", "true")
-    UI.setAttribute("btnScelta", "active", "true")
-
-    updateCenterPanel()
-end
-
-function engine_validatePhases()
-
-    if not ENGINE.phases then
-        error("ENGINE.phases NIL")
-    end
-
-    for phaseName, phaseData in pairs(ENGINE.phases) do
-
-        if not phaseData.allowedActions then
-            error("Manca allowedActions in fase: "..phaseName)
-        end
-
-        if not phaseData.transitions then
-            error("Manca transitions in fase: "..phaseName)
-        end
-
-        if not phaseData.render then
-            error("Manca render in fase: "..phaseName)
-        end
-
-        for i = 1, #phaseData.transitions do
-            local t = phaseData.transitions[i]
-
-            if not t.to then
-                error("Transizione senza 'to' in fase: "..phaseName)
-            end
-
-            if not ENGINE.phases[t.to] then
-                error("Transizione verso fase inesistente: "..t.to.." (da "..phaseName..")")
-            end
-
-            if not t.conditions then
-                error("Transizione senza conditions in fase: "..phaseName)
-            end
-        end
-    end
-end
--- ============================================================
--- ENGINE CORE
--- ============================================================
--- ============================================================
--- FUNZIONE: engine_handleAction()
--- ============================================================
-    function engine_handleAction(action)
-
-        print("engine_handleAction")
-
-        if not engine_isAllowed(action.type) then
-            return
-        end
-
-        engine_execute(action)
-        engine_transition(action) -- PASSO L'AZIONE
-        updateCenterPanel()
-    end
--- ============================================================
--- FUNZIONE: engine_isAllowed()
--- ============================================================
-function engine_isAllowed(actionType)
-
-    print("engine_isAllowed")
-
-    local phase = ENGINE.phases[ENGINE.phase]
-    if not phase then return false end
-
-    for i = 1, #phase.allowedActions do
-        local allowed = phase.allowedActions[i]
-        if actionType == allowed then
-            print("ok allowed")
-            return true
-        end
-    end
-
-    return false
-end
--- ============================================================
--- FUNZIONE: engine_execute()
--- ============================================================
-    function engine_execute(action)
-
-        print("engine_execute")
-
-        if action.type == "ARMY1_CLICK" then
-            ENGINE.state.Army1Click = true
-
-        elseif action.type == "ARMY2_CLICK" then
-            ENGINE.state.Army2Click = true
-        end
-    end
--- ============================================================
--- FUNZIONE: engine_transition()
--- ============================================================   
--- ================================================================================================================================================
---                                                              REFACTORING FASI
--- ================================================================================================================================================
-
 COND = {
     BOTH_ARMIES_READY = "both_armies_ready",
     CONFIRM_PRESSED   = "confirm_pressed",
@@ -1589,57 +1412,172 @@ COND = {
 
 function onLoad()
 
-    print("onLoad")
+    linee_rettangolo = true
+    linee_deploy     = false
 
     local phases_json = [[
-    {
-      "SITTING": {
-        "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
-        "render": "3BtnClick",
-        "transitions": [
-          {
-            "to": "DEPLOY",
-            "conditions": ["both_armies_ready", "confirm_pressed"]
-          }
-        ]
-      },
-      "DEPLOY": {
-        "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
-        "render": "2BtnClick",
-        "transitions": [
-          {
-            "to": "READY",
-            "conditions": ["both_armies_ready"]
-          }
-        ]
-      },
-      "READY": {
-        "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
-        "render": "2BtnClick",
-        "transitions": [
-          {
-            "to": "ARMY_CHECK",
-            "conditions": ["both_armies_ready"]
-          }
-        ]
-      },
-      "ARMY_CHECK": {
-        "allowedActions": ["CONFIRM"],
-        "render": "1BtnClick",
-        "transitions": [
-          {
-            "to": "INITIATIVE",
-            "conditions": ["confirm_pressed"]
-          }
-        ]
-      },
-      "INITIATIVE": {
-        "allowedActions": [],
-        "render": "1BtnClick",
-        "transitions": []
-      }
-    }
-    ]]
+        {
+            "SITTING": {
+                "allowedActions": [
+                    "ARMY1_CLICK",
+                    "ARMY2_CLICK",
+                    "CONFIRM"
+                ],
+                "render": "3BtnClick",
+                "buttons": {
+                    "BTN_ARMY1": "ARMY1_CLICK",
+                    "BTN_ARMY2": "ARMY2_CLICK",
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "DEPLOY",
+                        "conditions": [
+                            "both_armies_ready",
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            },
+            "DEPLOY": {
+                "allowedActions": [
+                    "ARMY1_CLICK",
+                    "ARMY2_CLICK",
+                    "CONFIRM"
+                ],
+                "render": "3BtnClick",
+                "buttons": {
+                    "BTN_ARMY1": "ARMY1_CLICK",
+                    "BTN_ARMY2": "ARMY2_CLICK",
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "INITIATIVE",
+                        "conditions": [
+                            "both_armies_ready",
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            },
+            "INITIATIVE": {
+                "allowedActions": [
+                    "ARMY1_CLICK",
+                    "ARMY2_CLICK",
+                    "CONFIRM"
+                ],
+                "render": "3BtnClick",
+                "buttons": {
+                    "BTN_ARMY1": "ARMY1_CLICK",
+                    "BTN_ARMY2": "ARMY2_CLICK",
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "MOVE",
+                        "conditions": [
+                            "both_armies_ready",
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            },
+            "MOVE": {
+                "allowedActions": [
+                    "ARMY1_CLICK",
+                    "ARMY2_CLICK",
+                    "CONFIRM"
+                ],
+                "render": "3BtnClick",
+                "buttons": {
+                    "BTN_ARMY1": "ARMY1_CLICK",
+                    "BTN_ARMY2": "ARMY2_CLICK",
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "SHOOT",
+                        "conditions": [
+                            "both_armies_ready",
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            },
+            "SHOOT": {
+                "allowedActions": [
+                    "ARMY1_CLICK",
+                    "ARMY2_CLICK",
+                    "CONFIRM"
+                ],
+                "render": "3BtnClick",
+                "buttons": {
+                    "BTN_ARMY1": "ARMY1_CLICK",
+                    "BTN_ARMY2": "ARMY2_CLICK",
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "ATTACK",
+                        "conditions": [
+                            "both_armies_ready",
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            },
+            "ATTACK": {
+                "allowedActions": [
+                    "ARMY1_CLICK",
+                    "ARMY2_CLICK",
+                    "CONFIRM"
+                ],
+                "render": "3BtnClick",
+                "buttons": {
+                    "BTN_ARMY1": "ARMY1_CLICK",
+                    "BTN_ARMY2": "ARMY2_CLICK",
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "MORALE",
+                        "conditions": [
+                            "both_armies_ready",
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            },
+            "MORALE": {
+                "allowedActions": [
+                    "CONFIRM"
+                ],
+                "render": "1BtnClick",
+                "buttons": {
+                    "BTN_SINGLE": "CONFIRM"
+                },
+                "transitions": [
+                    {
+                        "to": "INITIATIVE",
+                        "conditions": [
+                            "confirm_pressed"
+                        ]
+                    }
+                ]
+            }
+        }					    
+	]]
+
+    --===========================
+    -- "FINAL-PHASE": {
+    --     "allowedActions": [],
+    --     "render": "NoBtn",
+    --     "buttons": {},
+    --     "transitions": []
+    -- }
+    --===========================
+
 
     local decoded = JSON.decode(phases_json)
     if not decoded then
@@ -1652,7 +1590,8 @@ function onLoad()
         phase = "SITTING",
         state = {
             Army1Click = false,
-            Army2Click = false
+            Army2Click = false,
+            ConfirmClick = false
         },
         phases = phasesData
     }
@@ -1663,7 +1602,11 @@ function onLoad()
     UI.setAttribute("btnArmy2", "active", "true")
     UI.setAttribute("btnScelta", "active", "true")
 
+    clear()
+    print("onLoad")
     updateCenterPanel()
+    aggiornaLinee()
+    
 end
 
 function engine_validatePhases()
@@ -1704,119 +1647,129 @@ function engine_validatePhases()
     end
 end
 
+-- ==============================================================================================================
+--                                                          ENGINE CORE
+-- ==============================================================================================================
 -- ============================================================
--- ENGINE CORE
+-- FUNZIONE:
 -- ============================================================
+    function engine_handleButton(slot, player)
 
-function engine_handleAction(action)
+        print("engine_handleButton")
 
-    print("engine_handleAction")
+        local phase = ENGINE.phases[ENGINE.phase]
+        if not phase then return end
 
-    if not engine_isAllowed(action.type) then
-        return
+        if not phase.buttons then return end
+
+        local actionType = phase.buttons[slot]
+        if not actionType then return end
+
+        engine_handleAction({
+            type = actionType,
+            player = player
+        })
     end
+-- ============================================================
+-- FUNZIONE:
+-- ============================================================
+    function engine_handleAction(action)
 
-    engine_execute(action)
-    engine_transition(action)
-    updateCenterPanel()
-end
+        print("engine_handleAction")
 
-function engine_isAllowed(actionType)
-
-    print("engine_isAllowed")
-
-    local phase = ENGINE.phases[ENGINE.phase]
-    if not phase then return false end
-
-    for i = 1, #phase.allowedActions do
-        local allowed = phase.allowedActions[i]
-        if actionType == allowed then
-            print("ok allowed")
-            return true
+        if not engine_isAllowed(action.type) then
+            return
         end
+
+        engine_execute(action)
+        engine_transition(action)
+        updateCenterPanel()
     end
+-- ============================================================
+-- FUNZIONE:
+-- ============================================================
+    function engine_isAllowed(actionType)
 
-    return false
-end
+        print("engine_isAllowed")
 
-function engine_execute(action)
+        local phase = ENGINE.phases[ENGINE.phase]
+        if not phase then return false end
 
-    print("engine_execute")
+        for i = 1, #phase.allowedActions do
+            local allowed = phase.allowedActions[i]
+            if actionType == allowed then
+                return true
+            end
+        end
 
-    if action.type == "ARMY1_CLICK" then
-        ENGINE.state.Army1Click = true
-
-    elseif action.type == "ARMY2_CLICK" then
-        ENGINE.state.Army2Click = true
+        return false
     end
-end
+-- ============================================================
+-- FUNZIONE:
+-- ============================================================
+    function engine_execute(action)
 
-function engine_transition(action)
+        if action.type == "ARMY1_CLICK" then
+            ENGINE.state.Army1Click = true
 
-    print("engine_transition")
+        elseif action.type == "ARMY2_CLICK" then
+            ENGINE.state.Army2Click = true
 
-    local phase = ENGINE.phases[ENGINE.phase]
-    if not phase then return end
-
-    if action then
-        for i = 1, #phase.transitions do
-            local t = phase.transitions[i]
-
-            if checkConditions(t.conditions, action) then
-                ENGINE.phase = t.to
-                engine_resetState()
-                break
+        elseif action.type == "CONFIRM" then
+            if ENGINE.state.Army1Click and ENGINE.state.Army2Click then
+                ENGINE.state.ConfirmClick = true
             end
         end
     end
+-- ============================================================
+-- FUNZIONE:
+-- ============================================================
+    function engine_transition(action)
 
-    local changed = true
+        print("engine_transition")
 
-    while changed do
-        changed = false
+        local phase = ENGINE.phases[ENGINE.phase]
+        if not phase then return end
 
-        local p = ENGINE.phases[ENGINE.phase]
-        if not p then return end
+        if action then
+            for i = 1, #phase.transitions do
+                local t = phase.transitions[i]
 
-        for i = 1, #p.transitions do
-            local t = p.transitions[i]
+                if checkConditions(t.conditions, action) then
+                    ENGINE.phase = t.to
+                    engine_resetState()
+                    break
+                end
+            end
+        end
 
-            if checkConditions(t.conditions, nil) then
-                ENGINE.phase = t.to
-                engine_resetState()
-                changed = true
-                break
+        local changed = true
+
+        while changed do
+            changed = false
+
+            local p = ENGINE.phases[ENGINE.phase]
+            if not p then return end
+
+            for i = 1, #p.transitions do
+                local t = p.transitions[i]
+
+                if checkConditions(t.conditions, nil) then
+                    ENGINE.phase = t.to
+                    engine_resetState()
+                    changed = true
+                    break
+                end
             end
         end
     end
-
-    printToAll(ENGINE.phase, "Blue")
-end
-
-function checkCondition(cond, action)
-
-    print("checkCondition: "..tostring(cond))
-    print("phase: "..tostring(ENGINE.phase))
-    print("Army1Click: ".. tostring(ENGINE.state.Army1Click))
-    print("Army2Click: ".. tostring(ENGINE.state.Army2Click))
-
-    if cond == COND.BOTH_ARMIES_READY then
-        return ENGINE.state.Army1Click and ENGINE.state.Army2Click
-    end
-
-    if cond == COND.CONFIRM_PRESSED then
-        return action and action.type == "CONFIRM"
-    end
-
-    if cond == COND.AUTO_PASS then
-        return true
-    end
-
-    return false
-end
-
+    -- ============================================================
+-- FUNZIONE: checkConditions()
+-- ============================================================
 function checkConditions(conditions, action)
 
+    print("checkConditions")
+    
     if type(conditions) == "string" then
         return checkCondition(conditions, action)
     end
@@ -1827,7 +1780,6 @@ function checkConditions(conditions, action)
 
     for i = 1, #conditions do
         local cond = conditions[i]
-
         if not checkCondition(cond, action) then
             return false
         end
@@ -1835,15 +1787,42 @@ function checkConditions(conditions, action)
 
     return true
 end
+-- ============================================================
+-- FUNZIONE: checkCondition()
+-- ============================================================
+    function checkCondition(cond, action)
 
-function engine_resetState()
+    print("checkCondition: " ..tostring(ENGINE.phase))
 
-    ENGINE.state = {
-        Army1Click = false,
-        Army2Click = false
-    }
-end
+        if cond == COND.BOTH_ARMIES_READY then
+            print("Army1Click: ".. tostring(ENGINE.state.Army1Click) .." Army2Click: ".. tostring(ENGINE.state.Army2Click))
+            return ENGINE.state.Army1Click and ENGINE.state.Army2Click
+        end
+    
+        if cond == COND.CONFIRM_PRESSED then
+            print("ConfirmClick: ".. tostring(ENGINE.state.ConfirmClick))
+            return ENGINE.state.ConfirmClick
+        end
+    
+        if cond == COND.AUTO_PASS then
+            return true
+        end
+    
+        return false
+    end
+-- ============================================================
+-- FUNZIONE:
+-- ============================================================
+    function engine_resetState()
 
+        print("engine_resetState")
+
+            ENGINE.state = {
+                Army1Click = false,
+                Army2Click = false,
+                ConfirmClick = false
+            }
+    end
 -- ============================================================
 -- UI WRAPPER
 -- ============================================================
@@ -1852,55 +1831,47 @@ function setPlayerRed(player_clicked, value, id)
 
     print("setPlayerRed")
 
-    if Player["Red"].seated then
-        player_clicked.broadcast("color " .. army1 .. " already used")
-    else
-        player_clicked.changeColor("Red")
-        print(player_clicked.steam_name .. " choose ".. army1)
-    end
+    -- if Player["Red"].seated then
+    --     player_clicked.broadcast("color " .. army1 .. " already used")
+    -- else
+    --     player_clicked.changeColor("Red")
+    --     print(player_clicked.steam_name .. " choose ".. army1)
+    -- end
 
-    engine_handleAction({
-        type = "ARMY1_CLICK"
-    })
+    -- engine_handleAction({
+    --     type = "ARMY1_CLICK"
+    -- })
 end
 
 function setPlayerGreen(player_clicked, value, id)
 
     print("setPlayerGreen")
 
-    if Player["Green"].seated then
-        player_clicked.broadcast("color " .. army2 .. " already used")
-    else
-        player_clicked.changeColor("Green")
-        print(player_clicked.steam_name .. " choose ".. army2)
-    end
+    -- if Player["Green"].seated then
+    --     player_clicked.broadcast("color " .. army2 .. " already used")
+    -- else
+    --     player_clicked.changeColor("Green")
+    --     print(player_clicked.steam_name .. " choose ".. army2)
+    -- end
 
-    engine_handleAction({
-        type = "ARMY2_CLICK"
-    })
-end
-
-function onBtnScelta()
-
-    print("onBtnScelta")
-
-    engine_handleAction({
-        type = "CONFIRM"
-    })
+    -- engine_handleAction({
+    --     type = "ARMY2_CLICK"
+    -- })
 end
 
 function onBtnArmy1(player, value, id)
-
     print("onBtnArmy1")
-
-    setPlayerRed(player, value, id)
+    engine_handleButton("BTN_ARMY1", player)
 end
 
 function onBtnArmy2(player, value, id)
-
     print("onBtnArmy2")
+    engine_handleButton("BTN_ARMY2", player)
+end
 
-    setPlayerGreen(player, value, id)
+function onBtnScelta(player, value, id)
+    print("onBtnScelta")
+    engine_handleButton("BTN_SINGLE", player)
 end
 
 -- ============================================================
@@ -1933,6 +1904,16 @@ function updateCenterPanel()
     UI.setAttribute("panelBtnUp", "active", "true")
     UI.setAttribute("panelBtnDown", "active", "true")
 
+    if phase.render == "NoBtn" then
+        UI.setAttribute("btnArmy1", "active", "false")
+        UI.setAttribute("btnArmy2", "active", "false")
+        UI.setAttribute("btnScelta", "active", "false")
+        UI.setAttribute("panelBtnUp", "active", "false")
+        UI.setAttribute("panelBtnDown", "active", "false")
+        UI.setAttribute("panelBtnDown", "offsetXY", "0 266")
+
+    end
+
     if phase.render == "2BtnClick" then
         UI.setAttribute("btnArmy1", "active", "true")
         UI.setAttribute("btnArmy2", "active", "true")
@@ -1943,7 +1924,6 @@ function updateCenterPanel()
 
     if phase.render == "1BtnClick" then
         UI.setAttribute("btnScelta", "active", "true")
-
         UI.setAttribute("panelBtnUp", "active", "false")
         UI.setAttribute("panelBtnDown", "offsetXY", "0 318")
     end
@@ -1951,23 +1931,41 @@ function updateCenterPanel()
     if phase.render == "3BtnClick" then
         UI.setAttribute("btnArmy1", "active", "true")
         UI.setAttribute("btnArmy2", "active", "true")
-        UI.setAttribute("btnScelta", "active", "true")
+        UI.setAttribute("panelBtnDown", "active", "false")
+        UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
+
+        if ENGINE.state.Army1Click and ENGINE.state.Army2Click then
+            UI.setAttribute("panelBtnUp", "active", "false")
+            UI.setAttribute("panelBtnDown", "active", "true")
+            UI.setAttribute("panelBtnDown", "offsetXY", "0 318")
+            UI.setAttribute("btnScelta", "active", "true")
+        else
+            UI.setAttribute("btnScelta", "active", "false")
+        end
     end
 
-    if ENGINE.phase == "SITTING" then
-        UI.setAttribute("textFase", "text", "PHASE: SITTING")
-        UI.setAttribute("textDesc", "text", "Select both players")
+if ENGINE.phase == "SITTING" then
+    UI.setAttribute("textFase", "text", "PHASE: SITTING")
+    if ENGINE.state.Army1Click and ENGINE.state.Army2Click then UI.setAttribute("textDesc", "text", "Both players selected, press Confirm")
+    else UI.setAttribute("textDesc", "text", "Select both players") end
     elseif ENGINE.phase == "DEPLOY" then
         UI.setAttribute("textFase", "text", "PHASE: DEPLOY")
-        UI.setAttribute("textDesc", "text", "Confirm deployment")
-    elseif ENGINE.phase == "READY" then
-        UI.setAttribute("textFase", "text", "PHASE: READY")
-        UI.setAttribute("textDesc", "text", "Game ready")
-    elseif ENGINE.phase == "ARMY_CHECK" then
-        UI.setAttribute("textFase", "text", "PHASE: ARMY CHECK")
-        UI.setAttribute("textDesc", "text", "Verify armies")
+        UI.setAttribute("textDesc", "text", "Deploy your units behind the spawning line")
     elseif ENGINE.phase == "INITIATIVE" then
         UI.setAttribute("textFase", "text", "PHASE: INITIATIVE")
-        UI.setAttribute("textDesc", "text", "Roll a D6")
+        UI.setAttribute("textDesc", "text", "The dice are rolled and the winner decides who moves first.")
+    elseif ENGINE.phase == "MOVE" then
+        UI.setAttribute("textFase", "text", "PHASE: MOVE")
+        UI.setAttribute("textDesc", "text", "Move your armY")
+    elseif ENGINE.phase == "SHOOT" then
+        UI.setAttribute("textFase", "text", "PHASE: SHOOT")
+        UI.setAttribute("textDesc", "text", "Open fire on targets")
+    elseif ENGINE.phase == "ATTACK" then
+        UI.setAttribute("textFase", "text", "PHASE: ATTACK")
+        UI.setAttribute("textDesc", "text", "Resolve combat")        
+    elseif ENGINE.phase == "MORALE" then
+        UI.setAttribute("textFase", "text", "PHASE: MORALE")
+        UI.setAttribute("textDesc", "text", "Test morale")
     end
 end
+
