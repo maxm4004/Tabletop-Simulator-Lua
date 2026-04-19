@@ -15,6 +15,14 @@
               color="White"
               alignment="MiddleCenter"/>
         <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
+        <Text id="textTurn"
+              text="TURN"
+              fontSize="18"
+              fontStyle="Bold"
+              color="White"
+              alignment="MiddleCenter"/>              
+        </HorizontalLayout>
+        <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
         <Text id="army1"
               text="Army 1"
               fontSize="14"
