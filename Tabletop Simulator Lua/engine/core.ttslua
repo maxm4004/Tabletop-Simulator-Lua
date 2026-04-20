@@ -1,0 +1,207 @@
+ENGINE = nil
+
+-- ============================================================
+-- FUNZIONE: engine_init()
+-- ============================================================
+function engine_init()
+
+    if not ENGINE then
+        error("ENGINE non inizializzato")
+    end
+
+    engine_validatePhases()
+
+    UI.setAttribute("btnArmy1", "active", "true")
+    UI.setAttribute("btnArmy2", "active", "true")
+    UI.setAttribute("btnScelta", "active", "true")
+
+    if clear then clear() end
+    updateCenterPanel()
+    if aggiornaLinee then aggiornaLinee() end
+
+    engine_validatePhases()
+
+    UI.setAttribute("BTN_ARMY1", "active", "true")
+    UI.setAttribute("BTN_ARMY2", "active", "true")
+    UI.setAttribute("BTN_SINGLE", "active", "true")
+    fadeOut("WELCOME TO LIONHEART")
+
+     if clear then clear() end
+     if allPlayersGrey then allPlayersGrey() end
+    if updateCenterPanel then updateCenterPanel() end
+    if aggiornaLinee then aggiornaLinee() end
+end
+-- ============================================================
+-- FUNZIONE: engine_validatePhases()
+-- ============================================================
+function engine_validatePhases()
+
+    if not ENGINE.phases then
+        error("ENGINE.phases NIL")
+    end
+
+    for phaseName, phaseData in pairs(ENGINE.phases) do
+
+        if not phaseData.allowedActions then
+            error("Manca allowedActions in fase: "..phaseName)
+        end
+
+        if not phaseData.transitions then
+            error("Manca transitions in fase: "..phaseName)
+        end
+
+        if not phaseData.render then
+            error("Manca render in fase: "..phaseName)
+        end
+
+        if phaseData.buttons then
+            for slot, btn in pairs(phaseData.buttons) do
+                if type(btn) ~= "table" then
+                    error("Button malformato in fase: "..phaseName.." slot: "..slot)
+                end
+
+                if btn.action and type(btn.action) ~= "string" then
+                    error("Button action non valida in fase: "..phaseName.." slot: "..slot)
+                end
+
+                if btn.label and type(btn.label) ~= "string" then
+                    error("Button label non valida in fase: "..phaseName.." slot: "..slot)
+                end
+
+                if btn.textColor and type(btn.textColor) ~= "string" then
+                    error("Button textColor non valida in fase: "..phaseName.." slot: "..slot)
+                end
+
+                if btn.callback and type(btn.callback) ~= "string" then
+                    error("Button callback non valida in fase: "..phaseName.." slot: "..slot)
+                end
+            end
+        end
+
+        for i = 1, #phaseData.transitions do
+            local t = phaseData.transitions[i]
+
+            if not t.to then
+                error("Transizione senza 'to' in fase: "..phaseName)
+            end
+
+            if not ENGINE.phases[t.to] then
+                error("Transizione verso fase inesistente: "..t.to.." (da "..phaseName..")")
+            end
+
+            if not t.conditions then
+                error("Transizione senza conditions in fase: "..phaseName)
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: engine_handleAction()
+-- ============================================================
+function engine_handleAction(action)
+
+    if DEBUG then print("engine_handleAction") end
+
+    if not engine_isAllowed(action.type) then
+        return
+    end
+
+    engine_execute(action)
+    engine_transition(action)
+    updateCenterPanel()
+end
+
+-- ============================================================
+-- FUNZIONE: engine_isAllowed()
+-- ============================================================
+function engine_isAllowed(actionType)
+
+    if DEBUG then print("engine_isAllowed") end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase then return false end
+
+    for i = 1, #phase.allowedActions do
+        if actionType == phase.allowedActions[i] then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- ============================================================
+-- FUNZIONE: engine_execute()
+-- ============================================================
+function engine_execute(action)
+
+    if DEBUG then print("engine_execute") end
+
+    if action.type == ACTION.ARMY1_CLICK then
+        ENGINE.state.Army1Click = true
+
+    elseif action.type == ACTION.ARMY2_CLICK then
+        ENGINE.state.Army2Click = true
+
+    elseif action.type == ACTION.CONFIRM then
+        ENGINE.state.ConfirmClick = true
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: engine_transition()
+-- ============================================================
+function engine_transition(action)
+
+    if DEBUG then print("engine_transition") end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase then return end
+
+    if action then
+        for i = 1, #phase.transitions do
+            local t = phase.transitions[i]
+
+            if checkConditions(t.conditions, action) then
+                ENGINE.phase = t.to
+                engine_resetState()
+                break
+            end
+        end
+    end
+
+    local changed = true
+
+    while changed do
+        changed = false
+
+        local p = ENGINE.phases[ENGINE.phase]
+        if not p then return end
+
+        for i = 1, #p.transitions do
+            local t = p.transitions[i]
+
+            if checkConditions(t.conditions, nil) then
+                ENGINE.phase = t.to
+                engine_resetState()
+                changed = true
+                break
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: engine_resetState()
+-- ============================================================
+function engine_resetState()
+
+    if DEBUG then print("engine_resetState") end
+
+    ENGINE.state = {
+        Army1Click = false,
+        Army2Click = false,
+        ConfirmClick = false
+    }
+end

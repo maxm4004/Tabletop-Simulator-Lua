@@ -1,0 +1,56 @@
+-- ============================================================
+-- FUNZIONE: checkConditions()
+-- ============================================================
+function checkConditions(conditions, action)
+
+   if DEBUG then print("checkConditions") end
+
+    if type(conditions) == "string" then
+        return checkCondition(conditions, action)
+    end
+
+    if not conditions then
+        return false
+    end
+
+    for i = 1, #conditions do
+        if not checkCondition(conditions[i], action) then
+            return false
+        end
+    end
+
+    return true
+end
+
+-- ============================================================
+-- FUNZIONE: checkCondition()
+-- ============================================================
+function checkCondition(cond, action)
+
+   if DEBUG then print("checkCondition") end
+   
+    local phase = ENGINE.phases[ENGINE.phase]
+
+    if cond == COND.BOTH_PLAYERS_SELECTED then
+        return ENGINE.state.Army1Click and ENGINE.state.Army2Click
+    end
+
+    if cond == COND.CONFIRM_READY then
+        return ENGINE.state.ConfirmClick
+           and ENGINE.state.Army1Click
+           and ENGINE.state.Army2Click
+    end
+
+    if cond == COND.CONFIRM_IMMEDIATE then
+        if ENGINE.state.ConfirmClick and phase.turnStart then
+            ENGINE.turn = ENGINE.turn + 1
+        end
+        return ENGINE.state.ConfirmClick
+    end
+
+    if cond == COND.AUTO_ADVANCE then
+        return true
+    end
+
+    return false
+end
