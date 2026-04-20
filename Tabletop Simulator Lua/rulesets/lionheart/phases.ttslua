@@ -1,0 +1,244 @@
+-- ============================================================
+-- FUNZIONE: lionheart_initPhases()
+-- ============================================================
+function lionheart_initPhases()
+
+    linee_rettangolo = true
+    linee_deploy     = false
+
+     local phases_json = [[
+    {
+        "SITTING": {
+            "title": "PHASE: SITTING",
+            "desc": "Select both players",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClick",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Select Red",
+                    "textColor": "White",
+                    "callback": "sitting_btn_army"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Select Green",
+                    "textColor": "White",
+                    "callback": "sitting_btn_army"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "DEPLOY",
+                    "conditions": ["both_players_selected"]
+                }
+            ]
+        },
+
+        "DEPLOY": {
+            "title": "PHASE: DEPLOY",
+            "desc": "Deploy your units behind the spawning line",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Ready",
+                    "textColor": "White",
+                    "callback": "deploy_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Ready",
+                    "textColor": "White",
+                    "callback": "deploy_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Deploy",
+                    "textColor": "Black",
+                    "callback": "deploy_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "INITIATIVE",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+
+        "INITIATIVE": {
+            "title": "PHASE: INITIATIVE",
+            "desc": "The dice are rolled and the winner decides who moves first.",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Starts",
+                    "textColor": "White",
+                    "callback": "initiative_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Starts",
+                    "textColor": "White",
+                    "callback": "initiative_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Initiative",
+                    "textColor": "Black",
+                    "callback": "initiative_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "MOVE",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+
+        "MOVE": {
+            "title": "PHASE: MOVE",
+            "desc": "Move your army",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Done",
+                    "textColor": "White",
+                    "callback": "move_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Done",
+                    "textColor": "White",
+                    "callback": "move_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Move",
+                    "textColor": "Black",
+                    "callback": "move_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "SHOOT",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+
+        "SHOOT": {
+            "title": "PHASE: SHOOT",
+            "desc": "Open fire on targets",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Done",
+                    "textColor": "White",
+                    "callback": "shoot_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Done",
+                    "textColor": "White",
+                    "callback": "shoot_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Shoot",
+                    "textColor": "Black",
+                    "callback": "shoot_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "ATTACK",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+
+        "ATTACK": {
+            "title": "PHASE: ATTACK",
+            "desc": "Resolve combat",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Done",
+                    "textColor": "White",
+                    "callback": "attack_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Done",
+                    "textColor": "White",
+                    "callback": "attack_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Attack",
+                    "textColor": "Black",
+                    "callback": "attack_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "MORALE",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+
+        "MORALE": {
+            "title": "PHASE: MORALE",
+            "desc": "Test morale",
+            "allowedActions": ["CONFIRM"],
+            "turnStart": true,
+            "render": "1BtnClick",
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Next Turn",
+                    "textColor": "Black",
+                    "callback": "morale_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "INITIATIVE",
+                    "conditions": ["confirm_immediate"]
+                }
+            ]
+        }
+    }
+    ]]
+
+    local decoded = JSON.decode(phases_json)
+    if not decoded then
+        error("JSON decode FALLITO")
+    end
+
+    local phasesData = decoded[1] or decoded
+
+    ENGINE = {
+        phase = "SITTING",
+        turn = 1,
+        state = {
+            Army1Click = false,
+            Army2Click = false,
+            ConfirmClick = false
+        },
+        phases = phasesData
+    }
+end
