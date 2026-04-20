@@ -54,8 +54,8 @@
     <VerticalLayout spacing="6" padding="10 10 10 10">
         <HorizontalLayout>
             <Row>      
-                <Button id="btnArmy1"
-                    text="BtnArmy1"
+                <Button id="BTN_ARMY1"
+                    text="BTN_ARMY1"
                     width="180"
                     fontSize="14"
                     color="rgba(0.7,0.15,0.15,1)"
@@ -63,8 +63,8 @@
                     onClick="onBtnArmy1"/>    
             </Row>
             <Row>              
-                <Button id="btnArmy2"
-                    text="BtnArmy2"
+                <Button id="BTN_ARMY2"
+                    text="BTN_ARMY2"
                     width="180"
                     fontSize="14"
                     color="rgba(0.15,0.6,0.15,1)"
@@ -84,8 +84,8 @@
     <VerticalLayout spacing="6" padding="10 10 10 10">
         <HorizontalLayout childAlignment="MiddleCenter">
            <Row>
-                <Button id="btnScelta"
-                    text="BtnScelta"
+                <Button id="BTN_SINGLE"
+                    text="BTN_SINGLE"
                     width="380"  
                     fontSize="14"
                     color="Grey"
@@ -103,6 +103,21 @@
 
     <Image image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/logo/logo.png"
            preserveAspect="1"/>
+</Panel>
+
+<Panel id="warning" rectAlignment="LowerCenter"
+       width="600"
+       height="30"
+       color="rgba(0,0,0,0.0)"
+       offsetXY="0 700">
+        <Text id="textWarning"
+              text=""
+              fontSize="26"
+              fontStyle="Bold"
+              color="rgba(212,175,55,0.9)" 
+              outline="#000000" 
+              outlineSize="2"
+              alignment="MiddleCenter"/>
 </Panel>
 
 <Panel rectAlignment="LowerCenter"
