@@ -13,6 +13,7 @@ function lionheart_initPhases()
             "desc": "Select both players",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
             "render": "2BtnClick",
+            "enforceOwnership": false,
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
@@ -30,7 +31,7 @@ function lionheart_initPhases()
             "transitions": [
                 {
                     "to": "DEPLOY",
-                    "conditions": ["both_players_selected"]
+                    "conditions": ["requirement_met"]
                 }
             ]
         },
@@ -40,6 +41,7 @@ function lionheart_initPhases()
             "desc": "Deploy your units behind the spawning line",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
+            "enforceOwnership": true,
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
@@ -73,6 +75,7 @@ function lionheart_initPhases()
             "desc": "The dice are rolled and the winner decides who moves first.",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
+            "enforceOwnership": true,
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
@@ -106,6 +109,7 @@ function lionheart_initPhases()
             "desc": "Move your army",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
+            "enforceOwnership": true,
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
@@ -139,6 +143,7 @@ function lionheart_initPhases()
             "desc": "Open fire on targets",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
+            "enforceOwnership": true,
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
@@ -172,6 +177,7 @@ function lionheart_initPhases()
             "desc": "Resolve combat",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
+            "enforceOwnership": true,
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
@@ -206,6 +212,7 @@ function lionheart_initPhases()
             "allowedActions": ["CONFIRM"],
             "turnStart": true,
             "render": "1BtnClick",
+            "enforceOwnership": true,
             "buttons": {
                 "BTN_SINGLE": {
                     "action": "CONFIRM",

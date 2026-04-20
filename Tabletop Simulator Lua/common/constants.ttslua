@@ -8,7 +8,8 @@ COND = {
     BOTH_PLAYERS_SELECTED = "both_players_selected",
     CONFIRM_READY         = "confirm_ready",
     CONFIRM_IMMEDIATE     = "confirm_immediate",
-    AUTO_ADVANCE          = "auto_advance"
+    AUTO_ADVANCE          = "auto_advance",
+    REQUIREMENT_MET       = "requirement_met"
 }
 
 COLOR = {

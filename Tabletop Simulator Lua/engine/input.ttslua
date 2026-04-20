@@ -1,40 +1,51 @@
 -- ============================================================
 -- FUNZIONE: engine_handleButton()
 -- ============================================================
-function engine_handleButton(slot, player, value, id)
+    function engine_handleButton(slot, player, value, id)
 
-   if DEBUG then print("engine_handleButton") end
+        local phase = ENGINE.phases[ENGINE.phase]
+        if not phase or not phase.buttons then return end
 
-    local phase = ENGINE.phases[ENGINE.phase]
-    if not phase or not phase.buttons then return end
+        local button = phase.buttons[slot]
+        if not button then return end
 
-    local button = phase.buttons[slot]
-    if not button then return end
-
-    local allowed = true
-
-    if button.callback then
-        local fn = _G[button.callback]
-        if fn then
-            local result = fn(player, value, id)
-            if result == false then
-                allowed = false
+        if slot == BUTTONS.BTN_ARMY1 and phase.enforceOwnership then
+            if not player or player.color ~= COLOR.ARMY1 then
+                fadeOut("Not your button")
+                return
             end
         end
-    end
 
-    if not allowed then
-        return
-    end
+        if slot == BUTTONS.BTN_ARMY2 and phase.enforceOwnership then
+            if not player or player.color ~= COLOR.ARMY2 then
+                fadeOut("Not your button")
+                return
+            end
+        end
 
-    if button.action then
-        engine_handleAction({
-            type = button.action,
-            player = player
-        })
-    end
-end
+        local allowed = true
 
+        if button.callback then
+            local fn = _G[button.callback]
+            if fn then
+                local result = fn(player, value, id)
+                if result == false then
+                    allowed = false
+                end
+            end
+        end
+
+        if not allowed then
+            return
+        end
+
+        if button.action then
+            engine_handleAction({
+                type = button.action,
+                player = player
+            })
+        end
+    end
 -- ============================================================
 -- FUNZIONE: onBtnArmy1()
 -- ============================================================

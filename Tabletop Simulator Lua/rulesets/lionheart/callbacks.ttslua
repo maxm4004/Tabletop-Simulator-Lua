@@ -6,7 +6,6 @@ army2 = "Army2"
 colorArmy1 = "Grey"
 colorArmy2 = "Grey"
 numeroPlayerSeated = 0
-
 -- ============================================================
 -- FUNZIONE: allPlayersGrey()
 -- ============================================================
@@ -179,18 +178,8 @@ function sitting_btn_army(player, value, id)
                 fadeOut("color " .. army2 .. " already used")  
             end
         end
-    end      
-
-    local playerArmy1 = Player[COLOR.ARMY1].seated
-    local playerArmy2 = Player[COLOR.ARMY2].seated
-
-    print("playerArmy1: ".. tostring(playerArmy1) .." - " .."playerArmy2: ".. tostring(playerArmy2))
-
-    sitting_btn_army1(nil, playerArmy1, nil)
-    
-    sitting_btn_army2(nil, playerArmy2, nil)
-
-    return false
+    end     
+    return true
  end
 -- ============================================================
 -- FUNZIONE: sitting_btn_army1()

@@ -1,0 +1,69 @@
+-- ============================================================
+-- FUNZIONE: onSave()
+-- ============================================================
+function onSave()
+
+    local saveData = {
+        engine = ENGINE,
+        ruleset = RULESET,
+        game = GAME,
+        army = ARMY,
+        wounds_data = wounds_data,
+        esercito_1 = esercito_1,
+        esercito_2 = esercito_2,
+        segnalini_guids = segnalini_guids
+    }
+
+    return JSON.encode(saveData)
+end
+
+-- ============================================================
+-- FUNZIONE: ripristinaStato()
+-- ============================================================
+function ripristinaStato(save_state)
+
+    if not save_state or save_state == "" then
+        return
+    end
+
+    local ok, data = pcall(function()
+        return JSON.decode(save_state)
+    end)
+
+    if not ok or not data then
+        print("ripristinaStato: save_state non valido")
+        return
+    end
+
+    if data.engine then
+        ENGINE = data.engine
+    end
+
+    if data.ruleset then
+        RULESET = data.ruleset
+    end
+
+    if data.game then
+        GAME = data.game
+    end
+
+    if data.army then
+        ARMY = data.army
+    end
+
+    if data.wounds_data then
+        wounds_data = data.wounds_data
+    end
+
+    if data.esercito_1 then
+        esercito_1 = data.esercito_1
+    end
+
+    if data.esercito_2 then
+        esercito_2 = data.esercito_2
+    end
+
+    if data.segnalini_guids then
+        segnalini_guids = data.segnalini_guids
+    end
+end

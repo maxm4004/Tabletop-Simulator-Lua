@@ -1,13 +1,11 @@
-require("common.constants")
-require("common.utils")
-require("engine.core")
-require("engine.conditions")
-require("engine.input")
-require("engine.ui")
-require("rulesets.lionheart.callbacks")
-require("rulesets.lionheart.phases")
+--[[ Lua code. See documentation: https://api.tabletopsimulator.com/ --]]
 
+--[[ The onLoad event is called after the game save finishes loading. --]]
 function onLoad()
-    lionheart_initPhases()
-    engine_init()
+    --[[ print('onLoad!') --]]
+end
+
+--[[ The onUpdate event is called once per frame. --]]
+function onUpdate()
+    --[[ print('onUpdate loop!') --]]
 end

@@ -31,6 +31,12 @@ function checkCondition(cond, action)
    
     local phase = ENGINE.phases[ENGINE.phase]
 
+    if cond == COND.REQUIREMENT_MET then
+        local p1 = Player[COLOR.ARMY1]
+        local p2 = Player[COLOR.ARMY2]
+        return p1 and p1.seated and p2 and p2.seated
+    end
+
     if cond == COND.BOTH_PLAYERS_SELECTED then
         return ENGINE.state.Army1Click and ENGINE.state.Army2Click
     end

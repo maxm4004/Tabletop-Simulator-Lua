@@ -1,4 +1,14 @@
 -- ============================================================
+-- FUNZIONE: engine_handleChat()
+-- ============================================================
+function engine_handleChat(message, player)
+
+    if message == "!restart" then restart() return false end
+    if message == "!clear" then clear() return false end
+
+    return false
+end
+-- ============================================================
 -- FUNZIONE: allPlayersGrey()
 -- ============================================================
 function fadeOut(warning)
@@ -32,3 +42,89 @@ function allPlayersGrey()
         end
     end
 end
+-- ============================================================
+-- FUNZIONE: clear()
+-- ============================================================
+   function clear() for i=0,120 do print("") end end
+-- ============================================================
+-- FUNZIONE: restart()
+-- ============================================================
+    function restart()
+
+        for _, obj in ipairs(getAllObjects()) do
+            for _, tag in ipairs(obj.getTags()) do
+                if tag == "Army1" or tag == "Army2" then
+                    if parsaNome(obj.getName()) then
+                        obj.destruct()
+                    end
+                    break
+                end
+            end
+        end
+
+        ARMY[1] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
+        ARMY[2] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
+
+        esercito_1 = {}
+        esercito_2 = {}
+        wounds_data = {}
+
+        turno_corrente = 0
+        fase_corrente = 0
+
+        Army1DeployDone = false
+        Army2DeployDone = false
+        pronto_red = false
+        pronto_green = false
+        iniziativa_scelta = false
+        mano_tag = nil
+        mano_passata = false
+
+        for _, guid in ipairs(segnalini_guids) do
+            local o = getObjectFromGUID(guid)
+            if o then
+                o.destruct()
+            end
+        end
+
+        segnalini_guids = {}
+        Turns.enable = false
+        linee_deploy = false
+
+
+
+        if ENGINE then
+            ENGINE.phase = "SITTING"
+            ENGINE.state = {
+                Army1Click = false,
+                Army2Click = false
+            }
+        end
+
+        colorArmy1 = "Grey"
+        colorArmy2 = "Grey"
+
+        UI.setAttribute("army1", "color", "Grey")
+        UI.setAttribute("army2", "color", "Grey")
+
+        UI.setAttribute("BTN_ARMY1", "active", "true")
+        UI.setAttribute("BTN_ARMY2", "active", "true")
+        UI.setAttribute("BTN_SINGLE", "active", "true")
+
+        UI.setAttribute("panelBtnUp", "active", "true")
+        UI.setAttribute("panelBtnDown", "active", "true")
+        UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
+        UI.setAttribute("panelBtnDown", "offsetXY", "0 266")
+
+        for _, p in pairs(Player.getPlayers()) do
+            if p.color == "Red" or p.color == "Green" or p.color == "White" then
+                p.changeColor("Grey")
+            end
+        end
+
+        updateCenterPanel()
+        aggiornaLinee()
+        clear()
+
+        printToAll("[RESET] Partita azzerata — pronto per nuovo setup", {r=0.9, g=0.5, b=0.1})
+    end
