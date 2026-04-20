@@ -1,8 +1,8 @@
 -- ============================================================
 --   LIONHEART BOT - Tabletop Simulator
 -- ============================================================
-VERSION = "v1.35.06"
-DEBUG   = true  -- false = controlli player attivi
+VERSION = "v1.35.07"
+DEBUG   = false  -- false = controlli player attivi
 
 -- TAG_1 = function() return (ARMY[1].tag or "ARMY1") end
 -- TAG_2 = function() return (ARMY[2].tag or "ARMY2") end
@@ -714,8 +714,6 @@ end
 -- ============================================================
 function aggiornaLinee()
    
-    print("aggiornaLinee")
-
     local linee = {}
 
     if linee_croce then
@@ -912,9 +910,9 @@ function clear() for i=0,120 do print("") end end
         UI.setAttribute("army1", "color", "Grey")
         UI.setAttribute("army2", "color", "Grey")
 
-        UI.setAttribute("btnArmy1", "active", "true")
-        UI.setAttribute("btnArmy2", "active", "true")
-        UI.setAttribute("btnScelta", "active", "true")
+        UI.setAttribute("BTN_ARMY1", "active", "true")
+        UI.setAttribute("BTN_ARMY2", "active", "true")
+        UI.setAttribute("BTN_SINGLE", "active", "true")
 
         UI.setAttribute("panelBtnUp", "active", "true")
         UI.setAttribute("panelBtnDown", "active", "true")
@@ -1096,87 +1094,6 @@ end
 -- =========================================================================================================================
 --                                                       FUNZIONI FERITE FINE
 -- =========================================================================================================================
-army1 = "Army1"
-army2 = "Army2"
-colorArmy1 = "Grey"
-colorArmy2 = "Grey"
-numeroPlayerSeated = 0
--- ============================================================
--- FUNZIONE: countSeated()
--- ============================================================
-function countSeated()
-    numeroPlayerSeated = 0
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
-            if p and p.seated then
-                if p.color == "Green" then numeroPlayerSeated=numeroPlayerSeated+1 end
-                if p.color == "Red" then numeroPlayerSeated=numeroPlayerSeated+1 end                
-            end
-        end
-    end
-    return numeroPlayerSeated
-end
--- ============================================================
--- FUNZIONE: isArmy1Seated()
--- ============================================================
-function isArmy1Seated()
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
-            if p.color == "Green" then 
-                return true
-            end
-        end
-    end
-end
--- ============================================================
--- FUNZIONE: isArmy2Seated()
--- ============================================================
-function isArmy2Seated()
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
-            if p.color == "Red" then 
-                return true
-            end
-        end
-    end
-end
--- ============================================================
--- FUNZIONE: visonPlayerConnectual()
--- ============================================================
-function onPlayerConnect(player)
-    print(player.steam_name)
-    print(player.color)
-end
--- ============================================================
--- FUNZIONE: onPlayerDisconnect()
--- ============================================================
-function onPlayerDisconnect(player)
-    print(player.steam_name)
-    print(player.color)
-end
--- ============================================================
--- FUNZIONE: onPlayerChangeColor()
--- ============================================================
-function onPlayerChangeColor(color)
-
-
-    if not color then return end
-    if color == "Black" or color == "Grey" then 
-
-            if not isArmy1Seated() then
-                colorArmy1 = "Grey"
-            end
-
-            if not isArmy2Seated() then
-                colorArmy2 = "Grey"
-            end        
-    end
-
-    if color == "Red" then colorArmy1 = color end  
-    if color == "Green" then colorArmy2 = color end
-
-    updateCenterPanel()
-end
 -- ============================================================
 -- FUNZIONE: visual()
 -- ============================================================
@@ -1209,198 +1126,6 @@ function visual(obj, player)
         end
         return false
 end
--- ============================================================
--- FUNZIONE: updateCenterPanel()
--- ============================================================
--- function updateCenterPanel()
-
-    -- local function onSittings()
-    --     print("onSittings")
-    --     UI.setAttribute("textFase", "text", "PHASE: CHOOSING COLOR")
-    --     UI.setAttribute("army1", "text", string.upper(army1))
-    --     UI.setAttribute("army1", "color", colorArmy1 or "Grey")
-    --     UI.setAttribute("army2", "text", string.upper(army2))
-    --     UI.setAttribute("army2", "color", colorArmy2 or "Grey")
-    --     UI.setAttribute("textDesc", "text", "Choose color " .. army1 .. " or color " .. army2)
-
-    --     UI.setAttribute("btnArmy1", "active", "true")   
-    --     UI.setAttribute("btnArmy1", "text", "Choose ".. army1) 
-    --     UI.setAttribute("btnArmy1", "onClick", "setPlayerRed") 
-    --     UI.setAttribute("btnArmy2", "active", "true")   
-    --     UI.setAttribute("btnArmy2", "text", "Choose " .. army2) 
-    --     UI.setAttribute("btnArmy2", "onClick", "setPlayerGreen")     
-    --     UI.setAttribute("btnScelta", "active", "true") 
-       
-    --     --hide panelBtnDown
-    --     UI.setAttribute("panelBtnDown", "active", "false") 
-    --     UI.setAttribute("panelBtnUp", "offsetXY", "0 318")    
-    -- end
-
-    -- local function onDeploying()
-    --     print("onDeploying")
-    --     UI.setAttribute("textFase", "text", "PHASE: DEPLOYING ARMIES")
-    --     UI.setAttribute("army1", "text", string.upper(army1))
-    --     UI.setAttribute("army1", "color", colorArmy1 or "Grey")
-    --     UI.setAttribute("army2", "text", string.upper(army2))
-    --     UI.setAttribute("army2", "color", colorArmy2 or "Grey")
-    --     UI.setAttribute("textDesc", "text", "Deploy armies on green ground")
-
-    --     UI.setAttribute("btnArmy1", "active", "true")   
-    --     UI.setAttribute("btnArmy1", "text", "Deploy ".. army1) 
-    --     UI.setAttribute("btnArmy1", "onClick", "onDeployArmy1") 
-    --     UI.setAttribute("btnArmy2", "active", "true")   
-    --     UI.setAttribute("btnArmy2", "text", "Deploy ".. army2) 
-    --     UI.setAttribute("btnArmy2", "onClick", "onDeployArmy2") 
-       
-    --     --hide panelBtnDown
-    --     UI.setAttribute("panelBtnDown", "active", "false") 
-    --     UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
-    -- end
-
-    -- local function onReadyToStart()
-    --     print("onReadyToStart")
-    --     UI.setAttribute("textFase", "text", "PHASE: READY TO START")
-    --     UI.setAttribute("army1", "text", string.upper(army1))
-    --     UI.setAttribute("army1", "color", colorArmy1 or "Grey")
-    --     UI.setAttribute("army2", "text", string.upper(army2))
-    --     UI.setAttribute("army2", "color", colorArmy2 or "Grey")
-    --     UI.setAttribute("textDesc", "text", "Check if your army is inside spawning zone")
-
-    --     UI.setAttribute("btnArmy1", "active", "true")   
-    --     UI.setAttribute("btnArmy1", "text", army1 .. "is ready?") 
-    --     UI.setAttribute("btnArmy1", "onClick", "onDeployArmy1") 
-    --     UI.setAttribute("btnArmy2", "active", "true")   
-    --     UI.setAttribute("btnArmy2", "text", army2 .. "is ready?") 
-    --     UI.setAttribute("btnArmy2", "onClick", "onDeployArmy2") 
-       
-    --     --hide panelBtnDown
-    --     UI.setAttribute("panelBtnDown", "active", "false") 
-    --     UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
-    -- end
-
-    -- print("fase corrente: ".. fase_corrente)
-    -- print("Army1DeployDone: ".. tostring(Army1DeployDone))
-    -- print("Army2DeployDone: ".. tostring(Army2DeployDone))
-    -- print("turno_corrente: ".. turno_corrente)
-    -- print("numeroPlayerSeated: ".. countSeated())
-
-    -- army1 = ARMY[1].nome_display or "NO lettura json"
-    -- army2 = ARMY[2].nome_display or "NO lettura json"
-
-    -- army1 = "Army1"
-    -- army2 = "Army2"
-
-    -- if tonumber(countSeated()) == 0 then
-    --     onSittings()
-    -- end
-
-    -- if tonumber(countSeated()) == 1 then
-    --     if not isArmy1Seated() then
-    --         colorArmy1 = "Red"
-    --         colorArmy2 = "Grey"
-    --     end
-
-    --     if not isArmy2Seated() then
-    --         colorArmy1 = "Grey"
-    --         colorArmy2 = "Green"
-    --     end   
-    --     onSittings()
-    -- end 
-        
-    -- if tonumber(countSeated()) == 2 then
-    --     onDeploying()
-    -- end
-
-    -- if Army1DeployDone and Army2DeployDone then
-    --     print("Deploy effettuato")
-    --     onReadyToStart()
-    -- end    
-    
-    -- -- STATO 1a: Fase INIZIATIVA (fase_corrente==1) — mostra pulsanti scelta iniziativa
-    -- if fase_corrente == 1 and not iniziativa_scelta then
-
-    --     UI.setAttribute("banner_ini_row", "active", "true")
-    --     UI.setAttribute("banner_btn_ini1", "text", army1)
-    --     UI.setAttribute("banner_btn_ini2", "text", army2)
-    --     UI.setAttribute("banner_title", "text", "TURNO " .. turno_corrente)
-    --     UI.setAttribute("banner_army1", "text", "Fase: INIZIATIVA")
-    --     UI.setAttribute("banner_army2", "text", "")
-    --     UI.setAttribute("banner_desc",  "text", "Chi ha vinto il dado premi il tuo nome per prendere l'iniziativa, o quello avversario per passarla.")
-    --     return
-    -- end
-
-    -- -- STATO 1: Gioco in corso (fase > 0, non INIZIATIVA)
-    -- if fase_corrente > 0 and fase_corrente ~= 1 then
- 
-    --     local fase = FASI[fase_corrente]
-    --     local nb_ini = iniziativa_tag
-    --     for slot = 1, 2 do
-    --         if ARMY[slot].tag == iniziativa_tag then
-    --             nb_ini = ARMY[slot].nome_display or iniziativa_tag
-    --         end
-    --     end
-    --     UI.setAttribute("banner_title", "text", "TURNO " .. turno_corrente)
-    --     UI.setAttribute("banner_army1", "text", "Fase: " .. (fase and fase.nome or "---"))
-    --     local mostra_ini = (fase_corrente == 2)  -- solo MOVIMENTO
-    --     UI.setAttribute("banner_army2", "text", mostra_ini and ("Iniziativa: " .. nb_ini) or "")
-    --     UI.setAttribute("banner_desc",  "text", fase and fase.desc or "")
-    --     -- Fasi con mano: mostra PASSA LA MANO o AVANZA FASE
-    --     if fase and fase.turno_tts and mano_tag ~= nil then
-    --         local nb_mano = mano_tag
-    --         local col_mano = "rgba(0.5,0.2,0.7,1)"
-    --         for slot = 1, 2 do
-    --             if ARMY[slot].tag == mano_tag then
-    --                 nb_mano = ARMY[slot].nome_display or mano_tag
-    --                 local c = ARMY[slot].color
-    --                 if c == "Red"   then col_mano = "rgba(0.8,0.1,0.1,1)" end
-    --                 if c == "Green" then col_mano = "rgba(0.1,0.6,0.1,1)" end
-    --             end
-    --         end
-    --         UI.setAttribute("banner_btn_mano", "active", "true")
-    --         UI.setAttribute("banner_btn_mano", "text",  nb_mano .. " — FINE MOVIMENTO")
-    --         UI.setAttribute("banner_btn_mano", "color", col_mano)
-    --     else
-    --         local btn_txt = fase_corrente >= #FASI and "► FINE TURNO" or "► AVANZA FASE"
-    --         local btn_col = fase_corrente >= #FASI and "rgba(0.15,0.4,0.8,1)" or "rgba(0.15,0.4,0.8,1)"
-    --         UI.setAttribute("banner_btn_fase", "active", "true")
-    --         local tiro
-    --         if fase_corrente ~= 3 then tiro = false else tiro = true end
-    --         --UI.setAttribute("banner_btn_tiro1", "active", tiro)
-    --         --UI.setAttribute("banner_btn_tiro2", "active", tiro)
- 
-    --         UI.setAttribute("banner_btn_fase", "text",  btn_txt)
-    --         UI.setAttribute("banner_btn_fase", "color", btn_col)
-    --     end
-    --     return
-    -- end
-
-    -- STATO 3: Deploy fatto, in attesa PRONTO
-    
-
-    --     UI.setAttribute("banner_pronti_row", "active", "true")
-    --     UI.setAttribute("banner_title", "text", "SCHIERA I TUOI ESERCITI")
-
-    --     UI.setAttribute("banner_army1", "text", "[R] " .. army1)
-    --     UI.setAttribute("banner_army2", "text", "[G] " .. army2)
-    --     UI.setAttribute("banner_desc",  "text", "Quando pronti premi il tuo pulsante PRONTO")
-    --     -- Aggiorna aspetto pulsanti in base allo stato
-    --     if pronto_red then
-    --         UI.setAttribute("banner_btn_pronto_red", "text",  "[R] IN ATTESA...")
-    --         UI.setAttribute("banner_btn_pronto_red", "color", "rgba(0.4,0.4,0.4,1)")
-    --     else
-    --         UI.setAttribute("banner_btn_pronto_red", "text",  "[R] PRONTO")
-    --         UI.setAttribute("banner_btn_pronto_red", "color", "rgba(0.7,0.15,0.15,1)")
-    --     end
-    --     if pronto_green then
-    --         UI.setAttribute("banner_btn_pronto_green", "text",  "[G] IN ATTESA...")
-    --         UI.setAttribute("banner_btn_pronto_green", "color", "rgba(0.4,0.4,0.4,1)")
-    --     else
-    --         UI.setAttribute("banner_btn_pronto_green", "text",  "[G] PRONTO")
-    --         UI.setAttribute("banner_btn_pronto_green", "color", "rgba(0.15,0.6,0.15,1)")
-    --     end
-    --     return
-    -- end
---end
 -- ================================================================================================================================================
 --                                                              REFACTORING FASI
 -- ================================================================================================================================================
@@ -1418,6 +1143,18 @@ COND = {
     AUTO_ADVANCE          = "auto_advance"
 }
 
+COLOR = {
+    ARMY1 = "Red",
+    ARMY2 = "Green",
+    NOARMY = "Grey"    
+}
+
+BUTTONS = {
+    BTN_ARMY1 = "BTN_ARMY1",
+    BTN_ARMY2 = "BTN_ARMY2",
+    BTN_SINGLE = "BTN_SINGLE"
+}
+
 -- ============================================================
 -- FUNZIONE: onLoad()
 -- ============================================================
@@ -1431,32 +1168,26 @@ function onLoad()
         "SITTING": {
             "title": "PHASE: SITTING",
             "desc": "Select both players",
-            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
-            "render": "3BtnClick",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClick",
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
                     "label": "Select Red",
                     "textColor": "White",
-                    "callback": "sitting_btn_army1"
+                    "callback": "sitting_btn_army"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
                     "label": "Select Green",
                     "textColor": "White",
-                    "callback": "sitting_btn_army2"
-                },
-                "BTN_SINGLE": {
-                    "action": "CONFIRM",
-                    "label": "Confirm",
-                    "textColor": "Red",
-                    "callback": "sitting_btn_single"
+                    "callback": "sitting_btn_army"
                 }
             },
             "transitions": [
                 {
                     "to": "DEPLOY",
-                    "conditions": ["both_players_selected", "confirm_ready"]
+                    "conditions": ["both_players_selected"]
                 }
             ]
         },
@@ -1470,19 +1201,19 @@ function onLoad()
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
                     "label": "Army 1 Ready",
-                    "textColor": "Black",
+                    "textColor": "White",
                     "callback": "deploy_btn_army1"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
                     "label": "Army 2 Ready",
-                    "textColor": "Blue",
+                    "textColor": "White",
                     "callback": "deploy_btn_army2"
                 },
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Deploy",
-                    "textColor": "Red",
+                    "textColor": "Black",
                     "callback": "deploy_btn_single"
                 }
             },
@@ -1515,7 +1246,7 @@ function onLoad()
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Initiative",
-                    "textColor": "Red",
+                    "textColor": "Black",
                     "callback": "initiative_btn_single"
                 }
             },
@@ -1548,7 +1279,7 @@ function onLoad()
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Move",
-                    "textColor": "Red",
+                    "textColor": "Black",
                     "callback": "move_btn_single"
                 }
             },
@@ -1581,7 +1312,7 @@ function onLoad()
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Shoot",
-                    "textColor": "Red",
+                    "textColor": "Black",
                     "callback": "shoot_btn_single"
                 }
             },
@@ -1614,7 +1345,7 @@ function onLoad()
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Attack",
-                    "textColor": "Red",
+                    "textColor": "Black",
                     "callback": "attack_btn_single"
                 }
             },
@@ -1636,7 +1367,7 @@ function onLoad()
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Next Turn",
-                    "textColor": "Red",
+                    "textColor": "Black",
                     "callback": "morale_btn_single"
                 }
             },
@@ -1670,13 +1401,16 @@ function onLoad()
 
     engine_validatePhases()
 
-    UI.setAttribute("btnArmy1", "active", "true")
-    UI.setAttribute("btnArmy2", "active", "true")
-    UI.setAttribute("btnScelta", "active", "true")
-
+    UI.setAttribute("BTN_ARMY1", "active", "true")
+    UI.setAttribute("BTN_ARMY2", "active", "true")
+    UI.setAttribute("BTN_SINGLE", "active", "true")
+    fadeOut("WELCOME TO LIONHEART")
+ 
     clear()
+    allPlayersGrey();
     updateCenterPanel()
     aggiornaLinee()
+
 end
 
 -- ============================================================
@@ -1747,37 +1481,49 @@ end
 -- ==============================================================================================================
 --                                                          ENGINE CORE
 -- ==============================================================================================================
-
 -- ============================================================
 -- FUNZIONE: engine_handleButton()
 -- ============================================================
-function engine_handleButton(slot, player, value, id)
+    function engine_handleButton(slot, player, value, id)
 
-    local phase = ENGINE.phases[ENGINE.phase]
-    if not phase or not phase.buttons then return end
+        if DEBUG then print("engine_handleButton") end
 
-    local button = phase.buttons[slot]
-    if not button then return end
+        local phase = ENGINE.phases[ENGINE.phase]
+        if not phase or not phase.buttons then return end
 
-    if button.callback then
-        local fn = _G[button.callback]
-        if fn then
-            fn(player, value, id)
+        local button = phase.buttons[slot]
+        if not button then return end
+
+        local allowed = true
+
+        if button.callback then
+            local fn = _G[button.callback]
+            if fn then
+                local result = fn(player, value, id)
+                if result == false then
+                    allowed = false
+                end
+            end
+        end
+
+        if not allowed then
+            return
+        end
+
+        if button.action then
+            engine_handleAction({
+                type = button.action,
+                player = player
+            })
         end
     end
-
-    if button.action then
-        engine_handleAction({
-            type = button.action,
-            player = player
-        })
-    end
-end
 
 -- ============================================================
 -- FUNZIONE: engine_handleAction()
 -- ============================================================
 function engine_handleAction(action)
+
+    if DEBUG then print("engine_handleAction") end
 
     if not engine_isAllowed(action.type) then
         return
@@ -1792,6 +1538,8 @@ end
 -- FUNZIONE: engine_isAllowed()
 -- ============================================================
 function engine_isAllowed(actionType)
+
+    if DEBUG then print("engine_isAllowed") end
 
     local phase = ENGINE.phases[ENGINE.phase]
     if not phase then return false end
@@ -1810,6 +1558,8 @@ end
 -- ============================================================
 function engine_execute(action)
 
+    if DEBUG then print("engine_execute") end
+
     if action.type == ACTION.ARMY1_CLICK then
         ENGINE.state.Army1Click = true
 
@@ -1825,6 +1575,8 @@ end
 -- FUNZIONE: engine_transition()
 -- ============================================================
 function engine_transition(action)
+
+    if DEBUG then print("engine_transition") end
 
     local phase = ENGINE.phases[ENGINE.phase]
     if not phase then return end
@@ -1861,11 +1613,12 @@ function engine_transition(action)
         end
     end
 end
-
 -- ============================================================
 -- FUNZIONE: checkConditions()
 -- ============================================================
 function checkConditions(conditions, action)
+    
+    if DEBUG then print("checkConditions") end
 
     if type(conditions) == "string" then
         return checkCondition(conditions, action)
@@ -1889,6 +1642,8 @@ end
 -- ============================================================
 function checkCondition(cond, action)
 
+    if DEBUG then print("checkCondition") end
+    
     local phase = ENGINE.phases[ENGINE.phase]
 
     if cond == COND.BOTH_PLAYERS_SELECTED then
@@ -1920,6 +1675,8 @@ end
 -- ============================================================
 function engine_resetState()
 
+    if DEBUG then print("engine_resetState") end
+
     ENGINE.state = {
         Army1Click = false,
         Army2Click = false,
@@ -1930,30 +1687,76 @@ end
 -- ============================================================
 -- CALLBACKS
 -- ============================================================
+-- ============================================================
+-- FUNZIONE: sitting_btn_army()
+-- ============================================================
+function sitting_btn_army(player, value, id)
+    
+    local colorPlayer = player.color
+    
+    if id == BUTTONS.BTN_ARMY1 then          
+        if colorArmy1 == COLOR.NOARMY then
+            if colorArmy2 == colorPlayer then
+                colorArmy2 = COLOR.NOARMY
+            end
+            player.changeColor(COLOR.ARMY1)
+            colorArmy1 = COLOR.ARMY1
+            colorPlayer = COLOR.ARMY1
+        else 
+            if colorPlayer == colorArmy1 then
+                fadeOut(army1 .. " already using this color") 
+            else
+                fadeOut("color " .. army1 .. " already used")  
+            end
+        end
+    end
 
+    if id == BUTTONS.BTN_ARMY2 then 
+        if colorArmy2 == COLOR.NOARMY then
+            if colorArmy1 == colorPlayer then
+                colorArmy1 = COLOR.NOARMY
+            end
+            player.changeColor(COLOR.ARMY2)
+            colorArmy2 = COLOR.ARMY2
+            colorPlayer = COLOR.ARMY2
+        else 
+            if colorPlayer == colorArmy2 then
+                fadeOut(army2 .. " already using this color") 
+            else
+                fadeOut("color " .. army2 .. " already used")  
+            end
+        end
+    end      
+
+    local playerArmy1 = Player[COLOR.ARMY1].seated
+    local playerArmy2 = Player[COLOR.ARMY2].seated
+
+    print("playerArmy1: ".. tostring(playerArmy1) .." - " .."playerArmy2: ".. tostring(playerArmy2))
+
+    sitting_btn_army1(nil, playerArmy1, nil)
+    
+    sitting_btn_army2(nil, playerArmy2, nil)
+
+    return false
+ end
 -- ============================================================
 -- FUNZIONE: sitting_btn_army1()
 -- ============================================================
-function sitting_btn_army1(player, value, id)
-
-    print("sitting_btn_army1")
-
-end
-
+   function sitting_btn_army1(player, value, id)
+      return value
+   end
 -- ============================================================
 -- FUNZIONE: sitting_btn_army2()
 -- ============================================================
-function sitting_btn_army2(player, value, id)
-
-    print("sitting_btn_army2")
-
-end
-
+    function sitting_btn_army2(player, value, id)
+        return value
+    end
 -- ============================================================
 -- FUNZIONE: sitting_btn_single()
 -- ============================================================
 function sitting_btn_single(player, value, id)
     print("sitting_btn_single")
+    return true
 end
 
 -- ============================================================
@@ -1961,12 +1764,14 @@ end
 -- ============================================================
 function deploy_btn_army1(player, value, id)
     print("deploy_btn_army1")
+    return true
 end
 -- ============================================================
 -- FUNZIONE: deploy_btn_army2()
 -- ============================================================
 function deploy_btn_army2(player, value, id)
     print("deploy_btn_army2")
+    return true
 end
 
 -- ============================================================
@@ -1974,6 +1779,7 @@ end
 -- ============================================================
 function deploy_btn_single(player, value, id)
     print("deploy_btn_single")
+    return true
 end
 
 -- ============================================================
@@ -1981,6 +1787,7 @@ end
 -- ============================================================
 function initiative_btn_army1(player, value, id)
     print("initiative_btn_army1")
+    return true
 end
 
 -- ============================================================
@@ -1988,6 +1795,7 @@ end
 -- ============================================================
 function initiative_btn_army2(player, value, id)
     print("initiative_btn_army2")
+    return true
 end
 
 -- ============================================================
@@ -1995,12 +1803,14 @@ end
 -- ============================================================
 function initiative_btn_single(player, value, id)
      print("initiative_btn_single")
+     return true
 end
 -- ============================================================
 -- FUNZIONE: move_btn_army1()
 -- ============================================================
 function move_btn_army1(player, value, id)
     print("move_btn_army1")
+    return true
 end
 
 -- ============================================================
@@ -2008,6 +1818,7 @@ end
 -- ============================================================
 function move_btn_army2(player, value, id)
     print("move_btn_army2")
+    return true
 end
 
 -- ============================================================
@@ -2015,6 +1826,7 @@ end
 -- ============================================================
 function move_btn_single(player, value, id)
     print("move_btn_single")
+    return true
 end
 
 -- ============================================================
@@ -2022,6 +1834,7 @@ end
 -- ============================================================
 function shoot_btn_army1(player, value, id)
     print("shoot_btn_army1")
+    return true
 end
 
 -- ============================================================
@@ -2029,6 +1842,7 @@ end
 -- ============================================================
 function shoot_btn_army2(player, value, id)
     print("shoot_btn_army2")
+    return true
 end
 
 -- ============================================================
@@ -2036,6 +1850,7 @@ end
 -- ============================================================
 function shoot_btn_single(player, value, id)
     print("shoot_btn_single")
+    return true
 end
 
 -- ============================================================
@@ -2043,6 +1858,7 @@ end
 -- ============================================================
 function attack_btn_army1(player, value, id)
     print("attack_btn_army1")
+    return true
 end
 
 -- ============================================================
@@ -2050,6 +1866,7 @@ end
 -- ============================================================
 function attack_btn_army2(player, value, id)
     print("attack_btn_army2")
+    return true
 end
 
 -- ============================================================
@@ -2057,6 +1874,7 @@ end
 -- ============================================================
 function attack_btn_single(player, value, id)
     print("attack_btn_single")
+    return true
 end
 
 -- ============================================================
@@ -2064,6 +1882,7 @@ end
 -- ============================================================
 function morale_btn_single(player, value, id)
     print("morale_btn_single")
+    return true
 end
 
 -- ============================================================
@@ -2102,9 +1921,9 @@ RENDERERS = {}
 -- ============================================================
     RENDERERS.NoBtn = function(phase)
 
-        UI.setAttribute("btnArmy1", "active", "false")
-        UI.setAttribute("btnArmy2", "active", "false")
-        UI.setAttribute("btnScelta", "active", "false")
+        UI.setAttribute("BTN_ARMY1", "active", "false")
+        UI.setAttribute("BTN_ARMY2", "active", "false")
+        UI.setAttribute("BTN_SINGLE", "active", "false")
 
         UI.setAttribute("panelBtnUp", "active", "false")
         UI.setAttribute("panelBtnDown", "active", "false")
@@ -2118,7 +1937,7 @@ RENDERERS = {}
         UI.setAttribute("panelBtnDown", "active", "true")
         UI.setAttribute("panelBtnDown", "offsetXY", "0 318")
 
-        UI.setAttribute("btnScelta", "active", "true")
+        UI.setAttribute("BTN_SINGLE", "active", "true")
     end
 -- ============================================================
 -- FUNZIONE: RENDERERS.NoBtn()
@@ -2129,8 +1948,8 @@ RENDERERS = {}
         UI.setAttribute("panelBtnDown", "active", "false")
         UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
 
-        -- UI.setAttribute("btnArmy1", "active", "true")
-        -- UI.setAttribute("btnArmy2", "active", "true")
+        -- UI.setAttribute("BTN_ARMY1", "active", "true")
+        -- UI.setAttribute("BTN_ARMY2", "active", "true")
     end
 -- ============================================================
 -- FUNZIONE: RENDERERS.NoBtn()
@@ -2141,14 +1960,14 @@ RENDERERS = {}
         UI.setAttribute("panelBtnDown", "active", "false")
         UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
 
-        -- UI.setAttribute("btnArmy1", "active", "true")
-        -- UI.setAttribute("btnArmy2", "active", "true")
+        -- UI.setAttribute("BTN_ARMY1", "active", "true")
+        -- UI.setAttribute("BTN_ARMY2", "active", "true")
 
         if ENGINE.state.Army1Click and ENGINE.state.Army2Click then
             UI.setAttribute("panelBtnUp", "active", "false")
             UI.setAttribute("panelBtnDown", "active", "true")
             UI.setAttribute("panelBtnDown", "offsetXY", "0 318")
-            UI.setAttribute("btnScelta", "active", "true")
+            UI.setAttribute("BTN_SINGLE", "active", "true")
         end
     end
 -- ============================================================
@@ -2181,18 +2000,18 @@ function updateCenterPanel()
     UI.setAttribute("textDesc", "text", phase.desc or "")
     UI.setAttribute("textTurn", "text", ENGINE.turn == 0 and "" or " TURN: "..ENGINE.turn)
     
-    UI.setAttribute("btnArmy1", "text", btn1 and btn1.label or "")
-    UI.setAttribute("btnArmy1", "textColor", btn1 and btn1.textColor)
+    UI.setAttribute("BTN_ARMY1", "text", btn1 and btn1.label or "")
+    UI.setAttribute("BTN_ARMY1", "textColor", btn1 and btn1.textColor)
 
-    UI.setAttribute("btnArmy2", "text", btn2 and btn2.label or "")
-    UI.setAttribute("btnArmy2", "textColor", btn2 and btn2.textColor)
+    UI.setAttribute("BTN_ARMY2", "text", btn2 and btn2.label or "")
+    UI.setAttribute("BTN_ARMY2", "textColor", btn2 and btn2.textColor)
 
-    UI.setAttribute("btnScelta", "text", btnS and btnS.label or "")
-    UI.setAttribute("btnScelta", "textColor", btnS and btnS.textColor)
+    UI.setAttribute("BTN_SINGLE", "text", btnS and btnS.label or "")
+    UI.setAttribute("BTN_SINGLE", "textColor", btnS and btnS.textColor)
 
-    -- UI.setAttribute("btnArmy1", "active", "false")
-    -- UI.setAttribute("btnArmy2", "active", "false")
-    -- UI.setAttribute("btnScelta", "active", "false")
+    -- UI.setAttribute("BTN_ARMY1", "active", "false")
+    -- UI.setAttribute("BTN_ARMY2", "active", "false")
+    -- UI.setAttribute("BTN_SINGLE", "active", "false")
 
     UI.setAttribute("panelBtnUp", "active", "true")
     UI.setAttribute("panelBtnDown", "active", "true")
@@ -2207,7 +2026,102 @@ function updateCenterPanel()
         printToAll("Renderer non trovato: "..tostring(phase.render), "Red")
     end
 end
+-- ================================================================================================================================
+--                                                           PLAYERS SEATED
+-- ================================================================================================================================
+army1 = "Army1"
+army2 = "Army2"
+colorArmy1 = "Grey"
+colorArmy2 = "Grey"
+numeroPlayerSeated = 0
 
+-- ============================================================
+-- FUNZIONE: allPlayersGrey()
+-- ============================================================
+function allPlayersGrey()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p then
+          p.changeColor("Grey")
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: countSeated()
+-- ============================================================
+function countSeated()
+    numeroPlayerSeated = 0
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p and p.seated then
+                if p.color == "Green" then numeroPlayerSeated=numeroPlayerSeated+1 end
+                if p.color == "Red" then numeroPlayerSeated=numeroPlayerSeated+1 end                
+            end
+        end
+    end
+    return numeroPlayerSeated
+end
+-- ============================================================
+-- FUNZIONE: isOtherPlayerSeated()
+-- ============================================================
+function isOtherPlayerSeated(player)
+
+
+    local function checkPlayer(player)
+        if player.color ~= COLOR.NOARMY then 
+            return true
+        end    
+    end    
+
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.steam_name ~= player.steam_name then
+                return checkPlayer(p)
+            end
+        end
+    end
+    return false
+end
+-- ============================================================
+-- FUNZIONE: isArmy1Seated()
+-- ============================================================
+function isArmy1Seated()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.color == "Green" then 
+                return true
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: isArmy2Seated()
+-- ============================================================
+function isArmy2Seated()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.color == "Red" then 
+                return true
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: onPlayerConnect()
+-- ============================================================
+function onPlayerConnect(player)
+    print(player.steam_name)
+    print(player.color)
+end
+-- ============================================================
+-- FUNZIONE: onPlayerDisconnect()
+-- ============================================================
+function onPlayerDisconnect(player)
+    print(player.steam_name)
+    print(player.color)
+end
+-- ============================================================
+-- FUNZIONE: onPlayerChangeColor()
+-- ============================================================
 function onPlayerChangeColor(color)
 
     if not color then return end
@@ -2226,4 +2140,50 @@ function onPlayerChangeColor(color)
     if color == "Green" then colorArmy2 = color end
 
     updateCenterPanel()
+end
+-- ============================================================
+-- FUNZIONE: setPlayerRed()
+-- ============================================================
+function setPlayerRed(player, value, id)
+
+    if Player["Red"].seated then
+        player.broadcast("color " .. army1 .. " already used")
+    else    
+        player.changeColor("Red")
+        print(player.steam_name .. " choose ".. army1)
+    end
+end
+-- ============================================================
+-- FUNZIONE: setPlayerGreen()
+-- ============================================================
+function setPlayerGreen(player, value, id)
+    
+    if Player["Green"].seated then
+        player.broadcast("color " .. army2 .. " already used")
+    else    
+        player.changeColor("Green")
+        print(player.steam_name .. " choose ".. army2)
+    end
+end
+
+function fadeOut(warning)
+
+    local alpha = 1
+    
+
+    UI.setAttribute("textWarning", "active", "true")
+    UI.setAttribute("textWarning", "text", warning)
+
+    local function step()
+        alpha = alpha - 0.05
+        if alpha <= 0 then
+            UI.setAttribute("textWarning", "active", "false")
+            return
+        end
+     
+        UI.setAttribute("textWarning", "color", "rgba(255,215,0," .. alpha .. ")")
+        Wait.time(step, 0.2)
+    end
+
+    step()
 end
