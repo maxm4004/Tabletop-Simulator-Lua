@@ -1,0 +1,34 @@
+-- ============================================================
+-- FUNZIONE: allPlayersGrey()
+-- ============================================================
+function fadeOut(warning)
+
+    local alpha = 1
+    
+
+    UI.setAttribute("textWarning", "active", "true")
+    UI.setAttribute("textWarning", "text", warning)
+
+    local function step()
+        alpha = alpha - 0.05
+        if alpha <= 0 then
+            UI.setAttribute("textWarning", "active", "false")
+            return
+        end
+     
+        UI.setAttribute("textWarning", "color", "rgba(255,215,0," .. alpha .. ")")
+        Wait.time(step, 0.2)
+    end
+
+    step()
+end
+-- ============================================================
+-- FUNZIONE: allPlayersGrey()
+-- ============================================================
+function allPlayersGrey()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p then
+          p.changeColor("Grey")
+        end
+    end
+end

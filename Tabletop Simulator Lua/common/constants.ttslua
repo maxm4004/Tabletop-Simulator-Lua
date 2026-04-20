@@ -1,0 +1,24 @@
+ACTION = {
+    ARMY1_CLICK = "ARMY1_CLICK",
+    ARMY2_CLICK = "ARMY2_CLICK",
+    CONFIRM     = "CONFIRM"
+}
+
+COND = {
+    BOTH_PLAYERS_SELECTED = "both_players_selected",
+    CONFIRM_READY         = "confirm_ready",
+    CONFIRM_IMMEDIATE     = "confirm_immediate",
+    AUTO_ADVANCE          = "auto_advance"
+}
+
+COLOR = {
+    ARMY1 = "Red",
+    ARMY2 = "Green",
+    NOARMY = "Grey"    
+}
+
+BUTTONS = {
+    BTN_ARMY1 = "BTN_ARMY1",
+    BTN_ARMY2 = "BTN_ARMY2",
+    BTN_SINGLE = "BTN_SINGLE"
+}
