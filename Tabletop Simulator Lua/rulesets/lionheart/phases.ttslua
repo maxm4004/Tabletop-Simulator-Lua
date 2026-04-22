@@ -6,7 +6,7 @@ function lionheart_initPhases()
     linee_rettangolo = true
     linee_deploy     = false
 
-     local phases_json = [[
+    local phases_json = [[
     {
         "SITTING": {
             "title": "PHASE: SITTING",
@@ -210,9 +210,9 @@ function lionheart_initPhases()
             "title": "PHASE: MORALE",
             "desc": "Test morale",
             "allowedActions": ["CONFIRM"],
-            "turnStart": true,
             "render": "1BtnClick",
             "enforceOwnership": true,
+            "turnStart": true,
             "buttons": {
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
@@ -233,19 +233,40 @@ function lionheart_initPhases()
 
     local decoded = JSON.decode(phases_json)
     if not decoded then
-        error("JSON decode FALLITO")
+        print("JSON decode FALLITO")
+        return
     end
 
     local phasesData = decoded[1] or decoded
 
-    ENGINE = {
-        phase = "SITTING",
-        turn = 1,
-        state = {
-            Army1Click = false,
-            Army2Click = false,
-            ConfirmClick = false
-        },
-        phases = phasesData
-    }
+    if not ENGINE then
+        ENGINE = {
+            phase = "SITTING",
+            turn = 1,
+            state = {
+                Army1Click = false,
+                Army2Click = false,
+                ConfirmClick = false
+            },
+            phases = phasesData
+        }
+    else
+        ENGINE.phases = phasesData
+
+        if not ENGINE.state then
+            ENGINE.state = {
+                Army1Click = false,
+                Army2Click = false,
+                ConfirmClick = false
+            }
+        end
+
+        if not ENGINE.phase then
+            ENGINE.phase = "SITTING"
+        end
+
+        if not ENGINE.turn then
+            ENGINE.turn = 1
+        end
+    end
 end

@@ -1,69 +1,235 @@
 -- ============================================================
--- FUNZIONE: onSave()
+-- FUNZIONE: lionheart_onSave()
 -- ============================================================
-function onSave()
+function lionheart_onSave()
+
+   local players_saved = {}
+
+   local p1 = Player[COLOR.ARMY1]
+   if p1 and p1.seated then
+        players_saved[1] = {
+            steam_id   = p1.steam_id,
+            steam_name = p1.steam_name,
+            color      = COLOR.ARMY1,
+            slot       = 1,
+            seated     = p1.seated
+        }
+    end
+
+    local p2 = Player[COLOR.ARMY2]
+
+    if p2 and p2.seated then
+        players_saved[2] = {
+            steam_id   = p2.steam_id,
+            steam_name = p2.steam_name,
+            color      = COLOR.ARMY2,
+            slot       = 2,
+            seated     = p1.seated
+        }
+    end
 
     local saveData = {
-        engine = ENGINE,
+        engine = {
+            phase = ENGINE and ENGINE.phase or nil,
+            turn = ENGINE and ENGINE.turn or nil,
+            state = ENGINE and ENGINE.state or nil
+        },
         ruleset = RULESET,
         game = GAME,
         army = ARMY,
         wounds_data = wounds_data,
         esercito_1 = esercito_1,
         esercito_2 = esercito_2,
-        segnalini_guids = segnalini_guids
+        players_saved = players_saved
     }
 
+    --debug("onSave", saveData)
     return JSON.encode(saveData)
 end
+-- ============================================================
+-- FUNZIONE: ripristinaColoriPlayers()
+-- ============================================================
+function ripristinaColoriPlayers()
+    
+    if DEBUG then print("ripristinaColoriPlayers") end
+    if not players_saved then return end
+    local currentPlayers = Player.getPlayers()
 
+    for _, saved in pairs(players_saved) do
+        for _, p in ipairs(currentPlayers) do
+            if tostring(p.steam_id) == tostring(saved.steam_id) then
+                p.changeColor(saved.color)
+                --if COLOR.ARMY1 == saved.color then colorArmy1 = saved.color end
+                --if COLOR.ARMY2 == saved.color then colorArmy2 = saved.color end
+            end
+        end
+    end
+end
 -- ============================================================
 -- FUNZIONE: ripristinaStato()
 -- ============================================================
 function ripristinaStato(save_state)
 
-    if not save_state or save_state == "" then
-        return
-    end
+    if not save_state or save_state == "" then return false end
 
-    local ok, data = pcall(function()
-        return JSON.decode(save_state)
-    end)
-
-    if not ok or not data then
-        print("ripristinaStato: save_state non valido")
-        return
-    end
+    local ok, data = pcall(JSON.decode, save_state)
+    if not ok or not data then return false end
 
     if data.engine then
-        ENGINE = data.engine
+        if not ENGINE then ENGINE = {} end
+        if data.engine.phase then ENGINE.phase = data.engine.phase end
+        if data.engine.turn then ENGINE.turn = data.engine.turn end
+        if data.engine.state then ENGINE.state = data.engine.state end
     end
 
-    if data.ruleset then
-        RULESET = data.ruleset
+    if data.ruleset then RULESET = data.ruleset end
+    if data.wounds_data then wounds_data = data.wounds_data end
+    if data.esercito_1 then esercito_1 = data.esercito_1 end
+    if data.esercito_2 then esercito_2 = data.esercito_2 end
+    if data.segnalini_guids then segnalini_guids = data.segnalini_guids end
+
+    if data.players_saved then
+        players_saved = data.players_saved
     end
 
-    if data.game then
-        GAME = data.game
-    end
-
-    if data.army then
-        ARMY = data.army
-    end
-
-    if data.wounds_data then
-        wounds_data = data.wounds_data
-    end
-
-    if data.esercito_1 then
-        esercito_1 = data.esercito_1
-    end
-
-    if data.esercito_2 then
-        esercito_2 = data.esercito_2
-    end
-
-    if data.segnalini_guids then
-        segnalini_guids = data.segnalini_guids
-    end
+    return true
 end
+-- ============================================================
+-- FUNZIONE: debug()
+-- ============================================================
+function debug(m, save_state)
+
+    local ENGINE = save_state.engine
+    local RULESET = save_state.rulesets
+    local GAME = save_state.game
+    local ARMY = save_state.army
+    local wounds_data = save_state.wounds_data
+    local esercito_1 = save_state.esercito_1
+    local esercito_2 = save_state.esercito_2
+    local p1 = nil
+    local p2 = nil
+    if save_state.players_saved then
+         p1 = save_state.players_saved[1]  
+         p2 = save_state.players_saved[2] 
+    end
+    
+    clear()
+
+    print("========================================")
+    print("               "..m)
+    print("========================================")
+
+    print("ENGINE table exists: " .. tostring(ENGINE ~= nil))
+    if ENGINE then
+        print("ENGINE.phase = " .. tostring(ENGINE.phase))
+        print("ENGINE.turn = " .. tostring(ENGINE.turn))
+
+        if ENGINE.state then
+            print("ENGINE.state.Army1Click = " .. tostring(ENGINE.state.Army1Click))
+            print("ENGINE.state.Army2Click = " .. tostring(ENGINE.state.Army2Click))
+            print("ENGINE.state.ConfirmClick = " .. tostring(ENGINE.state.ConfirmClick))
+        else
+            print("ENGINE.state = nil")
+        end
+    else
+        print("ENGINE = nil")
+    end
+
+    -- print("----------------------------------------")
+
+    -- print("RULESET exists: " .. tostring(RULESET ~= nil))
+    -- if RULESET then
+    --     print("RULESET.turno_corrente = " .. tostring(RULESET.turno_corrente))
+    --     print("RULESET.fase_corrente = " .. tostring(RULESET.fase_corrente))
+    --     print("RULESET.iniziativa_tag = " .. tostring(RULESET.iniziativa_tag))
+    --     print("RULESET.iniziativa_scelta = " .. tostring(RULESET.iniziativa_scelta))
+    --     print("RULESET.mano_tag = " .. tostring(RULESET.mano_tag))
+    --     print("RULESET.mano_passata = " .. tostring(RULESET.mano_passata))
+    --     print("RULESET.pronto_red = " .. tostring(RULESET.pronto_red))
+    --     print("RULESET.pronto_green = " .. tostring(RULESET.pronto_green))
+    --     print("RULESET.Army1DeployDone = " .. tostring(RULESET.Army1DeployDone))
+    --     print("RULESET.Army2DeployDone = " .. tostring(RULESET.Army2DeployDone))
+    -- else
+    --     print("RULESET = nil")
+    -- end
+
+    -- print("----------------------------------------")
+
+    -- print("GAME exists: " .. tostring(GAME ~= nil))
+    -- if GAME then
+    --     print("GAME.army1 = " .. tostring(GAME.army1))
+    --     print("GAME.army2 = " .. tostring(GAME.army2))
+    --     print("GAME.colorArmy1 = " .. tostring(GAME.colorArmy1))
+    --     print("GAME.colorArmy2 = " .. tostring(GAME.colorArmy2))
+    --     print("GAME.numeroPlayerSeated = " .. tostring(GAME.numeroPlayerSeated))
+    -- else
+    --     print("GAME = nil")
+    -- end
+
+    -- print("----------------------------------------")
+
+    -- print("ARMY exists: " .. tostring(ARMY ~= nil))
+    -- if ARMY then
+    --     print("ARMY[1].player = " .. tostring(ARMY[1] and ARMY[1].player))
+    --     print("ARMY[1].tag = " .. tostring(ARMY[1] and ARMY[1].tag))
+    --     print("ARMY[1].nome = " .. tostring(ARMY[1] and ARMY[1].nome))
+    --     print("ARMY[1].color = " .. tostring(ARMY[1] and ARMY[1].color))
+
+    --     print("ARMY[2].player = " .. tostring(ARMY[2] and ARMY[2].player))
+    --     print("ARMY[2].tag = " .. tostring(ARMY[2] and ARMY[2].tag))
+    --     print("ARMY[2].nome = " .. tostring(ARMY[2] and ARMY[2].nome))
+    --     print("ARMY[2].color = " .. tostring(ARMY[2] and ARMY[2].color))
+    -- else
+    --     print("ARMY = nil")
+    -- end
+
+    -- print("----------------------------------------")
+
+    -- print("wounds_data exists: " .. tostring(wounds_data ~= nil))
+    -- if wounds_data then
+    --     print("wounds_data count = " .. tostring(#wounds_data))
+    -- else
+    --     print("wounds_data = nil")
+    -- end
+
+    -- print("----------------------------------------")
+
+    -- print("esercito_1 exists: " .. tostring(esercito_1 ~= nil))
+    -- if esercito_1 then
+    --     print("esercito_1 count = " .. tostring(#esercito_1))
+    -- else
+    --     print("esercito_1 = nil")
+    -- end
+
+    -- print("esercito_2 exists: " .. tostring(esercito_2 ~= nil))
+    -- if esercito_2 then
+    --     print("esercito_2 count = " .. tostring(#esercito_2))
+    -- else
+    --     print("esercito_2 = nil")
+    -- end
+
+    print("----------------------------------------")
+
+    print("Player[COLOR.ARMY1] exists = " .. tostring(p1 ~= nil))
+    if p1 then
+        print("Player[COLOR.ARMY1].seated = " .. tostring(p1.seated))
+        print("Player[COLOR.ARMY1].steam_name = " .. tostring(p1.steam_name))
+        print("Player[COLOR.ARMY1].steam_id = " .. tostring(p1.steam_id))
+        print("Player[COLOR.ARMY1].color = " .. tostring(p1.color))
+    end
+
+    print("----------------------------------------")
+
+    print("Player[COLOR.ARMY2] exists = " .. tostring(p2 ~= nil))
+    if p2 then
+        print("Player[COLOR.ARMY2].seated = " .. tostring(p2.seated))
+        print("Player[COLOR.ARMY2].steam_name = " .. tostring(p2.steam_name))
+        print("Player[COLOR.ARMY2].steam_id = " .. tostring(p2.steam_id))
+        print("Player[COLOR.ARMY2].color = " .. tostring(p2.color))
+    end
+
+    print("========================================")
+    print("========================================")
+
+    return save_state
+end   

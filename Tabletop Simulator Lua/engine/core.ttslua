@@ -1,35 +1,42 @@
-ENGINE = nil
-
 -- ============================================================
 -- FUNZIONE: engine_init()
 -- ============================================================
+
 function engine_init()
 
-    if not ENGINE then
-        error("ENGINE non inizializzato")
-    end
+        if DEBUG == true then
 
-    engine_validatePhases()
+            if ENGINE then
+                print("ENGINE.phase = " .. tostring(ENGINE.phase))
+                print("ENGINE.turn = " .. tostring(ENGINE.turn))
+            end
 
-    UI.setAttribute("btnArmy1", "active", "true")
-    UI.setAttribute("btnArmy2", "active", "true")
-    UI.setAttribute("btnScelta", "active", "true")
+            if players_saved and players_saved[1] then
+                    print("Player[COLOR.ARMY1].seated = " .. tostring(players_saved[1].seated))
+                    print("Player[COLOR.ARMY1].steam_name = " .. tostring(players_saved[1].steam_name))
+                    print("Player[COLOR.ARMY1].steam_id = " .. tostring(players_saved[1].steam_id))
+                    print("Player[COLOR.ARMY1].color = " .. tostring(players_saved[1].color))
+            end
 
-    if clear then clear() end
-    updateCenterPanel()
-    if aggiornaLinee then aggiornaLinee() end
-
-    engine_validatePhases()
+            if players_saved and players_saved[2] then
+                    print("Player[COLOR.ARMY2].seated = " .. tostring(players_saved[2].seated))
+                    print("Player[COLOR.ARMY2].steam_name = " .. tostring(players_saved[2].steam_name))
+                    print("Player[COLOR.ARMY2].steam_id = " .. tostring(players_saved[2].steam_id))
+                    print("Player[COLOR.ARMY2].color = " .. tostring(players_saved[2].color))
+            end
+        end
+        
+    --engine_validatePhases()
 
     UI.setAttribute("BTN_ARMY1", "active", "true")
     UI.setAttribute("BTN_ARMY2", "active", "true")
     UI.setAttribute("BTN_SINGLE", "active", "true")
     fadeOut("WELCOME TO LIONHEART")
 
-     if clear then clear() end
-     if allPlayersGrey then allPlayersGrey() end
+    if allPlayersGrey then allPlayersGrey() end
     if updateCenterPanel then updateCenterPanel() end
     if aggiornaLinee then aggiornaLinee() end
+    
 end
 -- ============================================================
 -- FUNZIONE: engine_validatePhases()

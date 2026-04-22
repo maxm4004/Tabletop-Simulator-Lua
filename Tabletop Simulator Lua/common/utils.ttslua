@@ -1,105 +1,112 @@
 -- ============================================================
 -- FUNZIONE: engine_handleChat()
 -- ============================================================
-function engine_handleChat(message, player)
+    function engine_handleChat(message, player)
 
-    if message == "!restart" then restart() return false end
-    if message == "!clear" then clear() return false end
+        if message == "!restart" then restart() return false end
+        if message == "!clear" then clear() return false end
 
-    return false
-end
+        return false
+    end
+-- ============================================================
+-- FUNZIONE: error()
+-- ============================================================
+    function error(warning) 
+        return fadeOut(warning)
+    end
+-- ============================================================
+-- FUNZIONE: fadeOut()
+-- ============================================================
+    function fadeOut(warning)
+
+        local alpha = 1
+        
+        UI.setAttribute("textWarning", "active", "true")
+        UI.setAttribute("textWarning", "text", warning)
+
+        local function step()
+            alpha = alpha - 0.05
+            if alpha <= 0 then
+                UI.setAttribute("textWarning", "active", "false")
+                return
+            end
+        
+            UI.setAttribute("textWarning", "color", "rgba(255,215,0," .. alpha .. ")")
+            Wait.time(step, 0.2)
+        end
+
+        step()
+    end
 -- ============================================================
 -- FUNZIONE: allPlayersGrey()
 -- ============================================================
-function fadeOut(warning)
-
-    local alpha = 1
-    
-
-    UI.setAttribute("textWarning", "active", "true")
-    UI.setAttribute("textWarning", "text", warning)
-
-    local function step()
-        alpha = alpha - 0.05
-        if alpha <= 0 then
-            UI.setAttribute("textWarning", "active", "false")
-            return
-        end
-     
-        UI.setAttribute("textWarning", "color", "rgba(255,215,0," .. alpha .. ")")
-        Wait.time(step, 0.2)
-    end
-
-    step()
-end
--- ============================================================
--- FUNZIONE: allPlayersGrey()
--- ============================================================
-function allPlayersGrey()
-    for _, p in ipairs(Player.getPlayers()) do
-        if p then
-          p.changeColor("Grey")
+    function allPlayersGrey()
+        for _, p in ipairs(Player.getPlayers()) do
+            if p then
+            p.changeColor("Grey")
+            end
         end
     end
-end
 -- ============================================================
 -- FUNZIONE: clear()
 -- ============================================================
-   function clear() for i=0,120 do print("") end end
+   function clear() for i=0,250 do print("") end end
 -- ============================================================
 -- FUNZIONE: restart()
 -- ============================================================
     function restart()
 
-        for _, obj in ipairs(getAllObjects()) do
-            for _, tag in ipairs(obj.getTags()) do
-                if tag == "Army1" or tag == "Army2" then
-                    if parsaNome(obj.getName()) then
-                        obj.destruct()
-                    end
-                    break
-                end
-            end
-        end
+        -- for _, obj in ipairs(getAllObjects()) do
+        --     for _, tag in ipairs(obj.getTags()) do
+        --         if tag == "Army1" or tag == "Army2" then
+        --             if parsaNome(obj.getName()) then
+        --                 obj.destruct()
+        --             end
+        --             break
+        --         end
+        --     end
+        -- end
 
-        ARMY[1] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
-        ARMY[2] = {player=nil, tag=nil, nome=nil, color=nil, pannello_guid=nil}
+        -- ARMY = {
+        --     [1] = { player=nil, tag=nil, nome=nil, nome_display=nil, color=nil, pannello_guid=nil },
+        --     [2] = { player=nil, tag=nil, nome=nil, nome_display=nil, color=nil, pannello_guid=nil }
+        --     }
 
-        esercito_1 = {}
-        esercito_2 = {}
-        wounds_data = {}
+        -- esercito_1 = {}
+        -- esercito_2 = {}
+        -- wounds_data = {}
 
-        turno_corrente = 0
-        fase_corrente = 0
+        -- turno_corrente = 0
+        -- fase_corrente = 0
 
-        Army1DeployDone = false
-        Army2DeployDone = false
-        pronto_red = false
-        pronto_green = false
-        iniziativa_scelta = false
-        mano_tag = nil
-        mano_passata = false
+        -- Army1DeployDone = false
+        -- Army2DeployDone = false
+        -- pronto_red = false
+        -- pronto_green = false
+        -- iniziativa_scelta = false
+        -- mano_tag = nil
+        -- mano_passata = false
+        -- segnalini_guids = {}
+        -- Turns.enable = false
+        -- linee_deploy = false
 
-        for _, guid in ipairs(segnalini_guids) do
-            local o = getObjectFromGUID(guid)
-            if o then
-                o.destruct()
-            end
-        end
+        -- for _, guid in ipairs(segnalini_guids) do
+        --     local o = getObjectFromGUID(guid)
+        --     if o then
+        --         o.destruct()
+        --     end
+        -- end
 
-        segnalini_guids = {}
-        Turns.enable = false
-        linee_deploy = false
-
-
-
-        if ENGINE then
-            ENGINE.phase = "SITTING"
-            ENGINE.state = {
+        ENGINE = {
+            phase = "SITTING",
+            turn = 1,
+            state = {
                 Army1Click = false,
-                Army2Click = false
-            }
-        end
+                Army2Click = false,
+                ConfirmClick = false
+            },
+            phases = phasesData
+        }
 
         colorArmy1 = "Grey"
         colorArmy2 = "Grey"
@@ -122,9 +129,34 @@ end
             end
         end
 
-        updateCenterPanel()
-        aggiornaLinee()
-        clear()
-
-        printToAll("[RESET] Partita azzerata — pronto per nuovo setup", {r=0.9, g=0.5, b=0.1})
+        onLoad()    
     end
+-- ============================================================
+-- FUNZIONE: aggiornaLinee()
+-- ============================================================
+function aggiornaLinee()
+   
+    local linee = {}
+
+    if linee_croce then
+        table.insert(linee, { points={{x=-TAVOLO_LX,y=TAVOLO_Y,z=0},{x=TAVOLO_LX,y=TAVOLO_Y,z=0}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
+        table.insert(linee, { points={{x=0,y=TAVOLO_Y,z=-TAVOLO_LZ},{x=0,y=TAVOLO_Y,z=TAVOLO_LZ}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
+    end
+    if linee_deploy then
+        local y  = VERDE_Y_LINEE
+        table.insert(linee, { points={{x=-VERDE_LX,y=y,z=-(VERDE_LZ-DEPLOY_CM)},{x=VERDE_LX,y=y,z=-(VERDE_LZ-DEPLOY_CM)}}, color={r=0.9,g=0.2,b=0.2}, thickness=0.25 })
+        table.insert(linee, { points={{x=-VERDE_LX,y=y,z=(VERDE_LZ-DEPLOY_CM)}, {x=VERDE_LX,y=y,z=(VERDE_LZ-DEPLOY_CM)}},  color={r=0.2,g=0.8,b=0.2}, thickness=0.25 })
+    end
+    if linee_rettangolo then
+        local y = 1.70
+        table.insert(linee, { points={{x=-46.18,y=y,z=-37.55},{x=46.18,y=y,z=-37.55},{x=46.18,y=y,z=-62.38},{x=-46.18,y=y,z=-62.38},{x=-46.18,y=y,z=-37.55}}, color={r=1,g=0,b=0}, thickness=0.3 })
+        table.insert(linee, { points={{x=-46.18,y=y,z=37.55}, {x=46.18,y=y,z=37.55}, {x=46.18,y=y,z=62.38}, {x=-46.18,y=y,z=62.38}, {x=-46.18,y=y,z=37.55}},  color={r=0,g=1,b=0}, thickness=0.3 })
+    end
+    if linee_settori then
+        local cols=6; local rows=5
+        local sx=(VERDE_LX*2)/cols; local sz=(VERDE_LZ*2)/rows; local y=3.5
+        for c=0,cols do local x=-VERDE_LX+c*sx; table.insert(linee,{points={{x,y,-VERDE_LZ},{x,y,VERDE_LZ}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
+        for r=0,rows do local z=-VERDE_LZ+r*sz; table.insert(linee,{points={{-VERDE_LX,y,z},{VERDE_LX,y,z}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
+    end
+    Global.setVectorLines(linee)
+end    

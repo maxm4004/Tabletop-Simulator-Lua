@@ -1,144 +1,110 @@
--- ================================================================================================================================
---                                                           PLAYERS SEATED
--- ================================================================================================================================
-army1 = "Army1"
-army2 = "Army2"
-colorArmy1 = "Grey"
-colorArmy2 = "Grey"
-numeroPlayerSeated = 0
--- ============================================================
--- FUNZIONE: allPlayersGrey()
--- ============================================================
-function allPlayersGrey()
-    for _, p in ipairs(Player.getPlayers()) do
-        if p then
-          p.changeColor("Grey")
+-- -- ================================================================================================================================
+-- --                                                           CALLBACKS
+-- -- ================================================================================================================================
+-- -- ============================================================
+-- -- FUNZIONE: onSaveState()
+-- -- ============================================================
+        function getVersion()
+            return VERSION
         end
-    end
-end
--- ============================================================
--- FUNZIONE: countSeated()
--- ============================================================
-function countSeated()
-    numeroPlayerSeated = 0
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
+-- -- ============================================================
+-- -- FUNZIONE: countSeated()
+-- -- ============================================================
+    function countSeated()
+        numeroPlayerSeated = 0
+        for _, p in ipairs(Player.getPlayers()) do
             if p and p.seated then
-                if p.color == "Green" then numeroPlayerSeated=numeroPlayerSeated+1 end
-                if p.color == "Red" then numeroPlayerSeated=numeroPlayerSeated+1 end                
+                if p and p.seated then
+                    if p.color == "Green" then numeroPlayerSeated=numeroPlayerSeated+1 end
+                    if p.color == "Red" then numeroPlayerSeated=numeroPlayerSeated+1 end                
+                end
             end
         end
+        return numeroPlayerSeated
     end
-    return numeroPlayerSeated
-end
--- ============================================================
--- FUNZIONE: isOtherPlayerSeated()
--- ============================================================
-function isOtherPlayerSeated(player)
+-- -- ============================================================
+-- -- FUNZIONE: isOtherPlayerSeated()
+-- -- ============================================================
+    function isOtherPlayerSeated(player)
 
-
-    local function checkPlayer(player)
-        if player.color ~= COLOR.NOARMY then 
-            return true
+        local function checkPlayer(player)
+            if player.color ~= COLOR.NOARMY then 
+                return true
+            end    
         end    
-    end    
 
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
-            if p.steam_name ~= player.steam_name then
-                return checkPlayer(p)
+        for _, p in ipairs(Player.getPlayers()) do
+            if p and p.seated then
+                if p.steam_name ~= player.steam_name then
+                    return checkPlayer(p)
+                end
+            end
+        end
+        return false
+    end
+-- -- ============================================================
+-- -- FUNZIONE: isArmy1Seated()
+-- -- ============================================================
+    function isArmy1Seated()
+        for _, p in ipairs(Player.getPlayers()) do
+            if p and p.seated then
+                if p.color == COLOR.ARMY1 then 
+                    return true
+                end
             end
         end
     end
-    return false
-end
--- ============================================================
--- FUNZIONE: isArmy1Seated()
--- ============================================================
-function isArmy1Seated()
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
-            if p.color == "Green" then 
-                return true
+-- -- ============================================================
+-- -- FUNZIONE: isArmy2Seated()
+-- -- ============================================================
+    function isArmy2Seated()
+        for _, p in ipairs(Player.getPlayers()) do
+            if p and p.seated then
+                if p.color == COLOR.ARMY2 then 
+                    return true
+                end
             end
         end
     end
-end
--- ============================================================
--- FUNZIONE: isArmy2Seated()
--- ============================================================
-function isArmy2Seated()
-    for _, p in ipairs(Player.getPlayers()) do
-        if p and p.seated then
-            if p.color == "Red" then 
-                return true
-            end
-        end
-    end
-end
 -- ============================================================
 -- FUNZIONE: onPlayerConnect()
 -- ============================================================
-function onPlayerConnect(player)
-    print(player.steam_name)
-    print(player.color)
-end
--- ============================================================
--- FUNZIONE: onPlayerDisconnect()
--- ============================================================
-function onPlayerDisconnect(player)
-    print(player.steam_name)
-    print(player.color)
-end
--- ============================================================
--- FUNZIONE: onPlayerChangeColor()
--- ============================================================
-function onPlayerChangeColor(color)
-
-    if not color then return end
-    if color == "Black" or color == "Grey" then 
-
-            if not isArmy1Seated() then
-                colorArmy1 = "Grey"
-            end
-
-            if not isArmy2Seated() then
-                colorArmy2 = "Grey"
-            end        
+    function onPlayerConnect(player)
+        fadeOut(player.steam_name .." joined the game")
+        print(player.color .." joined the game")
+        ripristinaColoriPlayers()
     end
-
-    if color == "Red" then colorArmy1 = color end  
-    if color == "Green" then colorArmy2 = color end
-
-    updateCenterPanel()
-end
--- ============================================================
--- FUNZIONE: setPlayerRed()
--- ============================================================
-function setPlayerRed(player, value, id)
-
-    if Player["Red"].seated then
-        player.broadcast("color " .. army1 .. " already used")
-    else    
-        player.changeColor("Red")
-        print(player.steam_name .. " choose ".. army1)
+-- -- ============================================================
+-- -- FUNZIONE: onPlayerDisconnect()
+-- -- ============================================================
+    function onPlayerDisconnect(player)
+        fadeOut(player.steam_name .." left the game")
+        print(player.color .." left the game")
     end
-end
--- ============================================================
--- FUNZIONE: setPlayerGreen()
--- ============================================================
-function setPlayerGreen(player, value, id)
-    
-    if Player["Green"].seated then
-        player.broadcast("color " .. army2 .. " already used")
-    else    
-        player.changeColor("Green")
-        print(player.steam_name .. " choose ".. army2)
+--============================================================
+--FUNZIONE: onPlayerChangeColor()
+--============================================================
+    function onPlayerChangeColor(color)
+
+        if DEBUG then print("onPlayerChangeColor") end
+
+        if not color then return end
+        if color == "Black" or color == "Grey" then 
+
+                if not isArmy1Seated() then
+                    colorArmy1 = "Grey"
+                end
+
+                if not isArmy2Seated() then
+                    colorArmy2 = "Grey"
+                end        
+        end
+
+        if COLOR.ARMY1 == color then colorArmy1 = color end
+        if COLOR.ARMY2 == color then colorArmy2 = color end
+
+        updateCenterPanel()
     end
-end
--- ================================================================================================================================
---                                                           CALLBACKS
--- ================================================================================================================================
 -- ============================================================
 -- FUNZIONE: sitting_btn_army()
 -- ============================================================
@@ -180,32 +146,26 @@ function sitting_btn_army(player, value, id)
         end
     end     
     return true
- end
+end
 -- ============================================================
 -- FUNZIONE: sitting_btn_army1()
 -- ============================================================
 function sitting_btn_army1(player, value, id)
-
     if DEBUG then print("sitting_btn_army1") end
-
-    return value
+    return true
 end
-
 -- ============================================================
 -- FUNZIONE: sitting_btn_army2()
 -- ============================================================
 function sitting_btn_army2(player, value, id)
-
     if DEBUG then print("sitting_btn_army2") end
-
-    return value
+    return true
 end
-
 -- ============================================================
 -- FUNZIONE: sitting_btn_single()
 -- ============================================================
 function sitting_btn_single(player, value, id)
-    print("sitting_btn_single")
+    if DEBUG then print("sitting_btn_single") end
     return true
 end
 
@@ -213,7 +173,7 @@ end
 -- FUNZIONE: deploy_btn_army1()
 -- ============================================================
 function deploy_btn_army1(player, value, id)
-    print("deploy_btn_army1")
+    if DEBUG then print("deploy_btn_army1") end
     return true
 end
 
@@ -221,7 +181,7 @@ end
 -- FUNZIONE: deploy_btn_army2()
 -- ============================================================
 function deploy_btn_army2(player, value, id)
-    print("deploy_btn_army2")
+    if DEBUG then print("deploy_btn_army2") end
     return true
 end
 
@@ -229,7 +189,7 @@ end
 -- FUNZIONE: deploy_btn_single()
 -- ============================================================
 function deploy_btn_single(player, value, id)
-    print("deploy_btn_single")
+    if DEBUG then print("deploy_btn_single") end
     return true
 end
 
@@ -237,7 +197,7 @@ end
 -- FUNZIONE: initiative_btn_army1()
 -- ============================================================
 function initiative_btn_army1(player, value, id)
-    print("initiative_btn_army1")
+    if DEBUG then print("initiative_btn_army1") end
     return true
 end
 
@@ -245,7 +205,7 @@ end
 -- FUNZIONE: initiative_btn_army2()
 -- ============================================================
 function initiative_btn_army2(player, value, id)
-    print("initiative_btn_army2")
+    if DEBUG then print("initiative_btn_army2") end
     return true
 end
 
@@ -253,7 +213,7 @@ end
 -- FUNZIONE: initiative_btn_single()
 -- ============================================================
 function initiative_btn_single(player, value, id)
-    print("initiative_btn_single")
+    if DEBUG then print("initiative_btn_single") end
     return true
 end
 
@@ -261,7 +221,7 @@ end
 -- FUNZIONE: move_btn_army1()
 -- ============================================================
 function move_btn_army1(player, value, id)
-    print("move_btn_army1")
+    if DEBUG then print("move_btn_army1") end
     return true
 end
 
@@ -269,7 +229,7 @@ end
 -- FUNZIONE: move_btn_army2()
 -- ============================================================
 function move_btn_army2(player, value, id)
-    print("move_btn_army2")
+    if DEBUG then print("move_btn_army2") end
     return true
 end
 
@@ -277,7 +237,7 @@ end
 -- FUNZIONE: move_btn_single()
 -- ============================================================
 function move_btn_single(player, value, id)
-    print("move_btn_single")
+    if DEBUG then print("move_btn_single") end
     return true
 end
 
@@ -285,7 +245,7 @@ end
 -- FUNZIONE: shoot_btn_army1()
 -- ============================================================
 function shoot_btn_army1(player, value, id)
-    print("shoot_btn_army1")
+    if DEBUG then print("shoot_btn_army1") end
     return true
 end
 
@@ -293,46 +253,41 @@ end
 -- FUNZIONE: shoot_btn_army2()
 -- ============================================================
 function shoot_btn_army2(player, value, id)
-    print("shoot_btn_army2")
+    if DEBUG then print("shoot_btn_army2") end
     return true
 end
-
 -- ============================================================
 -- FUNZIONE: shoot_btn_single()
 -- ============================================================
 function shoot_btn_single(player, value, id)
-    print("shoot_btn_single")
+    if DEBUG then print("shoot_btn_single") end
     return true
 end
-
 -- ============================================================
 -- FUNZIONE: attack_btn_army1()
 -- ============================================================
 function attack_btn_army1(player, value, id)
-    print("attack_btn_army1")
+    if DEBUG then print("attack_btn_army1") end
     return true
 end
-
 -- ============================================================
 -- FUNZIONE: attack_btn_army2()
 -- ============================================================
 function attack_btn_army2(player, value, id)
-    print("attack_btn_army2")
+    if DEBUG then print("attack_btn_army2") end
     return true
 end
-
 -- ============================================================
 -- FUNZIONE: attack_btn_single()
 -- ============================================================
 function attack_btn_single(player, value, id)
-    print("attack_btn_single")
+    if DEBUG then print("attack_btn_single") end
     return true
 end
-
 -- ============================================================
 -- FUNZIONE: morale_btn_single()
 -- ============================================================
 function morale_btn_single(player, value, id)
-    print("morale_btn_single")
+    if DEBUG then print("morale_btn_single") end
     return true
 end

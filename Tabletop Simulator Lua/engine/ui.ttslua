@@ -47,11 +47,11 @@ RENDERERS = {}
 -- ============================================================
 function updateCenterPanel()
 
-    print(colorArmy1)
-    print(colorArmy2)
+    if DEBUG then print("updateCenterPanel") end
 
     UI.setAttribute("army1", "color", (colorArmy1 or "Grey"))
     UI.setAttribute("army2", "color", (colorArmy2 or "Grey"))
+    UI.setAttribute("version", "text", VERSION)
 
     if not ENGINE or not ENGINE.phase then
         printToAll("ENGINE non inizializzato", "Red")
