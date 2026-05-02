@@ -1,0 +1,18 @@
+require("rulesets.lionheart.army")
+require("rulesets.lionheart.ui")
+require("rulesets.lionheart.conditions")
+require("rulesets.lionheart.callbacks")
+require("rulesets.lionheart.phase_hooks")
+require("rulesets.lionheart.lib")
+require("rulesets.lionheart.phases")
+require("rulesets.lionheart.persistence")
+require("rulesets.lionheart.register")
+
+ENGINE = ENGINE or {}
+ENGINE.handlers = ENGINE.handlers or {}
+
+for k, v in pairs(_G) do
+    if type(v) == "function" then
+        ENGINE.handlers[k] = v
+    end
+end

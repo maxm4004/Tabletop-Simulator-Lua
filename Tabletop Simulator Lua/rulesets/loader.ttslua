@@ -1,0 +1,7 @@
+if ACTIVE_RULESET == "LIONHEART" then
+    require("rulesets.lionheart.loader")
+elseif ACTIVE_RULESET == "DEFAULT" then
+    require("rulesets.default.loader")
+else
+    error("Unknown ruleset: " .. tostring(ACTIVE_RULESET))
+end

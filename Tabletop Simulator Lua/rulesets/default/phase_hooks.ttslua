@@ -1,0 +1,27 @@
+function before_start(phaseName, phase)
+    DEFAULT = DEFAULT or {}
+    DEFAULT.confirmed = false
+end
+
+function after_start(phaseName, phase)
+
+end
+
+function before_step(phaseName, phase)
+    DEFAULT = DEFAULT or {}
+    DEFAULT.confirmed = false
+end
+
+function after_step(phaseName, phase)
+
+end
+
+function before_end(phaseName, phase)
+DEFAULT = DEFAULT or {}
+DEFAULT.confirmed = false
+end
+
+function after_end(phaseName, phase)
+    ENGINE.turn = (ENGINE.turn or 1) + 1
+end
+

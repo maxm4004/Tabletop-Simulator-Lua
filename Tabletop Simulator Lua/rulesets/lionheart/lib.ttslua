@@ -1,0 +1,594 @@
+-- ============================================================
+-- FUNZIONE: restart()
+-- ============================================================
+function restart()
+
+    initPhases()
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    ENGINE.phase = "SITTING"
+    ENGINE.turn = 1
+ 
+    colorArmy1 = COLOR.NOARMY
+    colorArmy2 = COLOR.NOARMY
+
+    DICE_CONTEST = {
+        rolledNumberArmy1 = nil,
+        rolledNumberArmy2 = nil,
+        winner = nil,
+        initiative = nil
+    }
+    
+    TURN = {
+        phase = "SITTING",
+        activeArmy = nil,
+        firstArmy = nil,
+        completed = {
+            Army1 = false,
+            Army2 = false
+        }
+    }
+
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+
+    colorArmy1 = COLOR.NOARMY
+    colorArmy2 = COLOR.NOARMY
+
+    callHandler("initUI")
+    callHandler("resetPlayers")
+    callHandler("restoreDiceUiState")
+    callHandler("updateCenterPanel")
+    callHandler("aggiornaLinee")
+    printToAll("RESTART", "Yellow")
+
+end
+-- ============================================================
+-- FUNZIONE: getArmySlotByColor()
+-- ============================================================
+function getArmySlotByColor(color)
+    if color == COLOR.ARMY1 then return "Army1" end
+    if color == COLOR.ARMY2 then return "Army2" end
+    return nil
+end
+-- ============================================================
+-- FUNZIONE: getColorByArmySlot()
+-- ============================================================
+function getColorByArmySlot(armySlot)
+    if armySlot == "Army1" then return COLOR.ARMY1 end
+    if armySlot == "Army2" then return COLOR.ARMY2 end
+    return nil
+end
+-- ============================================================
+-- FUNZIONE: resetPlayers()
+-- ============================================================
+function blinkObject(id)
+    local visible = true
+
+    Wait.time(function()
+        visible = not visible
+        UI.setAttribute(id, "active", visible and "true" or "false")
+    end, 0.4, -1) 
+end
+-- ============================================================
+-- FUNZIONE: resetPlayers()
+-- ============================================================
+function resetPlayers()
+
+    for _, p in ipairs(Player.getPlayers()) do
+        if p then
+        p.changeColor(COLOR.NOARMY)
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: countSeated()
+-- ============================================================
+function countSeated()
+    numeroPlayerSeated = 0
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p and p.seated then
+                if p.color == "Green" then numeroPlayerSeated=numeroPlayerSeated+1 end
+                if p.color == "Red" then numeroPlayerSeated=numeroPlayerSeated+1 end                
+            end
+        end
+    end
+    return numeroPlayerSeated
+end
+-- ============================================================
+-- FUNZIONE: isOtherPlayerSeated()
+-- ============================================================
+function isOtherPlayerSeated(player)
+
+    local function checkPlayer(player)
+        if player.color ~= COLOR.NOARMY then 
+            return true
+        end    
+    end    
+
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.steam_name ~= player.steam_name then
+                return checkPlayer(p)
+            end
+        end
+    end
+    return false
+end
+-- ============================================================
+-- FUNZIONE: isArmy1Seated()
+-- ============================================================
+function isArmy1Seated()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.color == COLOR.ARMY1 then 
+                return true
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: isArmy2Seated()
+-- ============================================================
+function isArmy2Seated()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.color == COLOR.ARMY2 then 
+                return true
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: onPlayerConnect()
+-- ============================================================
+function onPlayerConnect(player)
+    if DEBUG then print("onPlayerConnect") end
+    fadeOut(player.steam_name .." joined the game")
+    print(player.color .." joined the game")
+    restorePlayersColors()
+end
+-- ============================================================
+-- FUNZIONE: onPlayerDisconnect()
+-- ============================================================
+function onPlayerDisconnect(player)
+    if DEBUG then print("onPlayerDisconnect") end
+    fadeOut(player.steam_name .." left the game")
+    print(player.color .." left the game")
+end
+--=============================================================
+--FUNZIONE: onPlayerChangeColor()
+--=============================================================
+function onPlayerChangeColor(color)
+
+    if not color then return end
+    if color == COLOR.GM or color == COLOR.NOARMY then 
+
+            if not isArmy1Seated() then
+                colorArmy1 = COLOR.NOARMY
+            end
+
+            if not isArmy2Seated() then
+                colorArmy2 = COLOR.NOARMY
+            end        
+    end
+
+    if COLOR.ARMY1 == color then colorArmy1 = color end
+    if COLOR.ARMY2 == color then colorArmy2 = color end
+
+    callHandler("updateCenterPanel")
+end
+--=============================================================
+--FUNZIONE: getArmyByButton()
+--=============================================================
+function getArmyByButton(id)
+    for k,v in pairs(ARMY) do
+        if v.button == id then
+            return k
+        end
+    end
+    return nil
+end
+--=============================================================
+--FUNZIONE: getArmyByColor()
+--=============================================================
+function getArmyByColor(player)
+    for k,v in pairs(ARMY) do
+        if v.color == player.color then
+            return k
+        end
+    end
+    return nil
+end
+-- ============================================================
+-- FUNZIONE: aggiornaLinee()
+-- ============================================================
+function aggiornaLinee()
+    
+    local linee = {}
+
+    if linee_croce then
+        table.insert(linee, { points={{x=-TAVOLO_LX,y=TAVOLO_Y,z=0},{x=TAVOLO_LX,y=TAVOLO_Y,z=0}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
+        table.insert(linee, { points={{x=0,y=TAVOLO_Y,z=-TAVOLO_LZ},{x=0,y=TAVOLO_Y,z=TAVOLO_LZ}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
+    end
+    if linee_deploy then
+        local y  = VERDE_Y_LINEE
+        table.insert(linee, { points={{x=-VERDE_LX,y=y,z=-(VERDE_LZ-DEPLOY_CM)},{x=VERDE_LX,y=y,z=-(VERDE_LZ-DEPLOY_CM)}}, color={r=0.9,g=0.2,b=0.2}, thickness=0.25 })
+        table.insert(linee, { points={{x=-VERDE_LX,y=y,z=(VERDE_LZ-DEPLOY_CM)}, {x=VERDE_LX,y=y,z=(VERDE_LZ-DEPLOY_CM)}},  color={r=0.2,g=0.8,b=0.2}, thickness=0.25 })
+    end
+    if linee_rettangolo then
+        local y = 1.70
+        table.insert(linee, { points={{x=-46.18,y=y,z=-37.55},{x=46.18,y=y,z=-37.55},{x=46.18,y=y,z=-62.38},{x=-46.18,y=y,z=-62.38},{x=-46.18,y=y,z=-37.55}}, color={r=1,g=0,b=0}, thickness=0.3 })
+        table.insert(linee, { points={{x=-46.18,y=y,z=37.55}, {x=46.18,y=y,z=37.55}, {x=46.18,y=y,z=62.38}, {x=-46.18,y=y,z=62.38}, {x=-46.18,y=y,z=37.55}},  color={r=0,g=1,b=0}, thickness=0.3 })
+    end
+    if linee_settori then
+        local cols=6; local rows=5
+        local sx=(VERDE_LX*2)/cols; local sz=(VERDE_LZ*2)/rows; local y=3.5
+        for c=0,cols do local x=-VERDE_LX+c*sx; table.insert(linee,{points={{x,y,-VERDE_LZ},{x,y,VERDE_LZ}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
+        for r=0,rows do local z=-VERDE_LZ+r*sz; table.insert(linee,{points={{-VERDE_LX,y,z},{VERDE_LX,y,z}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
+    end
+    Global.setVectorLines(linee)
+end    
+-- ============================================================
+-- FUNZIONE: dice_check()
+-- ============================================================
+function dice_check()
+
+   if not DICE_CONTEST.rolledNumberArmy1 or not DICE_CONTEST.rolledNumberArmy2 then return end
+
+    if DICE_CONTEST.rolledNumberArmy1 == DICE_CONTEST.rolledNumberArmy2 then
+        DICE_CONTEST.rolledNumberArmy1 = nil
+        DICE_CONTEST.rolledNumberArmy2 = nil
+        DICE_CONTEST.winner = nil
+        return
+    end
+
+    if DICE_CONTEST.rolledNumberArmy1 > DICE_CONTEST.rolledNumberArmy2 then
+        DICE_CONTEST.winner = 1
+    else
+        DICE_CONTEST.winner = 2
+    end   
+    
+    print("Winner is Army: " .. tostring(ARMY[DICE_CONTEST.winner].name))
+end
+-- ============================================================
+-- FUNZIONE: spinDie()
+-- ============================================================
+function spinDie(imageId, diceNumber, onEnd)
+
+    local delays = {0.05, 0.05, 0.06, 0.06, 0.08, 0.10, 0.12, 0.15, 0.18, 0.22, 0.28}
+    local index = 1
+
+    local function step()
+
+        local url = diceUrls[dice_roll()]
+        if diceNumber == 1 then
+            rolling1 = url
+        else
+            rolling2 = url
+        end
+
+        UI.setAttribute(imageId, "image", url)
+
+        if index >= #delays then
+            local finalValue = dice_roll()
+            local finalUrl = diceUrls[finalValue]
+
+            if diceNumber == 1 then
+                rolling1 = finalUrl
+            else
+                rolling2 = finalUrl
+            end
+
+            UI.setAttribute(imageId, "image", finalUrl)
+            
+
+            if onEnd then               
+                onEnd(finalValue)
+            end
+            return
+        end
+
+        local delay = delays[index]
+        index = index + 1
+        Wait.time(step, delay)
+    end
+
+    step()
+end
+-- ============================================================
+-- FUNZIONE: updateCenterPanel()
+-- ============================================================
+function updateCenterPanel()
+
+    if not ENGINE or not ENGINE.phases then
+        printToAll("ENGINE non inizializzato", "Red")
+        return
+    end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+
+    if not phase then
+        printToAll("Fase non trovata: " .. tostring(ENGINE.phase), "Red")
+        return
+    end
+
+    local renderer = RENDERERS[phase.render]
+
+    if renderer then
+        renderer(phase)
+    else
+        printToAll("Renderer non trovato: " .. tostring(phase.render), "Red")
+        return
+    end
+
+    -- ========================================================
+    -- TEXT PANEL
+    -- ========================================================
+
+    UI.setAttribute("versione", "text", VERSION.." - "..ACTIVE_RULESET)
+    UI.setAttribute("textFase", "text", phase.title .. " - TURN: " .. ENGINE.turn)
+    UI.setAttribute("textDesc", "text", phase.desc or "")
+
+    UI.setAttribute("army1", "text", army1)
+    UI.setAttribute("army2", "text", army2)
+    UI.setAttribute("army1", "color", colorArmy1 or COLOR.NOARMY)
+    UI.setAttribute("army2", "color", colorArmy2 or COLOR.NOARMY)
+
+    -- ========================================================
+    -- BUTTONS BASE
+    -- ========================================================
+ 
+    for slot, button in pairs(phase.buttons or {}) do
+      
+        if slot == BUTTONS.BTN_ARMY1 then
+            color = COLOR.ARMY1
+        elseif slot == BUTTONS.BTN_ARMY2 then
+            color = COLOR.ARMY2
+        end
+
+        UI.setAttribute(slot, "active", "true")
+        UI.setAttribute(slot, "color", button.color)
+        UI.setAttribute(slot, "text", button.label)
+        UI.setAttribute(slot, "textColor", button.textColor)
+    end
+-- ========================================================
+-- BUTTON STATE
+-- ========================================================
+
+if ENGINE.phase == "SITTING" then
+
+    if colorArmy1 ~= COLOR.NOARMY then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if colorArmy2 ~= COLOR.NOARMY then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+elseif ENGINE.phase == "DEPLOY" then
+
+    if TURN and TURN.completed and TURN.completed.Army1 then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if TURN and TURN.completed and TURN.completed.Army2 then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+elseif ENGINE.phase == "INITIATIVE_ROLL" then
+
+    if DICE_CONTEST and DICE_CONTEST.rolledNumberArmy1 ~= nil then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if DICE_CONTEST and DICE_CONTEST.rolledNumberArmy2 ~= nil then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+elseif phase and phase.inputMode == "INITIATIVE" then
+
+    if TURN and TURN.completed and TURN.completed.Army1 then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if TURN and TURN.completed and TURN.completed.Army2 then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+end
+
+-- ========================================================
+-- INITIATIVE OUTLINE
+-- ========================================================
+
+if phase.inputMode == "INITIATIVE" then
+    if TURN and TURN.activeArmy == "Army1" then
+        UI.setAttribute("iconMoveArmy1", "active", "true")
+    elseif TURN and TURN.activeArmy == "Army2" then
+        UI.setAttribute("iconMoveArmy2", "active", "true")
+    end
+end
+
+end
+-- ============================================================
+-- FUNZIONE: advanceTurnAfterClick()
+-- ============================================================
+function advanceTurnAfterClick(slot)
+
+    if slot == BUTTONS.BTN_ARMY1 then
+        TURN.completed.Army1 = true
+    end
+
+    if slot == BUTTONS.BTN_ARMY2 then
+        TURN.completed.Army2 = true
+    end
+
+    if TURN.activeArmy == "Army1" then
+        if TURN.completed.Army2 then
+            TURN.activeArmy = nil
+        else
+            TURN.activeArmy = "Army2"
+        end
+        return
+    end
+
+    if TURN.activeArmy == "Army2" then
+        if TURN.completed.Army1 then
+            TURN.activeArmy = nil
+        else
+            TURN.activeArmy = "Army1"
+        end
+        return
+    end
+end
+-- ============================================================
+-- FUNZIONE: dice_reset_roll()
+-- ============================================================
+function dice_reset_roll()
+    DICE_CONTEST.rolledNumberArmy1 = nil
+    DICE_CONTEST.rolledNumberArmy2 = nil
+    DICE_CONTEST.winner = nil
+end
+-- ============================================================
+-- FUNZIONE: canUseButton()
+-- ============================================================
+function canUseButton(slot, player, value, id, button, phase)
+
+    local mode = phase and phase.inputMode or "FREE"
+
+    -- ========================================================
+    -- FREE: tutti possono cliccare
+    -- ========================================================
+    if mode == "FREE" then
+        return true
+    end
+
+    -- ========================================================
+    -- OWNER: solo il player del bottone
+    -- ========================================================
+    if mode == "OWNER" then
+
+        if slot == BUTTONS.BTN_ARMY1 then
+            if not player or player.color ~= COLOR.ARMY1 then
+                fadeOut("Not your button")
+                return false
+            end
+        end
+
+        if slot == BUTTONS.BTN_ARMY2 then
+            if not player or player.color ~= COLOR.ARMY2 then
+                fadeOut("Not your button")
+                return false
+            end
+        end
+
+        return true
+    end
+
+    -- ========================================================
+    -- INITIATIVE: gestione turno con TURN
+    -- ========================================================
+    if mode == "INITIATIVE" then
+
+        local activeColor = getColorByArmySlot(TURN.activeArmy)
+
+        -- se esiste un turno attivo, solo lui può cliccare
+        if activeColor then
+            if not player or player.color ~= activeColor then
+                fadeOut("Wait for your opponent")
+                return false
+            end
+        end
+        return true
+    end
+
+    return true
+end
+-- ============================================================
+-- FUNZIONE: resetTurnForPhase()
+-- ============================================================
+function resetTurnForPhase()
+
+    if DEBUG then print("resetTurnForPhase") end
+
+    if not DICE_CONTEST or not DICE_CONTEST.initiative then return end
+
+    local army = getArmySlotByColor(DICE_CONTEST.initiative.color)
+
+    TURN.phase = ENGINE.phase
+    TURN.firstArmy = army
+    TURN.activeArmy = army
+    TURN.completed.Army1 = false
+    TURN.completed.Army2 = false
+end
+-- ============================================================
+-- FUNZIONE: restoreDiceUiState()
+-- ============================================================
+function restoreDiceUiState()
+
+    if DEBUG then print("restoreDiceUiState") end
+
+    local resetUrl = diceUrls[1]
+
+    if DICE_CONTEST.rolledNumberArmy1 then
+        UI.setAttribute("diceArmy1", "image", diceUrls[DICE_CONTEST.rolledNumberArmy1])
+    else
+        UI.setAttribute("diceArmy1", "image", resetUrl)
+    end
+
+    if DICE_CONTEST.rolledNumberArmy2 then
+        UI.setAttribute("diceArmy2", "image", diceUrls[DICE_CONTEST.rolledNumberArmy2])
+    else
+        UI.setAttribute("diceArmy2", "image", resetUrl)
+    end
+end
+-- ============================================================
+-- FUNZIONE: stato()
+-- ============================================================
+function stato()
+
+    local save_state = lionheart_onSave()
+    local data = JSON.decode(save_state)
+
+    --print("========== SAVE STATE ==========")
+    --prettyPrintTable(data.engine)
+    --print("================================")
+    --prettyPrintTable(data.turn)
+    print("================================")
+    prettyPrintTable(data)
+    print("================================")    
+end
+-- ============================================================
+-- FUNZIONE: prettyPrintTable()
+-- ============================================================
+function prettyPrintTable(t, indent)
+    indent = indent or 0
+
+    if type(t) ~= "table" then
+        print(tostring(t))
+        return
+    end
+
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            print(string.rep("  ", indent) .. k .. ":")
+            prettyPrintTable(v, indent + 1)
+        else
+            print(string.rep("  ", indent) .. k .. ": " .. tostring(v))
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: initUI()
+-- ============================================================
+function initUI()
+    callHandler("buildUI")
+end

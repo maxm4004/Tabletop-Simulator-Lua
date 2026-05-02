@@ -1,0 +1,12 @@
+TURN = {
+    activeArmy = "Army1" or "Army2" or nil,
+    completed = {
+        Army1 = false,
+        Army2 = false
+    }
+}
+
+function default_confirm(player, value, id, button)
+    DEFAULT.confirmed = true
+    return true
+end

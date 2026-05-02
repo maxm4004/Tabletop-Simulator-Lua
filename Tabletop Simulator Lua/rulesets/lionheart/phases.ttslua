@@ -1,7 +1,9 @@
 -- ============================================================
--- FUNZIONE: lionheart_initPhases()
+-- FUNZIONE: initPhases()
 -- ============================================================
-function lionheart_initPhases()
+function initPhases()
+
+    if DEBUG then print("lionheart_initPhases") end
 
     linee_rettangolo = true
     linee_deploy     = false
@@ -11,21 +13,26 @@ function lionheart_initPhases()
         "SITTING": {
             "title": "PHASE: SITTING",
             "desc": "Select both players",
+            "before": "before_sitting",
+            "after": "after_sitting",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
             "render": "2BtnClick",
             "enforceOwnership": false,
+            "inputMode": "FREE",
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
                     "label": "Select Red",
                     "textColor": "White",
-                    "callback": "sitting_btn_army"
+                     "color": "Red",
+                    "callback": "sitting_btn_all"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
                     "label": "Select Green",
                     "textColor": "White",
-                    "callback": "sitting_btn_army"
+                    "color": "Green",
+                    "callback": "sitting_btn_all"
                 }
             },
             "transitions": [
@@ -35,98 +42,134 @@ function lionheart_initPhases()
                 }
             ]
         },
-
         "DEPLOY": {
             "title": "PHASE: DEPLOY",
             "desc": "Deploy your units behind the spawning line",
+            "before": "before_deploy",
+            "after": "after_deploy",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
             "enforceOwnership": true,
+            "inputMode": "OWNER",
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
-                    "label": "Army 1 Ready",
+                    "label": "Deploy Army1",
                     "textColor": "White",
+                    "color": "Red",
                     "callback": "deploy_btn_army1"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
-                    "label": "Army 2 Ready",
+                    "label": "Deploy Army2",
                     "textColor": "White",
+                    "color": "Green",
                     "callback": "deploy_btn_army2"
                 },
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Deploy",
                     "textColor": "Black",
+                    "color": "Grey",
                     "callback": "deploy_btn_single"
                 }
             },
             "transitions": [
                 {
-                    "to": "INITIATIVE",
+                    "to": "INITIATIVE_ROLL",
                     "conditions": ["both_players_selected", "confirm_ready"]
                 }
             ]
         },
-
-        "INITIATIVE": {
-            "title": "PHASE: INITIATIVE",
-            "desc": "The dice are rolled and the winner decides who moves first.",
-            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
-            "render": "3BtnClick",
+        "INITIATIVE_ROLL": {
+            "title": "PHASE: INITIATIVE ROLL",
+            "desc": "Roll dice",
+            "before": "before_initiative_roll",
+            "after": "after_initiative_roll",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClickAndRoll",
             "enforceOwnership": true,
+            "inputMode": "OWNER",
             "buttons": {
-                "BTN_ARMY1": {
-                    "action": "ARMY1_CLICK",
-                    "label": "Army 1 Starts",
-                    "textColor": "White",
-                    "callback": "initiative_btn_army1"
-                },
-                "BTN_ARMY2": {
-                    "action": "ARMY2_CLICK",
-                    "label": "Army 2 Starts",
-                    "textColor": "White",
-                    "callback": "initiative_btn_army2"
-                },
-                "BTN_SINGLE": {
-                    "action": "CONFIRM",
-                    "label": "Confirm Initiative",
-                    "textColor": "Black",
-                    "callback": "initiative_btn_single"
-                }
+              "BTN_ARMY1": {
+                "action": "ARMY1_CLICK",
+                "label": "Roll Army 1",
+                "textColor": "White",
+                "color": "Red",
+                "callback": "roll_btn_all"
+              },
+              "BTN_ARMY2": {
+                "action": "ARMY2_CLICK",
+                "label": "Roll Army 2",
+                "textColor": "White",
+                "color": "Green",
+                "callback": "roll_btn_all"
+              }
             },
-            "transitions": [
-                {
-                    "to": "MOVE",
-                    "conditions": ["both_players_selected", "confirm_ready"]
-                }
-            ]
+            "transitions": [{
+              "to": "INITIATIVE_CHOICE",
+              "conditions": ["winner"]
+            }]
         },
-
+        "INITIATIVE_CHOICE": {
+            "title": "PHASE: INITIATIVE CHOICE",
+            "desc": "Assign initiative",
+            "before": "before_initiative_choice",
+            "after": "after_initiative_choice",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClickAndRoll",
+            "enforceOwnership": false,
+            "inputMode": "FREE",
+            "buttons": {
+              "BTN_ARMY1": {
+                "action": "ARMY1_CLICK",
+                "label": "Option 1",
+                "textColor": "White",
+                "color": "Red",
+                "callback": "assign_initiative_btn_all"
+              },
+              "BTN_ARMY2": {
+                "action": "ARMY2_CLICK",
+                "label": "Option 2",
+                "textColor": "White",
+                "color": "Green",
+                "callback": "assign_initiative_btn_all"
+              }
+            },
+            "transitions": [{
+              "to": "MOVE",
+              "conditions": ["assignment"]
+            }]
+        },
         "MOVE": {
             "title": "PHASE: MOVE",
             "desc": "Move your army",
+            "before": "before_move",
+            "after": "after_move",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
             "enforceOwnership": true,
+            "inputMode": "INITIATIVE",
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
                     "label": "Army 1 Done",
                     "textColor": "White",
+                    "color": "Red",
                     "callback": "move_btn_army1"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
                     "label": "Army 2 Done",
                     "textColor": "White",
+                    "color": "Green",
                     "callback": "move_btn_army2"
                 },
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Move",
                     "textColor": "Black",
+                    "color": "Grey",
                     "callback": "move_btn_single"
                 }
             },
@@ -137,30 +180,35 @@ function lionheart_initPhases()
                 }
             ]
         },
-
         "SHOOT": {
             "title": "PHASE: SHOOT",
             "desc": "Open fire on targets",
+            "before": "before_shoot",
+            "after": "after_shoot",
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
             "enforceOwnership": true,
+            "inputMode": "INITIATIVE",
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
                     "label": "Army 1 Done",
                     "textColor": "White",
+                    "color": "Red",
                     "callback": "shoot_btn_army1"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
                     "label": "Army 2 Done",
                     "textColor": "White",
+                    "color": "Green",
                     "callback": "shoot_btn_army2"
                 },
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Shoot",
                     "textColor": "Black",
+                    "color": "Grey",
                     "callback": "shoot_btn_single"
                 }
             },
@@ -171,30 +219,35 @@ function lionheart_initPhases()
                 }
             ]
         },
-
         "ATTACK": {
             "title": "PHASE: ATTACK",
             "desc": "Resolve combat",
+            "before": "before_attack",
+            "after": "after_attack",            
             "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
             "render": "3BtnClick",
             "enforceOwnership": true,
+            "inputMode": "INITIATIVE",
             "buttons": {
                 "BTN_ARMY1": {
                     "action": "ARMY1_CLICK",
                     "label": "Army 1 Done",
                     "textColor": "White",
+                    "color": "Red",
                     "callback": "attack_btn_army1"
                 },
                 "BTN_ARMY2": {
                     "action": "ARMY2_CLICK",
                     "label": "Army 2 Done",
                     "textColor": "White",
+                    "color": "Green",
                     "callback": "attack_btn_army2"
                 },
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Confirm Attack",
                     "textColor": "Black",
+                    "color": "Grey",
                     "callback": "attack_btn_single"
                 }
             },
@@ -205,25 +258,28 @@ function lionheart_initPhases()
                 }
             ]
         },
-
         "MORALE": {
             "title": "PHASE: MORALE",
             "desc": "Test morale",
+            "before": "before_morale",
+            "after": "after_morale",            
             "allowedActions": ["CONFIRM"],
             "render": "1BtnClick",
             "enforceOwnership": true,
+            "inputMode": "FREE",
             "turnStart": true,
             "buttons": {
                 "BTN_SINGLE": {
                     "action": "CONFIRM",
                     "label": "Next Turn",
                     "textColor": "Black",
+                    "color": "Grey",
                     "callback": "morale_btn_single"
                 }
             },
             "transitions": [
                 {
-                    "to": "INITIATIVE",
+                    "to": "INITIATIVE_ROLL",
                     "conditions": ["confirm_immediate"]
                 }
             ]
@@ -238,35 +294,34 @@ function lionheart_initPhases()
     end
 
     local phasesData = decoded[1] or decoded
-
+    
     if not ENGINE then
         ENGINE = {
             phase = "SITTING",
             turn = 1,
-            state = {
-                Army1Click = false,
-                Army2Click = false,
-                ConfirmClick = false
-            },
             phases = phasesData
         }
     else
         ENGINE.phases = phasesData
-
-        if not ENGINE.state then
-            ENGINE.state = {
-                Army1Click = false,
-                Army2Click = false,
-                ConfirmClick = false
-            }
-        end
-
+    
         if not ENGINE.phase then
             ENGINE.phase = "SITTING"
         end
-
+    
         if not ENGINE.turn then
             ENGINE.turn = 1
         end
+    end
+
+    if not TURN then
+        TURN = {
+            phase = ENGINE.phase,
+            activeArmy = nil,
+            firstArmy = nil,
+            completed = {
+                Army1 = false,
+                Army2 = false
+            }
+        }
     end
 end

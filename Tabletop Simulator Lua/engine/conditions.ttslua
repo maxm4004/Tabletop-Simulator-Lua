@@ -1,16 +1,13 @@
--- ============================================================
--- FUNZIONE: checkConditions()
--- ============================================================
 function checkConditions(conditions, action)
 
-   if DEBUG then print("checkConditions") end
+    if DEBUG then print("checkConditions") end
+
+    if not conditions then
+        return true
+    end
 
     if type(conditions) == "string" then
         return checkCondition(conditions, action)
-    end
-
-    if not conditions then
-        return false
     end
 
     for i = 1, #conditions do
@@ -22,41 +19,8 @@ function checkConditions(conditions, action)
     return true
 end
 
--- ============================================================
--- FUNZIONE: checkCondition()
--- ============================================================
 function checkCondition(cond, action)
-
-   if DEBUG then print("checkCondition") end
-   
-    local phase = ENGINE.phases[ENGINE.phase]
-
-    if cond == COND.REQUIREMENT_MET then
-        local p1 = Player[COLOR.ARMY1]
-        local p2 = Player[COLOR.ARMY2]
-        return p1 and p1.seated and p2 and p2.seated
-    end
-
-    if cond == COND.BOTH_PLAYERS_SELECTED then
-        return ENGINE.state.Army1Click and ENGINE.state.Army2Click
-    end
-
-    if cond == COND.CONFIRM_READY then
-        return ENGINE.state.ConfirmClick
-           and ENGINE.state.Army1Click
-           and ENGINE.state.Army2Click
-    end
-
-    if cond == COND.CONFIRM_IMMEDIATE then
-        if ENGINE.state.ConfirmClick and phase.turnStart then
-            ENGINE.turn = ENGINE.turn + 1
-        end
-        return ENGINE.state.ConfirmClick
-    end
-
-    if cond == COND.AUTO_ADVANCE then
-        return true
-    end
-
-    return false
+    local result = callCondition(cond, action)
+    if DEBUG then print("Condition: "..cond.." ".. tostring(result)) end
+    return result
 end

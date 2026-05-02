@@ -1,0 +1,98 @@
+function before_sitting(phaseName, phase)
+    TURN.phase = phaseName
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")    
+end
+
+function after_sitting(phaseName, phase)
+end
+
+function before_deploy(phaseName, phase)
+    TURN.phase = phaseName
+    TURN.completed = TURN.completed or { Army1 = false, Army2 = false }
+end
+
+function after_deploy(phaseName, phase)
+end
+
+function before_initiative_roll(phaseName, phase)
+    TURN.phase = phaseName
+end
+
+function after_initiative_roll(phaseName, phase)
+
+end
+
+function before_initiative_choice(phaseName, phase)
+    if DICE_CONTEST and DICE_CONTEST.winner then
+        UI.setAttribute("iconWinnerArmy"..DICE_CONTEST.winner, "active", "true")
+    end
+    TURN.phase = phaseName
+end
+
+function after_initiative_choice(phaseName, phase)
+    if DICE_CONTEST and DICE_CONTEST.winner then
+        UI.setAttribute("iconWinnerArmy"..DICE_CONTEST.winner, "active", "false")
+    end
+end
+
+function before_move(phaseName, phase)
+    if DICE_CONTEST and DICE_CONTEST.winner then
+        UI.setAttribute("iconWinnerArmy"..DICE_CONTEST.winner, "active", "false")
+    end
+
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+
+    TURN.phase = phaseName
+end
+
+function after_move(phaseName, phase)
+
+end
+
+function before_shoot(phaseName, phase)
+
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+    TURN.phase = phaseName
+end
+
+function after_shoot(phaseName, phase)
+
+end
+
+function before_attack(phaseName, phase)
+
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+    TURN.phase = phaseName
+end
+
+function after_attack(phaseName, phase)
+end
+
+function before_morale(phaseName, phase)
+    TURN.phase = phaseName
+end
+
+function after_morale(phaseName, phase)
+
+    ENGINE.turn = (ENGINE.turn or 1) + 1
+
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+
+    UI.setAttribute("diceArmy1", "image", diceUrls[1])
+    UI.setAttribute("diceArmy2", "image", diceUrls[1])
+
+    DICE_CONTEST.initiative = nil
+    DICE_CONTEST.winner = nil
+    DICE_CONTEST.rolledNumberArmy1 = nil
+    DICE_CONTEST.rolledNumberArmy2 = nil
+
+    TURN.phase = nil
+    TURN.activeArmy = nil
+    TURN.firstArmy = nil
+    TURN.completed.Army1 = false
+    TURN.completed.Army2 = false
+end

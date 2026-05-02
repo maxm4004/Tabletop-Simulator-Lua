@@ -1,0 +1,30 @@
+function registerDefaultConditions()
+
+    registerCondition(COND.REQUIREMENT_MET, function(action)
+        return colorArmy1 == COLOR.ARMY1 and colorArmy2 == COLOR.ARMY2
+    end)
+
+    registerCondition(COND.BOTH_PLAYERS_SELECTED, function(action)
+        return TURN and TURN.completed and TURN.completed.Army1 and TURN.completed.Army2
+    end)
+
+    registerCondition(COND.CONFIRM_READY, function(action)
+        return action and action.type and action.type == ACTION.CONFIRM and TURN and TURN.completed and TURN.completed.Army1 and TURN.completed.Army2
+    end)
+
+    registerCondition(COND.CONFIRM_IMMEDIATE, function(action)
+        return action and action.type == ACTION.CONFIRM
+    end)
+
+    registerCondition(COND.WINNER, function(action)
+        return DICE_CONTEST and DICE_CONTEST.winner ~= nil
+    end)
+
+    registerCondition(COND.ASSIGNMENT, function(action)
+        return DICE_CONTEST and DICE_CONTEST.initiative ~= nil
+    end)
+
+    registerCondition(COND.AUTO_ADVANCE, function(action)
+        return true
+    end)
+end

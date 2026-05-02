@@ -1,0 +1,83 @@
+-- ============================================================
+-- REGISTRAZIONE FUNZIONI GENERICHE
+-- ============================================================
+
+registerHandler("updateCenterPanel", function()
+    return updateCenterPanel()
+end)
+
+registerHandler("aggiornaLinee", function()
+    if aggiornaLinee then
+        return aggiornaLinee()
+    end
+end)
+
+registerHandler("restorePlayersColors", function()
+    return restorePlayersColors()
+end)
+
+registerHandler("canUseButton", function(slot, player, value, id, button, phase)
+    return canUseButton(slot, player, value, id, button, phase)
+end)
+
+registerHandler("resetPlayers", function()
+    if resetPlayers then
+        return resetPlayers()
+    end
+end)
+
+registerHandler("restoreState", function(save_state)
+    return restoreState(save_state)
+end)
+
+registerHandler("afterRestoreState", function(save_state)
+    callHandler("restorePlayersColors")
+    callHandler("restoreDiceUiState")
+    callHandler("updateCenterPanel")
+end)
+
+registerHandler("restart", function()
+    return restart()
+end)
+
+registerHandler("onSave", function()
+    return lionheart_save()
+end)
+
+registerHandler("restoreDiceUiState", function()
+    return restoreDiceUiState()
+end)
+
+registerHandler("engine_validatePhases", function()
+    return engine_validatePhases()
+end)
+
+registerHandler("rulesetInit", function(save_state)
+    callHandler("initPhases")
+    callHandler("autoRegisterFromPhases")
+    callHandler("registerDefaultConditions")
+end)
+
+registerHandler("initPhases", function(save_state)
+    return initPhases()
+end)
+
+registerHandler("autoRegisterFromPhases", function()
+    return autoRegisterFromPhases()
+end)
+
+registerHandler("registerDefaultConditions", function()
+    return registerDefaultConditions()
+end)
+
+registerHandler("initUI", function()
+    return initUI()
+end)
+
+registerHandler("buildUI", function()
+    return buildUI()
+end)
+
+registerHandler("getRulesetUiXml", function()
+    return getRulesetUiXml()
+end)

@@ -1,0 +1,170 @@
+function getRulesetUiXml()
+    return [[
+    <!-- TOP -->
+    <Panel id="panelVersion"
+           rectAlignment="UpperCenter"
+           width="420"
+           height="30"
+           color="rgba(0,0,0,0.35)"
+           offsetXY="-700 -218">
+           <Text id="versione" text="" fontSize="14" fontStyle="Bold" color="Yellow" alignment="MiddleCenter"/>
+    </Panel>
+    <Panel id="panelTop"
+            rectAlignment="UpperCenter"
+            width="420"
+            height="120"
+            color="rgba(0,0,0,0.25)"
+            offsetXY="0 -70">
+            <VerticalLayout spacing="6" padding="10 10 10 10">
+            <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
+                <Text id="textFase"
+                        text="FASE"
+                        fontSize="18"
+                        fontStyle="Bold"
+                        outline="#000000" 
+                        outlineSize="2" 
+                        color="Yellow"/>           
+            </HorizontalLayout>
+                <Text id="textDesc"
+                text="Descrizione"
+                fontSize="13"
+                fontStyle="Bold"
+                color="rgba(0.8,0.8,0.8,1)"
+                alignment="MiddleCenter"/>
+                <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
+                <Text id="army1"
+                    text="Army 1"
+                    fontSize="14"
+                    fontStyle="Bold"
+                    color="Grey"
+                    alignment="MiddleCenter"/>
+                <Text id="army2"
+                    text="Army 2"
+                    fontSize="14"
+                    fontStyle="Bold"
+                    color="Grey"
+                    alignment="MiddleCenter"/>
+                </HorizontalLayout>
+            </VerticalLayout>
+    </Panel> 
+    <Panel id="panelBtnUp"
+        rectAlignment="UpperCenter"
+        width="420"
+        height="50"
+        color="rgba(0,0,0,0.35)"
+        offsetXY="0 -192">
+        <!-- BOTTONI -->
+        <VerticalLayout spacing="6" padding="10 10 10 10">
+            <HorizontalLayout>
+                <Row>      
+                    <Button id="BTN_ARMY1"
+                        text="BTN_ARMY1"
+                        width="180"
+                        fontSize="14"
+                        fontStyle="Bold"
+                        color="rgba(0.7,0.15,0.15,1)"
+                        textColor="White"
+                        outline="#000000"
+                        outlineSize="1.2"
+                        onClick="onBtnArmy1"/>    
+                </Row>
+                <Row>              
+                    <Button id="BTN_ARMY2"
+                        text="BTN_ARMY2"
+                        width="180"
+                        fontSize="14"
+                        fontStyle="Bold"
+                        color="rgba(0.15,0.6,0.15,1)"
+                        textColor="White"
+                        outline="#000000"
+                        outlineSize="1.2"
+                        onClick="onBtnArmy2"/>
+                </Row>
+            </HorizontalLayout>  
+        </VerticalLayout>
+    </Panel>
+    <Panel id="panelBtnDown"
+       rectAlignment="UpperCenter"
+        width="420"
+        height="50"
+        color="rgba(0,0,0,0.37)"
+        offsetXY="0 -244">
+        <!-- BOTTONI -->
+            <VerticalLayout spacing="6" padding="10 10 10 10">
+                <HorizontalLayout childAlignment="MiddleCenter">
+                    <Row>
+                        <Button id="BTN_SINGLE"
+                            text="BTN_SINGLE"
+                            width="380"  
+                            fontSize="14"
+                            fontStyle="Bold"
+                            color="Grey"
+                            textColor="Black"
+                            outline="#000000"
+                            outlineSize="1.2"
+                            onClick="onBtnScelta"/> 
+                    </Row>
+                </HorizontalLayout>
+            </VerticalLayout> 
+    </Panel>
+    <Panel id="panelDices" 
+        rectAlignment="UpperCenter" 
+        width="420" 
+        height="100" 
+        color="rgba(0,0,0,0.35)"
+        offsetXY="0 -296">
+            <HorizontalLayout spacing="6" childAlignment=" MiddleCenter" height="60">
+                <Image id="diceArmy1" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/1d6.png" preserveAspect="1"/>
+                <Image id="diceArmy2" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/1d6.png" preserveAspect="1"/>
+            </HorizontalLayout>
+    </Panel>
+    <Panel id="iconWinnerArmy1"
+       rectAlignment="UpperCenter"
+       width="50"
+       height="30"
+       offsetXY="-170 -201"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image 
+        outline="#000000" 
+        outlineSize="0.6" 
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
+    </Panel>
+    <Panel id="iconWinnerArmy2"
+       rectAlignment="UpperCenter"
+       width="50"
+       height="30"
+       offsetXY="170 -201"
+       color="rgba(0,0,0,0.0)" 
+       active="false">
+        <Image 
+        outline="#000000" 
+        outlineSize="0.6" 
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
+    </Panel>
+    <Panel id="iconMoveArmy1"
+       rectAlignment="UpperCenter"
+       width="40"
+       height="20"
+       offsetXY="-35 -208"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image 
+        outline="#000000" 
+        outlineSize="0.6"       
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr11.png" preserveAspect="1"/>
+    </Panel>
+    <Panel id="iconMoveArmy2"
+       rectAlignment="UpperCenter"
+       width="40"
+       height="20"
+       offsetXY="35 -208"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image 
+        outline="#000000" 
+        outlineSize="0.6"   
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr22.png" preserveAspect="1"/>
+    </Panel>
+    ]]
+end

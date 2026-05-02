@@ -1,0 +1,41 @@
+registerHandler("onSave", function()
+    return default_onSave()
+end)
+
+registerHandler("restoreState", function(save_state)
+    return restoreState(save_state)
+end)
+
+registerHandler("afterRestoreState", function(save_state)
+    callHandler("updateCenterPanel")
+end)
+
+registerHandler("initPhases", function(save_state)
+    return initPhases()
+end)
+
+registerHandler("autoRegisterFromPhases", function()
+    return autoRegisterFromPhases()
+end)
+
+registerHandler("registerDefaultConditions", function()
+    return registerDefaultConditions()
+end)
+
+registerHandler("initUI", function()
+    return initUI()
+end)
+
+registerHandler("buildUI", function()
+    return buildUI()
+end)
+
+registerHandler("getRulesetUiXml", function()
+    return getRulesetUiXml()
+end)
+
+registerHandler("rulesetInit", function(save_state)
+    callHandler("initPhases")
+    callHandler("autoRegisterFromPhases")
+    callHandler("registerDefaultConditions")
+end)

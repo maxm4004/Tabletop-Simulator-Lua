@@ -1,0 +1,17 @@
+require("rulesets.default.ui")
+require("rulesets.default.callbacks")
+require("rulesets.default.conditions")
+require("rulesets.default.phase_hooks")
+require("rulesets.default.lib")
+require("rulesets.default.phases")
+require("rulesets.default.persistence")
+require("rulesets.default.register")
+
+ENGINE = ENGINE or {}
+ENGINE.handlers = ENGINE.handlers or {}
+
+for k, v in pairs(_G) do
+    if type(v) == "function" then
+        ENGINE.handlers[k] = v
+    end
+end

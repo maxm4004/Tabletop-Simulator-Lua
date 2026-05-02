@@ -1,0 +1,150 @@
+    -- ============================================================
+-- FUNZIONE: restart()
+-- ============================================================
+function restart()
+
+    print("restart default")
+
+    initPhases()
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    ENGINE.phase = "START"
+    ENGINE.turn = 1
+ 
+    DICE_CONTEST = {
+        rolledNumberArmy1 = nil,
+        rolledNumberArmy2 = nil,
+        winner = nil,
+        initiative = nil
+    }
+    
+    TURN = {
+        phase = "SITTING",
+        activeArmy = nil,
+        firstArmy = nil,
+        completed = {
+            Army1 = false,
+            Army2 = false
+        }
+    }
+
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+
+    colorArmy1 = COLOR.NOARMY
+    colorArmy2 = COLOR.NOARMY
+
+
+    callHandler("initUI")
+    callHandler("updateCenterPanel")
+    callHandler("aggiornaLinee")
+    printToAll("RESTART", "Yellow")
+
+end
+-- ============================================================
+-- FUNZIONE: stato()
+-- ============================================================
+function stato()
+
+    local save_state = default_onSave()
+    local data = JSON.decode(save_state)
+
+    print("========== SAVE STATE ==========")
+    prettyPrintTable(data.engine)
+    print("================================")
+    prettyPrintTable(data.turn)
+    print("================================")
+    prettyPrintTable(data.dice_contest)
+    print("================================")    
+end
+-- ============================================================
+-- FUNZIONE: prettyPrintTable()
+-- ============================================================
+function prettyPrintTable(t, indent)
+    indent = indent or 0
+
+    if type(t) ~= "table" then
+        print(tostring(t))
+        return
+    end
+
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            print(string.rep("  ", indent) .. k .. ":")
+            prettyPrintTable(v, indent + 1)
+        else
+            print(string.rep("  ", indent) .. k .. ": " .. tostring(v))
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: updateCenterPanel()
+-- ============================================================
+function updateCenterPanel()
+
+    if not ENGINE or not ENGINE.phase then return end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase then return end
+
+    -- ========================================================
+    -- TESTI
+    -- ========================================================
+    UI.setAttribute("versione", "text", VERSION.." - "..ACTIVE_RULESET)
+    UI.setAttribute("textFase", "text", phase.title or "")
+    UI.setAttribute("textDesc", "text", phase.desc or "")
+    UI.setAttribute("textTurn", "text", ENGINE.turn == 0 and "" or " TURN: " .. ENGINE.turn)
+
+    UI.setAttribute("army1", "text", army1)
+    UI.setAttribute("army2", "text", army2)
+    UI.setAttribute("army1", "color", colorArmy1 or COLOR.NOARMY)
+    UI.setAttribute("army2", "color", colorArmy2 or COLOR.NOARMY)
+    
+    -- ========================================================
+    -- RENDER
+    -- ========================================================
+
+    if phase.render and RENDERERS and RENDERERS[phase.render] then
+        RENDERERS[phase.render](phase)
+    end
+
+    -- ========================================================
+    -- BOTTONI
+    -- ========================================================
+
+    -- reset visibilità
+    UI.setAttribute(BUTTONS.BTN_ARMY1, "active", "false")
+    UI.setAttribute(BUTTONS.BTN_ARMY2, "active", "false")
+    UI.setAttribute(BUTTONS.BTN_SINGLE, "active", "false")
+
+    if phase.buttons then
+        for slot, btn in pairs(phase.buttons) do
+
+            UI.setAttribute(slot, "active", "true")
+
+            if btn.label then
+                UI.setAttribute(slot, "text", btn.label)
+            end
+
+            if btn.textColor then
+                UI.setAttribute(slot, "textColor", btn.textColor)
+            end
+
+            if btn.color then
+                UI.setAttribute(slot, "color", btn.color)
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: initUI()
+-- ============================================================
+function initUI()
+    callHandler("buildUI")
+end

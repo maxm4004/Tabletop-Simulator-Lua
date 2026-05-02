@@ -1,0 +1,16 @@
+-- ARMY = {
+--     [1] = {
+--         id = 1,
+--         name = "ARMY1",
+--         button = BUTTONS.BTN_ARMY1,
+--         action = ACTION.ARMY1_CLICK,
+--         color = COLOR.ARMY1
+--     },
+--     [2] = {
+--         id = 2,
+--         name = "ARMY2",
+--         button = BUTTONS.BTN_ARMY2,
+--         action = ACTION.ARMY2_CLICK,
+--         color = COLOR.ARMY2
+--     }
+-- }

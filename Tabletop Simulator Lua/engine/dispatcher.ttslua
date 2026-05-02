@@ -1,0 +1,41 @@
+ENGINE = ENGINE or {}
+ENGINE.handlers = ENGINE.handlers or {}
+ENGINE.conditions = ENGINE.conditions or {}
+
+function registerHandler(name, func)
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.handlers[name] = func
+end
+
+function callHandler(name, ...)
+    
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+
+    if ENGINE.handlers[name] then
+        if DEBUG and name ~= "onSave" then print(name) end
+        return ENGINE.handlers[name](...)
+    end
+
+    print("Handler non registrato: " .. tostring(name))
+    return true
+end
+
+function registerCondition(name, fn)
+    ENGINE = ENGINE or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+    ENGINE.conditions[name] = fn
+end
+
+function callCondition(name, ...)
+    ENGINE = ENGINE or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    if ENGINE.conditions[name] then
+        return ENGINE.conditions[name](...)
+    end
+    
+    print("Condition non registrata: " .. tostring(name))
+    return false
+end

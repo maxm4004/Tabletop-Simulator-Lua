@@ -1,0 +1,98 @@
+function initPhases()
+
+    local phases_json = [[
+    {
+        "START": {
+            "title": "DEFAULT: START",
+            "desc": "Demo start phase",
+            "inputMode": "FREE",
+            "render": "1BtnClick",
+            "before": "before_start",
+            "after": "after_start",
+            "allowedActions": ["CONFIRM"],
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Go to Step",
+                    "textColor": "White",
+                    "color": "Grey",
+                    "callback": "default_confirm"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "STEP",
+                    "conditions": ["default_confirmed"]
+                }
+            ]
+        },
+
+        "STEP": {
+            "title": "DEFAULT: STEP",
+            "desc": "Demo middle phase",
+            "inputMode": "FREE",
+            "render": "1BtnClick",
+            "before": "before_step",
+            "after": "after_step",
+            "allowedActions": ["CONFIRM"],
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Go to End",
+                    "textColor": "White",
+                    "color": "Grey",
+                    "callback": "default_confirm"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "END",
+                    "conditions": ["default_confirmed"]
+                }
+            ]
+        },
+
+        "END": {
+            "title": "DEFAULT: END",
+            "desc": "Demo end phase",
+            "inputMode": "FREE",
+            "render": "1BtnClick",
+            "before": "before_end",
+            "after": "after_end",
+            "allowedActions": ["CONFIRM"],
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Restart Demo",
+                    "textColor": "White",
+                    "color": "Grey",
+                    "callback": "default_confirm"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "START",
+                    "conditions": ["default_confirmed"]
+                }
+            ]
+        }
+    }
+    ]]
+
+    local decoded = JSON.decode(phases_json)
+    if not decoded then
+        print("DEFAULT JSON decode FALLITO")
+        return
+    end
+
+    local phasesData = decoded[1] or decoded
+
+    ENGINE = ENGINE or {}
+    ENGINE.phases = phasesData
+    ENGINE.phase = "START"
+    ENGINE.turn = 1
+
+    DEFAULT = {
+        confirmed = false
+    }
+end

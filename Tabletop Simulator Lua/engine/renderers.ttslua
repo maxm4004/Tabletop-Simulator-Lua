@@ -1,0 +1,53 @@
+RENDERERS = {}
+
+-- ============================================================
+-- FUNZIONE: RENDERERS.NoBtn()
+-- ============================================================
+    RENDERERS["1BtnClick"] = function(phase)
+
+        UI.setAttribute("panelBtnUp", "active", "false")
+        UI.setAttribute("panelBtnDown", "active", "true")
+        UI.setAttribute("panelBtnDown", "offsetXY", "0 -192")
+        UI.setAttribute("BTN_SINGLE", "active", "true")
+        UI.setAttribute("panelDices", "active", "false")
+
+    end
+-- ============================================================
+-- FUNZIONE: RENDERERS.2BtnClick()
+-- ============================================================
+    RENDERERS["2BtnClick"] = function(phase)
+
+        UI.setAttribute("panelBtnUp", "active", "true")
+        UI.setAttribute("panelBtnDown", "active", "false")
+        UI.setAttribute("panelBtnUp", "offsetXY", "0 -192")
+        UI.setAttribute("panelDices", "active", "false")
+
+    end
+-- ============================================================
+-- FUNZIONE: RENDERERS.2BtnClickAndRoll()
+-- ============================================================
+RENDERERS["2BtnClickAndRoll"] = function(phase)
+ 
+    UI.setAttribute("panelBtnUp", "active", "true")
+    UI.setAttribute("panelBtnUp", "offsetXY", "0 -192")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelDices", "active", "true")
+    UI.setAttribute("panelDices", "offsetXY", "0 -244")
+
+end
+-- ============================================================
+-- FUNZIONE: RENDERERS.3BtnClick()
+-- ============================================================
+    RENDERERS["3BtnClick"] = function(phase)
+
+        UI.setAttribute("panelBtnUp", "active", "true")
+        UI.setAttribute("panelBtnUp", "offsetXY", "0 -192")
+        UI.setAttribute("panelBtnDown", "active", "false")
+        UI.setAttribute("panelDices", "active", "false")
+        
+        if TURN and TURN.completed and TURN.completed.Army1 and TURN.completed.Army2 then
+            UI.setAttribute("panelBtnUp", "active", "false")
+            UI.setAttribute("panelBtnDown", "active", "true")
+            UI.setAttribute("panelBtnDown", "offsetXY", "0 -192")
+        end
+    end

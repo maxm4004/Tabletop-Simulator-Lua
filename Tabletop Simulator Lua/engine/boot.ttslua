@@ -1,0 +1,78 @@
+-- ============================================================
+-- WARFORGE BOOT
+-- ============================================================
+
+function warforge_boot(rulesetName, save_state)
+
+    if clear then clear() end
+
+    if VERSION then
+        printToAll(VERSION, "Yellow")
+    end 
+
+   if DEBUG then print("warforge_boot") end
+   
+    engine_reset()
+
+    math.randomseed(os.time())
+
+    callHandler("rulesetInit", save_state)
+
+    if save_state and save_state ~= "" then
+        callHandler("restoreState", save_state)
+    end
+
+    engine_init()
+
+    if save_state and save_state ~= "" then
+        Wait.time(function()
+            callHandler("afterRestoreState", save_state)
+        end, 1)
+    end
+
+    SAVE_STATE = save_state
+end
+-- ============================================================
+-- autoRegisterFromPhases
+-- ============================================================
+function autoRegisterFromPhases()
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+
+    for phaseName, phase in pairs(ENGINE.phases or {}) do
+
+        if phase.before and _G[phase.before] then
+            ENGINE.handlers[phase.before] = _G[phase.before]
+        end
+
+        if phase.after and _G[phase.after] then
+            ENGINE.handlers[phase.after] = _G[phase.after]
+        end
+
+        for slot, button in pairs(phase.buttons or {}) do
+            if button.callback and _G[button.callback] then
+                ENGINE.handlers[button.callback] = _G[button.callback]
+            end
+        end
+    end
+end
+-- ============================================================
+-- engine_reset
+-- ============================================================
+function engine_reset()
+
+    ENGINE = ENGINE or {}
+
+    ENGINE.phase = nil
+    ENGINE.phases = nil
+    ENGINE.turn = nil
+
+    -- NON azzerare handlers/conditions qui
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    TURN = nil
+    DICE_CONTEST = nil
+    DEFAULT = nil
+end

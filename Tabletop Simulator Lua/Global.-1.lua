@@ -1,51 +1,41 @@
-VERSION = "v1.35.10"
-ENGINE = nil
-DEBUG = false
+VERSION = "WARFORGE - v1.35.20"
+ACTIVE_RULESET = "LIONHEART"
+--ACTIVE_RULESET = "DEFAULT"
+SAVE_STATE = nil
+DEBUG = true
 army1 = "Army1"
 army2 = "Army2"
 
 require("common.constants")
 require("common.utils")
+
+
+require("engine.dispatcher")
+require("engine.boot")
 require("engine.core")
-require("engine.conditions")
-require("engine.input")
 require("engine.ui")
-require("rulesets.lionheart.callbacks")
-require("rulesets.lionheart.phases")
-require("rulesets.lionheart.persistence")
+require("engine.input")
+require("engine.conditions")
+require("engine.renderers")
 
-colorArmy1 = COLOR.NOARMY
-colorArmy2 = COLOR.NOARMY
-        
-
+require("rulesets.loader")
 
 -- ============================================================
 -- FUNZIONE: onLoad()
 -- ============================================================
-    function onLoad(save_state)
-
-        clear()
-        lionheart_initPhases()
-
-        if save_state and save_state ~= "" then
-            ripristinaStato(save_state)
-        end
-
-        engine_init()
-
-        if save_state and save_state ~= "" then
-            Wait.time(function()
-                ripristinaColoriPlayers()
-                updateCenterPanel()
-            end, 1)
-        end
-    end
+function onLoad(save_state)
+    if DEBUG then print("onLoad") end
+    warforge_boot(ACTIVE_RULESET, save_state)
+end
 -- ============================================================
 -- FUNZIONE: onSave()
 -- ============================================================
-    function onSave()     
-        return lionheart_onSave()
+function onSave()
+    if callHandler then
+        return callHandler("onSave")
     end
+    return ""
+end
 -- ============================================================
 -- FUNZIONE: onChat()
 -- ============================================================

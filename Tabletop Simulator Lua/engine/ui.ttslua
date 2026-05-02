@@ -1,103 +1,66 @@
-RENDERERS = {}
+function getEngineUiXml()
 
--- ============================================================
--- FUNZIONE: RENDERERS.NoBtn()
--- ============================================================
-    RENDERERS["1BtnClick"] = function(phase)
+    return [[
 
-        UI.setAttribute("panelBtnUp", "active", "false")
-        UI.setAttribute("panelBtnDown", "active", "true")
-        UI.setAttribute("panelBtnDown", "offsetXY", "0 318")
+    <!-- LOGO -->
+    <Panel id="logo_panel"
+           rectAlignment="UpperCenter"
+           width="550"
+           height="250"
+           offsetXY="-700 0">
+        <Image image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/logo/warforge.png" preserveAspect="1"/>
+    </Panel>
 
-        UI.setAttribute("BTN_SINGLE", "active", "true")
-    end
--- ============================================================
--- FUNZIONE: RENDERERS.NoBtn()
--- ============================================================
-    RENDERERS["2BtnClick"] = function(phase)
-
-        UI.setAttribute("panelBtnUp", "active", "true")
-        UI.setAttribute("panelBtnDown", "active", "false")
-        UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
-
-        -- UI.setAttribute("BTN_ARMY1", "active", "true")
-        -- UI.setAttribute("BTN_ARMY2", "active", "true")
-    end
--- ============================================================
--- FUNZIONE: RENDERERS.NoBtn()
--- ============================================================
-    RENDERERS["3BtnClick"] = function(phase)
-
-        UI.setAttribute("panelBtnUp", "active", "true")
-        UI.setAttribute("panelBtnDown", "active", "false")
-        UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
-
-        -- UI.setAttribute("BTN_ARMY1", "active", "true")
-        -- UI.setAttribute("BTN_ARMY2", "active", "true")
-
-        if ENGINE.state.Army1Click and ENGINE.state.Army2Click then
-            UI.setAttribute("panelBtnUp", "active", "false")
-            UI.setAttribute("panelBtnDown", "active", "true")
-            UI.setAttribute("panelBtnDown", "offsetXY", "0 318")
-            UI.setAttribute("BTN_SINGLE", "active", "true")
-        end
-    end
--- ============================================================
--- FUNZIONE: updateCenterPanel()
--- ============================================================
-function updateCenterPanel()
-
-    if DEBUG then print("updateCenterPanel") end
-
-    UI.setAttribute("army1", "color", (colorArmy1 or "Grey"))
-    UI.setAttribute("army2", "color", (colorArmy2 or "Grey"))
-    UI.setAttribute("version", "text", VERSION)
-
-    if not ENGINE or not ENGINE.phase then
-        printToAll("ENGINE non inizializzato", "Red")
-        return
-    end
-
-    local phase = ENGINE.phases[ENGINE.phase]
-
-    if not phase then
-        printToAll("Fase non trovata: "..tostring(ENGINE.phase), "Red")
-        return
-    end
-
-    local buttons = phase.buttons or {}
-
-    local btn1 = buttons.BTN_ARMY1
-    local btn2 = buttons.BTN_ARMY2
-    local btnS = buttons.BTN_SINGLE
-
-    UI.setAttribute("textFase", "text", phase.title or "")
-    UI.setAttribute("textDesc", "text", phase.desc or "")
-    UI.setAttribute("textTurn", "text", ENGINE.turn == 0 and "" or " TURN: "..ENGINE.turn)
+    <!-- WARNING -->
+    <Panel id="warning"
+           rectAlignment="LowerCenter"
+           width="600"
+           height="30"
+           color="rgba(0,0,0,0.0)"
+           offsetXY="0 700">
+                <Text id="textWarning"
+                    text=""
+                    fontSize="26"
+                    fontStyle="Bold"
+                    color="rgba(212,175,55,0.9)"
+                    outline="#000000"
+                    outlineSize="2"
+                    alignment="MiddleCenter"/>
+    </Panel>
     
-    UI.setAttribute("BTN_ARMY1", "text", btn1 and btn1.label or "")
-    UI.setAttribute("BTN_ARMY1", "textColor", btn1 and btn1.textColor)
+    <!-- CONTROL -->
+    <Panel rectAlignment="LowerCenter"
+       width="600"
+       height="60"
+       color="rgba(0,0,0,0.65)"
+       offsetXY="0 0">
+        <HorizontalLayout spacing="4" 
+                        childAlignment="MiddleCenter"
+                        padding="8 8 8 8">
+    
+            <Button text="Restart" fontSize="13" fontStyle="Bold"
+                    color="rgba(0.15,0.4,0.8,1)" textColor="White"
+                    width="130" height="50" onClick="restart"/>
 
-    UI.setAttribute("BTN_ARMY2", "text", btn2 and btn2.label or "")
-    UI.setAttribute("BTN_ARMY2", "textColor", btn2 and btn2.textColor)
+            <Button text="Clear" fontSize="13" fontStyle="Bold"
+                    color="rgba(0.15,0.4,0.8,1)" textColor="White"
+                    width="130" height="50" onClick="clear"/>
 
-    UI.setAttribute("BTN_SINGLE", "text", btnS and btnS.label or "")
-    UI.setAttribute("BTN_SINGLE", "textColor", btnS and btnS.textColor)
+            <Button text="Stato Corrente" fontSize="13" fontStyle="Bold"
+                    color="rgba(0.15,0.4,0.8,1)" textColor="White"
+                    width="130" height="50" onClick="stato"/>
 
-    -- UI.setAttribute("BTN_ARMY1", "active", "false")
-    -- UI.setAttribute("BTN_ARMY2", "active", "false")
-    -- UI.setAttribute("BTN_SINGLE", "active", "false")
+            <Button text="Save and Load" fontSize="13" fontStyle="Bold"
+                    color="rgba(0.15,0.4,0.8,1)" textColor="White"
+                    width="130" height="50" onClick="lionheart_onSave"/>
+        </HorizontalLayout>
+   </Panel>
 
-    UI.setAttribute("panelBtnUp", "active", "true")
-    UI.setAttribute("panelBtnDown", "active", "true")
-    UI.setAttribute("panelBtnUp", "offsetXY", "0 318")
-    UI.setAttribute("panelBtnDown", "offsetXY", "0 266")
+    ]]
+end
 
-    local renderer = RENDERERS[phase.render]
-
-    if renderer then
-        renderer(phase)
-    else
-        printToAll("Renderer non trovato: "..tostring(phase.render), "Red")
-    end
+function buildUI()
+    local engineXml = getEngineUiXml()
+    local rulesetXml = callHandler("getRulesetUiXml") or ""
+    UI.setXml(engineXml .. rulesetXml)
 end

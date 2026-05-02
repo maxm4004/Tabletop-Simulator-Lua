@@ -9,13 +9,16 @@ COND = {
     CONFIRM_READY         = "confirm_ready",
     CONFIRM_IMMEDIATE     = "confirm_immediate",
     AUTO_ADVANCE          = "auto_advance",
-    REQUIREMENT_MET       = "requirement_met"
+    REQUIREMENT_MET       = "requirement_met",
+    WINNER                = "winner",
+    ASSIGNMENT            = "assignment"
 }
 
 COLOR = {
     ARMY1 = "Red",
     ARMY2 = "Green",
-    NOARMY = "Grey"    
+    NOARMY = "Grey",
+    GM = "BLACK"
 }
 
 BUTTONS = {

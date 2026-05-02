@@ -1,42 +1,33 @@
 -- ============================================================
 -- FUNZIONE: engine_init()
 -- ============================================================
-
 function engine_init()
 
-        if DEBUG == true then
+    if DEBUG then print("engine_init") end
 
-            if ENGINE then
-                print("ENGINE.phase = " .. tostring(ENGINE.phase))
-                print("ENGINE.turn = " .. tostring(ENGINE.turn))
-            end
+    if not callHandler then
+        printToAll("ERRORE: callHandler non caricato", "Red")
+        return
+    end
 
-            if players_saved and players_saved[1] then
-                    print("Player[COLOR.ARMY1].seated = " .. tostring(players_saved[1].seated))
-                    print("Player[COLOR.ARMY1].steam_name = " .. tostring(players_saved[1].steam_name))
-                    print("Player[COLOR.ARMY1].steam_id = " .. tostring(players_saved[1].steam_id))
-                    print("Player[COLOR.ARMY1].color = " .. tostring(players_saved[1].color))
-            end
+    if not ENGINE or not ENGINE.phases then
+        printToAll("ERRORE: ENGINE.phases non inizializzato", "Red")
+        return
+    end
 
-            if players_saved and players_saved[2] then
-                    print("Player[COLOR.ARMY2].seated = " .. tostring(players_saved[2].seated))
-                    print("Player[COLOR.ARMY2].steam_name = " .. tostring(players_saved[2].steam_name))
-                    print("Player[COLOR.ARMY2].steam_id = " .. tostring(players_saved[2].steam_id))
-                    print("Player[COLOR.ARMY2].color = " .. tostring(players_saved[2].color))
-            end
-        end
-        
-    --engine_validatePhases()
+    if not ENGINE.phase then
+        printToAll("ERRORE: ENGINE.phase non inizializzata", "Red")
+        return
+    end
 
-    UI.setAttribute("BTN_ARMY1", "active", "true")
-    UI.setAttribute("BTN_ARMY2", "active", "true")
-    UI.setAttribute("BTN_SINGLE", "active", "true")
-    fadeOut("WELCOME TO LIONHEART")
+    if not ENGINE.phases[ENGINE.phase] then
+        printToAll("ERRORE: fase non trovata: " .. tostring(ENGINE.phase), "Red")
+        return
+    end
 
-    if allPlayersGrey then allPlayersGrey() end
-    if updateCenterPanel then updateCenterPanel() end
-    if aggiornaLinee then aggiornaLinee() end
-    
+    callHandler("engine_validatePhases")
+    callHandler("initUI")
+    engine_enterPhase(ENGINE.phase, nil)
 end
 -- ============================================================
 -- FUNZIONE: engine_validatePhases()
@@ -102,7 +93,6 @@ function engine_validatePhases()
         end
     end
 end
-
 -- ============================================================
 -- FUNZIONE: engine_handleAction()
 -- ============================================================
@@ -114,11 +104,10 @@ function engine_handleAction(action)
         return
     end
 
-    engine_execute(action)
+    --engine_execute(action)
     engine_transition(action)
-    updateCenterPanel()
+    callHandler("updateCenterPanel")
 end
-
 -- ============================================================
 -- FUNZIONE: engine_isAllowed()
 -- ============================================================
@@ -142,20 +131,8 @@ end
 -- FUNZIONE: engine_execute()
 -- ============================================================
 function engine_execute(action)
-
     if DEBUG then print("engine_execute") end
-
-    if action.type == ACTION.ARMY1_CLICK then
-        ENGINE.state.Army1Click = true
-
-    elseif action.type == ACTION.ARMY2_CLICK then
-        ENGINE.state.Army2Click = true
-
-    elseif action.type == ACTION.CONFIRM then
-        ENGINE.state.ConfirmClick = true
-    end
 end
-
 -- ============================================================
 -- FUNZIONE: engine_transition()
 -- ============================================================
@@ -166,49 +143,87 @@ function engine_transition(action)
     local phase = ENGINE.phases[ENGINE.phase]
     if not phase then return end
 
+    local transitioned = false
+
     if action then
         for i = 1, #phase.transitions do
             local t = phase.transitions[i]
 
-            if checkConditions(t.conditions, action) then
+            if checkConditions(t.conditions or {}, action) then
+                local oldPhaseName = ENGINE.phase
+
+                engine_exitPhase(oldPhaseName)
+
                 ENGINE.phase = t.to
                 engine_resetState()
+
+                engine_enterPhase(ENGINE.phase, oldPhaseName)
+
+                transitioned = true
                 break
             end
         end
     end
+
+    if transitioned then return end
 
     local changed = true
 
     while changed do
         changed = false
 
-        local p = ENGINE.phases[ENGINE.phase]
-        if not p then return end
+        local currentPhase = ENGINE.phases[ENGINE.phase]
+        if not currentPhase then return end
 
-        for i = 1, #p.transitions do
-            local t = p.transitions[i]
+        for i = 1, #currentPhase.transitions do
+            local t = currentPhase.transitions[i]
 
-            if checkConditions(t.conditions, nil) then
+            if checkConditions(t.conditions or {}, nil) then
+                local oldPhaseName = ENGINE.phase
+
+                engine_exitPhase(oldPhaseName)
+
                 ENGINE.phase = t.to
                 engine_resetState()
+
+                engine_enterPhase(ENGINE.phase, oldPhaseName)
+
                 changed = true
                 break
             end
         end
     end
 end
-
 -- ============================================================
 -- FUNZIONE: engine_resetState()
 -- ============================================================
 function engine_resetState()
+end
+-- ============================================================
+-- FUNZIONE: engine_enterPhase()
+-- ============================================================
+function engine_enterPhase(newPhaseName, oldPhaseName)
 
-    if DEBUG then print("engine_resetState") end
+    if DEBUG then print("engine_enterPhase") end
 
-    ENGINE.state = {
-        Army1Click = false,
-        Army2Click = false,
-        ConfirmClick = false
-    }
+    local phase = ENGINE.phases[newPhaseName]
+    if not phase then return end
+
+    if phase.before then
+        callHandler(phase.before, newPhaseName, phase)
+    end
+end
+-- ============================================================
+-- FUNZIONE: engine_exitPhase()
+-- ============================================================
+function engine_exitPhase(oldPhaseName)
+
+    if DEBUG then print("engine_exitPhase") end
+
+        local phase = ENGINE.phases[oldPhaseName]
+        if not phase then return end
+
+        if phase.after then
+            callHandler(phase.after, oldPhaseName, phase)
+        end
 end
