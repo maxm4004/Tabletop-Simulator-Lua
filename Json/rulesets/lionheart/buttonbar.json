@@ -4,7 +4,10 @@
       "1": {
         "label": "Range",
         "action": "shooting.showRange",
-        "tooltip": "Mostra cono/gittata"
+        "tooltip": "Mostra cono/gittata",
+        "color": "Yellow",
+         "textColor": "Red",
+         "callback": "clear"
       },
       "2": {
         "label": "Fire",
