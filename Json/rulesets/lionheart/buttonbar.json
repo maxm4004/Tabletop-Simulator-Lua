@@ -3,6 +3,7 @@
     "slots": {
       "1": {
         "label": "Fire",
+        "class": "bbar",
         "tooltip": "Mostra gittata",
         "color": "#D8C7A3FF",
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
@@ -14,6 +15,7 @@
       },
       "2": {
         "label": "Check Fire",
+        "class": "bbar",
         "tooltip": "Mostra gittata",
         "color": "#D8C7A3FF",
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
@@ -21,9 +23,11 @@
         "onClick": "engine_buttonBarClick",
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
         "iconWidth": 80, 
-        "iconHeight": 80      },
+        "iconHeight": 80      
+      },
       "3": {
         "label": "Check Fire",
+        "class": "bbar",        
         "tooltip": "Mostra gittata",
         "color": "#D8C7A3FF",
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
@@ -31,7 +35,8 @@
         "onClick": "engine_buttonBarClick",
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.pngg", 
         "iconWidth": 80, 
-        "iconHeight": 80      }
+        "iconHeight": 80      
+      }
     }
   }
 }
