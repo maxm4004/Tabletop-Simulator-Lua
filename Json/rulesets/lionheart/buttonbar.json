@@ -10,8 +10,8 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
-        "iconWidth": 80, 
-        "iconHeight": 80
+        "iconWidth": 40, 
+        "iconHeight": 40
       },
       "2": {
         "label": "Check Fire",
