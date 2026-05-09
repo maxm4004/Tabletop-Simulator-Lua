@@ -7,7 +7,8 @@
         "tooltip": "Mostra cono/gittata",
         "color": "Yellow",
          "textColor": "Red",
-         "callback": "clear"
+         "callback": "clear",
+         "imageUrl": ""https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/check.png"
       },
       "2": {
         "label": "Fire",
