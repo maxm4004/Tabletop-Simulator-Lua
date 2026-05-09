@@ -11,34 +11,22 @@
         "image": {"url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/json/rulesets/lionheart/images/check.png", "width": 80, "height": 80}
       },
       "2": {
-        "label": "Fire",
-        "action": "shooting.fire",
-        "tooltip": "Esegue tiro"
+        "label": "Check Fire",
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "image": {"url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/json/rulesets/lionheart/images/check.png", "width": 80, "height": 80}
       },
       "3": {
-        "label": "Stop",
-        "action": "shooting.stop",
-        "tooltip": "Ferma tiro"
-      },
-      "4": {
-        "label": "Line L",
-        "action": "formation.lineLeft",
-        "tooltip": "Forma linea a sinistra"
-      },
-      "5": {
-        "label": "Line R",
-        "action": "formation.lineRight",
-        "tooltip": "Forma linea a destra"
-      },
-      "6": {
-        "label": "Col Up",
-        "action": "formation.columnUp",
-        "tooltip": "Forma colonna avanti"
-      },
-      "7": {
-        "label": "Col Dn",
-        "action": "formation.columnDown",
-        "tooltip": "Forma colonna indietro"
+        "label": "Check Fire",
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "image": {"url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/json/rulesets/lionheart/images/check.png", "width": 80, "height": 80}
       }
     }
   }
