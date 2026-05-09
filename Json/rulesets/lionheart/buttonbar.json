@@ -36,6 +36,114 @@
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
         "iconWidth": 80, 
         "iconHeight": 80      
+      },
+      "4": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "5": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "6": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "7": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "8": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "9": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "10": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "11": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
+      },
+      "12": {
+        "label": "Check Fire",
+        "class": "bbar",        
+        "tooltip": "Mostra gittata",
+        "color": "#D8C7A3FF",
+        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
+        "textColor": "#2B1E10FF",
+        "onClick": "engine_buttonBarClick",
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/checkfire.png", 
+        "iconWidth": 80, 
+        "iconHeight": 80      
       }
     }
   }
