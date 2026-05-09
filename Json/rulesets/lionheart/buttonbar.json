@@ -8,7 +8,7 @@
         "color": "Yellow",
          "textColor": "Red",
          "callback": "clear",
-         "imageUrl": ""https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/check.png"
+         "imageUrl": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/check.png"
       },
       "2": {
         "label": "Fire",
