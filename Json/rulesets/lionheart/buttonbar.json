@@ -2,13 +2,12 @@
   "buttonbar": {
     "slots": {
       "1": {
-        "label": "Range",
-        "action": "shooting.showRange",
-        "tooltip": "Mostra cono/gittata",
+        "label": "Check Fire",
+        "tooltip": "Mostra gittata",
         "color": "#D8C7A3FF",
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
         "textColor": "#2B1E10FF",
-        "callback": "engine_buttonBarClick",
+        "onClick": "engine_buttonBarClick",
         "image": {"Url": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/json/rulesets/lionheart/images/check.png", "width": 80, "height": 80}
       },
       "2": {
