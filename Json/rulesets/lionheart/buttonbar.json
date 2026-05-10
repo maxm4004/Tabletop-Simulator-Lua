@@ -9,7 +9,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/check.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32
       },
