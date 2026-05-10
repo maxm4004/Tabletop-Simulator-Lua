@@ -21,7 +21,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "clear",  
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -33,7 +33,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -45,7 +45,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -57,7 +57,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -69,7 +69,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -81,7 +81,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -93,7 +93,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -105,7 +105,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -117,7 +117,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -129,7 +129,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       },
@@ -141,7 +141,7 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
+        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
         "iconWidth": 32, 
         "iconHeight": 32      
       }
