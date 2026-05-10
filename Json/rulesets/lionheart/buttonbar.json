@@ -22,8 +22,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "clear",  
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "3": {
         "label": "Check Fire",      
@@ -34,8 +34,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "4": {
         "label": "Check Fire", 
@@ -46,8 +46,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "5": {
         "label": "Check Fire",
@@ -58,8 +58,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "6": {
         "label": "Check Fire",  
@@ -70,8 +70,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "7": {
         "label": "Check Fire",       
@@ -82,8 +82,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "8": {
         "label": "Check Fire",     
@@ -94,8 +94,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "9": {
         "label": "Check Fire",        
@@ -106,8 +106,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "10": {
         "label": "Check Fire",        
@@ -118,8 +118,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "11": {
         "label": "Check Fire",     
@@ -130,8 +130,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       },
       "12": {
         "label": "Check Fire",        
@@ -142,8 +142,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",        
         "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/images/crown.png", 
-        "iconWidth": 40, 
-        "iconHeight": 40      
+        "iconWidth": 32, 
+        "iconHeight": 32      
       }
     }
   }
