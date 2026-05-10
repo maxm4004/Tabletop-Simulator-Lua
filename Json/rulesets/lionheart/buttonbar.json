@@ -10,8 +10,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_showRange",
         "icon": "icon_slot_1", 
-        "iconWidth": 45, 
-        "iconHeight": 45
+        "iconWidth": 32, 
+        "iconHeight": 32
       },
       "2": {
         "label": "Clear",
@@ -22,8 +22,8 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "clear",  
         "icon": "icon_slot_2", 
-        "iconWidth": 45, 
-        "iconHeight": 45
+        "iconWidth": 32, 
+        "iconHeight": 32
       },
       "3": {
         "label": "Check Fire",      
