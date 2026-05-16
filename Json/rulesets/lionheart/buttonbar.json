@@ -44,7 +44,10 @@
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_lineRight"           
+        "callBack": "lionheart_lineRight",
+        "icon": "icon_slot_5", 
+        "iconWidth": 42, 
+        "iconHeight": 42        
       },
       "5": {
         "label": "Unit Info",
@@ -53,7 +56,10 @@
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_infoUnita"       
+        "callBack": "lionheart_infoUnita",
+        "icon": "icon_slot_3", 
+        "iconWidth": 42, 
+        "iconHeight": 42               
       },
       "6": {
         "label": "Check Fire",  
@@ -62,10 +68,10 @@
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_showRange",        
-        "icon": "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png", 
-        "iconWidth": 32, 
-        "iconHeight": 32      
+        "callBack": "lionheart_showRange",
+        "icon": "icon_slot_5", 
+        "iconWidth": 42, 
+        "iconHeight": 42        
       },
       "7": {
         "label": "Check Fire",       
