@@ -10,8 +10,8 @@
         "onClick": "engine_buttonBarClick",        
         "callBack": "lionheart_showRange",
         "icon": "icon_slot_1", 
-        "iconWidth": 64, 
-        "iconHeight": 64
+        "iconWidth": 48, 
+        "iconHeight": 48
       },
       "2": {
         "label": "Clear",
