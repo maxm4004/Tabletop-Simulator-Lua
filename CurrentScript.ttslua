@@ -1,0 +1,4928 @@
+-- Bundled by luabundle {"rootModuleName":"Global.-1.lua","version":"1.6.0"}
+local __bundle_require, __bundle_loaded, __bundle_register, __bundle_modules = (function(superRequire)
+	local loadingPlaceholder = {[{}] = true}
+
+	local register
+	local modules = {}
+
+	local require
+	local loaded = {}
+
+	register = function(name, body)
+		if not modules[name] then
+			modules[name] = body
+		end
+	end
+
+	require = function(name)
+		local loadedModule = loaded[name]
+
+		if loadedModule then
+			if loadedModule == loadingPlaceholder then
+				return nil
+			end
+		else
+			if not modules[name] then
+				if not superRequire then
+					local identifier = type(name) == 'string' and '\"' .. name .. '\"' or tostring(name)
+					error('Tried to require ' .. identifier .. ', but no such module has been registered')
+				else
+					return superRequire(name)
+				end
+			end
+
+			loaded[name] = loadingPlaceholder
+			loadedModule = modules[name](require, loaded, register, modules)
+			loaded[name] = loadedModule
+		end
+
+		return loadedModule
+	end
+
+	return require, loaded, register, modules
+end)(nil)
+__bundle_register("Global.-1.lua", function(require, _LOADED, __bundle_register, __bundle_modules)
+VERSION = "WARFORGE - v1.35.20"
+ACTIVE_RULESET = "LIONHEART"
+--ACTIVE_RULESET = "DEFAULT"
+SAVE_STATE = nil
+DEBUG = false
+army1 = "Army1"
+army2 = "Army2"
+
+require("common.constants")
+require("common.utils")
+
+
+require("engine.dispatcher")
+require("engine.boot")
+require("engine.core")
+require("engine.buttonbar.loader") 
+require("engine.ui")
+require("engine.input")
+require("engine.conditions")
+require("engine.renderers")
+
+require("rulesets.loader")
+
+-- ============================================================
+-- FUNZIONE: onLoad()
+-- ============================================================
+function onLoad(save_state)
+    if DEBUG then print("onLoad") end
+    warforge_boot(ACTIVE_RULESET, save_state)
+end
+-- ============================================================
+-- FUNZIONE: onSave()
+-- ============================================================
+function onSave()
+    if callHandler then
+        return callHandler("onSave")
+    end
+    return ""
+end
+-- ============================================================
+-- FUNZIONE: onChat()
+-- ============================================================
+    function onChat(message, player)
+        return engine_handleChat(message, player)
+    end
+end)
+__bundle_register("rulesets.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+if ACTIVE_RULESET == "LIONHEART" then
+    require("rulesets.lionheart.loader")
+elseif ACTIVE_RULESET == "DEFAULT" then
+    require("rulesets.default.loader")
+else
+    error("Unknown ruleset: " .. tostring(ACTIVE_RULESET))
+end
+end)
+__bundle_register("rulesets.default.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+require("rulesets.default.ui")
+require("rulesets.default.callbacks")
+require("rulesets.default.conditions")
+require("rulesets.default.phase_hooks")
+require("rulesets.default.lib")
+require("rulesets.default.phases")
+require("rulesets.default.persistence")
+require("rulesets.default.register")
+
+ENGINE = ENGINE or {}
+ENGINE.handlers = ENGINE.handlers or {}
+
+-- FIX: auto-register filtrato (stessa logica del loader lionheart)
+local builtins = {}
+do
+    local knownBuiltins = {
+        "pairs", "ipairs", "next", "select", "type", "tostring", "tonumber",
+        "rawget", "rawset", "rawequal", "rawlen", "setmetatable", "getmetatable",
+        "pcall", "xpcall", "error", "assert", "print", "unpack", "table",
+        "string", "math", "os", "io", "coroutine", "package", "require",
+        "load", "loadfile", "dofile", "collectgarbage", "gcinfo"
+    }
+    for _, name in ipairs(knownBuiltins) do
+        builtins[name] = true
+    end
+end
+
+for k, v in pairs(_G) do
+    if type(v) == "function"
+    and not builtins[k]
+    and not ENGINE.handlers[k] then
+        ENGINE.handlers[k] = v
+    end
+end
+
+end)
+__bundle_register("rulesets.default.register", function(require, _LOADED, __bundle_register, __bundle_modules)
+registerHandler("onSave", function()
+    return default_onSave()
+end)
+
+registerHandler("restoreState", function(save_state)
+    return restoreState(save_state)
+end)
+
+registerHandler("afterRestoreState", function(save_state)
+    callHandler("updateCenterPanel")
+end)
+
+registerHandler("initPhases", function(save_state)
+    return initPhases()
+end)
+
+registerHandler("autoRegisterFromPhases", function()
+    return autoRegisterFromPhases()
+end)
+
+registerHandler("registerDefaultConditions", function()
+    return registerDefaultConditions()
+end)
+
+registerHandler("initUI", function()
+    return initUI()
+end)
+
+registerHandler("buildUI", function()
+    return buildUI()
+end)
+
+registerHandler("getRulesetUiXml", function()
+    return getRulesetUiXml()
+end)
+
+registerHandler("rulesetInit", function(save_state)
+    callHandler("initPhases")
+    callHandler("autoRegisterFromPhases")
+    callHandler("registerDefaultConditions")
+end)
+end)
+__bundle_register("rulesets.default.persistence", function(require, _LOADED, __bundle_register, __bundle_modules)
+function default_onSave()
+
+    local saveData = {
+        engine = {
+            phase = ENGINE and ENGINE.phase or nil,
+            turn = ENGINE and ENGINE.turn or nil
+        },
+        default = DEFAULT
+    }
+
+    return JSON.encode(saveData)
+end
+
+function restoreState(save_state)
+
+    if not save_state or save_state == "" then
+        return false
+    end
+
+    local ok, data = pcall(JSON.decode, save_state)
+    if not ok or not data then
+        return false
+    end
+
+    ENGINE = ENGINE or {}
+
+    if data.engine and data.engine.phase and ENGINE.phases[data.engine.phase] then
+        ENGINE.phase = data.engine.phase
+    end
+
+    if data.engine and data.engine.turn then
+        ENGINE.turn = data.engine.turn
+    end
+
+    DEFAULT = data.default or {
+        confirmed = false
+    }
+
+    return true
+end
+end)
+__bundle_register("rulesets.default.phases", function(require, _LOADED, __bundle_register, __bundle_modules)
+function initPhases()
+
+    local phases_json = [[
+    {
+        "START": {
+            "title": "DEFAULT: START",
+            "desc": "Demo start phase",
+            "inputMode": "FREE",
+            "render": "1BtnClick",
+            "before": "before_start",
+            "after": "after_start",
+            "allowedActions": ["CONFIRM"],
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Go to Step",
+                    "textColor": "White",
+                    "color": "Grey",
+                    "callback": "default_confirm"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "STEP",
+                    "conditions": ["default_confirmed"]
+                }
+            ]
+        },
+
+        "STEP": {
+            "title": "DEFAULT: STEP",
+            "desc": "Demo middle phase",
+            "inputMode": "FREE",
+            "render": "1BtnClick",
+            "before": "before_step",
+            "after": "after_step",
+            "allowedActions": ["CONFIRM"],
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Go to End",
+                    "textColor": "White",
+                    "color": "Grey",
+                    "callback": "default_confirm"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "END",
+                    "conditions": ["default_confirmed"]
+                }
+            ]
+        },
+
+        "END": {
+            "title": "DEFAULT: END",
+            "desc": "Demo end phase",
+            "inputMode": "FREE",
+            "render": "1BtnClick",
+            "before": "before_end",
+            "after": "after_end",
+            "allowedActions": ["CONFIRM"],
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Restart Demo",
+                    "textColor": "White",
+                    "color": "Grey",
+                    "callback": "default_confirm"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "START",
+                    "conditions": ["default_confirmed"]
+                }
+            ]
+        }
+    }
+    ]]
+
+    local decoded = JSON.decode(phases_json)
+    if not decoded then
+        print("DEFAULT JSON decode FALLITO")
+        return
+    end
+
+    local phasesData = decoded[1] or decoded
+
+    ENGINE = ENGINE or {}
+    ENGINE.phases = phasesData
+    ENGINE.phase = "START"
+    ENGINE.turn = 1
+
+    DEFAULT = {
+        confirmed = false
+    }
+end
+end)
+__bundle_register("rulesets.default.lib", function(require, _LOADED, __bundle_register, __bundle_modules)
+    -- ============================================================
+-- FUNZIONE: restart()
+-- ============================================================
+function restart()
+
+    print("restart default")
+
+    initPhases()
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    ENGINE.phase = "START"
+    ENGINE.turn = 1
+ 
+    DICE_CONTEST = {
+        rolledNumberArmy1 = nil,
+        rolledNumberArmy2 = nil,
+        winner = nil,
+        initiative = nil
+    }
+    
+    TURN = {
+        phase = "SITTING",
+        activeArmy = nil,
+        firstArmy = nil,
+        completed = {
+            Army1 = false,
+            Army2 = false
+        }
+    }
+
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+
+    colorArmy1 = COLOR.NOARMY
+    colorArmy2 = COLOR.NOARMY
+
+
+    callHandler("initUI")
+    callHandler("updateCenterPanel")
+    callHandler("aggiornaLinee")
+    printToAll("RESTART", "Yellow")
+
+end
+-- ============================================================
+-- FUNZIONE: stato()
+-- ============================================================
+function stato()
+
+    local save_state = default_onSave()
+    local data = JSON.decode(save_state)
+
+    print("========== SAVE STATE ==========")
+    prettyPrintTable(data.engine)
+    print("================================")
+    prettyPrintTable(data.turn)
+    print("================================")
+    prettyPrintTable(data.dice_contest)
+    print("================================")    
+end
+-- ============================================================
+-- FUNZIONE: prettyPrintTable()
+-- ============================================================
+function prettyPrintTable(t, indent)
+
+print("prettyPrintTable")
+
+
+    indent = indent or 0
+
+    if type(t) ~= "table" then
+        print(tostring(t))
+        return
+    end
+
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            print(string.rep("  ", indent) .. k .. ":")
+            prettyPrintTable(v, indent + 1)
+        else
+            print(string.rep("  ", indent) .. k .. ": " .. tostring(v))
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: updateCenterPanel()
+-- ============================================================
+function updateCenterPanel()
+
+    if not ENGINE or not ENGINE.phase then return end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase then return end
+
+    -- ========================================================
+    -- TESTI
+    -- ========================================================
+    UI.setAttribute("versione", "text", VERSION.." - "..ACTIVE_RULESET)
+    UI.setAttribute("textFase", "text", phase.title or "")
+    UI.setAttribute("textDesc", "text", phase.desc or "")
+    UI.setAttribute("textTurn", "text", ENGINE.turn == 0 and "" or " TURN: " .. ENGINE.turn)
+
+    UI.setAttribute("army1", "text", army1)
+    UI.setAttribute("army2", "text", army2)
+    UI.setAttribute("army1", "color", colorArmy1 or COLOR.NOARMY)
+    UI.setAttribute("army2", "color", colorArmy2 or COLOR.NOARMY)
+    
+    -- ========================================================
+    -- RENDER
+    -- ========================================================
+
+    if phase.render and RENDERERS and RENDERERS[phase.render] then
+        RENDERERS[phase.render](phase)
+    end
+
+    -- ========================================================
+    -- BOTTONI
+    -- ========================================================
+
+    -- reset visibilità
+    UI.setAttribute(BUTTONS.BTN_ARMY1, "active", "false")
+    UI.setAttribute(BUTTONS.BTN_ARMY2, "active", "false")
+    UI.setAttribute(BUTTONS.BTN_SINGLE, "active", "false")
+
+    if phase.buttons then
+        for slot, btn in pairs(phase.buttons) do
+
+            UI.setAttribute(slot, "active", "true")
+
+            if btn.label then
+                UI.setAttribute(slot, "text", btn.label)
+            end
+
+            if btn.textColor then
+                UI.setAttribute(slot, "textColor", btn.textColor)
+            end
+
+            if btn.color then
+                UI.setAttribute(slot, "color", btn.color)
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: initUI()
+-- ============================================================
+function initUI()
+    callHandler("buildUI")
+end
+end)
+__bundle_register("rulesets.default.phase_hooks", function(require, _LOADED, __bundle_register, __bundle_modules)
+function before_start(phaseName, phase)
+    DEFAULT = DEFAULT or {}
+    DEFAULT.confirmed = false
+end
+
+function after_start(phaseName, phase)
+
+end
+
+function before_step(phaseName, phase)
+    DEFAULT = DEFAULT or {}
+    DEFAULT.confirmed = false
+end
+
+function after_step(phaseName, phase)
+
+end
+
+function before_end(phaseName, phase)
+DEFAULT = DEFAULT or {}
+DEFAULT.confirmed = false
+end
+
+function after_end(phaseName, phase)
+    ENGINE.turn = (ENGINE.turn or 1) + 1
+end
+
+
+end)
+__bundle_register("rulesets.default.conditions", function(require, _LOADED, __bundle_register, __bundle_modules)
+function registerDefaultConditions()
+
+    registerCondition("default_confirmed", function(action)
+        return DEFAULT and DEFAULT.confirmed == true
+    end)
+
+end
+end)
+__bundle_register("rulesets.default.callbacks", function(require, _LOADED, __bundle_register, __bundle_modules)
+TURN = {
+    activeArmy = "Army1" or "Army2" or nil,
+    completed = {
+        Army1 = false,
+        Army2 = false
+    }
+}
+
+function default_confirm(player, value, id, button)
+    DEFAULT.confirmed = true
+    return true
+end
+end)
+__bundle_register("rulesets.default.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
+function getRulesetUiXml()
+    return [[
+        <!-- TOP -->
+        <Panel id="panelVersion"
+               rectAlignment="UpperCenter"
+               width="420"
+               height="30"
+               color="rgba(0,0,0,0.35)"
+               offsetXY="-700 -218">
+               <Text id="versione" text="" fontSize="14" fontStyle="Bold" color="Yellow" alignment="MiddleCenter"/>
+        </Panel>
+    <!-- INFO BASE -->
+    <Panel rectAlignment="UpperCenter"
+           width="420"
+           height="120"
+           color="rgba(0,0,0,0.35)"
+           offsetXY="0 -70">
+
+        <VerticalLayout spacing="8" padding="10 10 10 10">
+
+            <Text id="textFase"
+                  text="FASE"
+                  fontSize="18"
+                  fontStyle="Bold"
+                  color="White"
+                  alignment="MiddleCenter"/>
+
+            <Text id="textDesc"
+                  text="Descrizione"
+                  fontSize="14"
+                  color="rgba(0.8,0.8,0.8,1)"
+                  alignment="MiddleCenter"/>
+
+        </VerticalLayout>
+    </Panel>
+
+    <Panel id="panelBtnDown"
+       rectAlignment="UpperCenter"
+        width="420"
+        height="50"
+        color="rgba(0,0,0,0.35)"
+        offsetXY="0 -244">
+        <!-- BOTTONI -->
+            <VerticalLayout spacing="6" padding="10 10 10 10">
+                <HorizontalLayout childAlignment="MiddleCenter">
+                    <Row>
+                        <Button id="BTN_SINGLE"
+                            text="BTN_SINGLE"
+                            width="380"  
+                            fontSize="14"
+                            fontStyle="Bold"
+                            color="Grey"
+                            textColor="Black"
+                            outline="#000000"
+                            outlineSize="1.2"
+                            onClick="onBtnScelta"/> 
+                    </Row>
+                </HorizontalLayout>
+            </VerticalLayout> 
+    </Panel>
+    ]]
+end
+end)
+__bundle_register("rulesets.lionheart.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+require("rulesets.lionheart.deployment.loader")
+
+require("rulesets.lionheart.ui")
+require("rulesets.lionheart.conditions")
+require("rulesets.lionheart.callbacks")
+require("rulesets.lionheart.phase_hooks")
+require("rulesets.lionheart.lib")
+require("rulesets.lionheart.phases")
+require("rulesets.lionheart.persistence")
+require("rulesets.lionheart.register")
+
+ENGINE = ENGINE or {}
+ENGINE.handlers = ENGINE.handlers or {}
+
+-- FIX: auto-register filtrato.
+-- La versione precedente registrava ogni funzione di _G, inclusi
+-- built-in Lua (pairs, tostring, type, ecc.) e funzioni TTS API.
+-- Ora vengono registrate solo le funzioni che soddisfano almeno
+-- uno dei criteri: nome con underscore (pattern handler/callback),
+-- oppure già presenti in ENGINE.handlers dal register esplicito.
+-- I built-in non hanno underscore e non sono pre-registrati.
+local builtins = {}
+do
+    -- Snapshot dei nomi built-in prima del ruleset load
+    -- (in TTS il _G al momento del loader contiene solo i built-in
+    --  più le funzioni engine già caricate)
+    local knownBuiltins = {
+        "pairs", "ipairs", "next", "select", "type", "tostring", "tonumber",
+        "rawget", "rawset", "rawequal", "rawlen", "setmetatable", "getmetatable",
+        "pcall", "xpcall", "error", "assert", "print", "unpack", "table",
+        "string", "math", "os", "io", "coroutine", "package", "require",
+        "load", "loadfile", "dofile", "collectgarbage", "gcinfo"
+    }
+    for _, name in ipairs(knownBuiltins) do
+        builtins[name] = true
+    end
+end
+
+for k, v in pairs(_G) do
+    if type(v) == "function"
+    and not builtins[k]
+    and not ENGINE.handlers[k] then
+        -- Registra solo funzioni del ruleset non già registrate esplicitamente
+         ENGINE.handlers[k] = v
+    end
+end
+
+end)
+__bundle_register("rulesets.lionheart.register", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- REGISTRAZIONE FUNZIONI GENERICHE
+-- ============================================================
+
+registerHandler("updateCenterPanel", function()
+    return updateCenterPanel()
+end)
+
+registerHandler("aggiornaLinee", function()
+    if aggiornaLinee then
+        return aggiornaLinee()
+    end
+end)
+
+registerHandler("restorePlayersColors", function()
+    return restorePlayersColors()
+end)
+
+registerHandler("canUseButton", function(slot, player, value, id, button, phase)
+    return canUseButton(slot, player, value, id, button, phase)
+end)
+
+registerHandler("resetPlayers", function()
+    if resetPlayers then
+        return resetPlayers()
+    end
+end)
+
+registerHandler("restoreState", function(save_state)
+    return restoreState(save_state)
+end)
+
+registerHandler("afterRestoreState", function(save_state)
+    callHandler("restorePlayersColors")
+    callHandler("restoreDiceUiState")
+    callHandler("updateCenterPanel")
+end)
+
+registerHandler("restart", function()
+    return restart()
+end)
+
+registerHandler("clear", function()
+    return clear()
+end)
+
+registerHandler("onSave", function()
+    return lionheart_save()
+end)
+
+registerHandler("restoreDiceUiState", function()
+    return restoreDiceUiState()
+end)
+
+registerHandler("engine_validatePhases", function()
+    return engine_validatePhases()
+end)
+
+registerHandler("rulesetInit", function(save_state)
+    return rulesetInit(save_state)
+end)
+
+registerHandler("initPhases", function()
+    return initPhases()
+end)
+
+registerHandler("autoRegisterFromPhases", function()
+    return autoRegisterFromPhases()
+end)
+
+registerHandler("registerDefaultConditions", function()
+    return registerDefaultConditions()
+end)
+
+registerHandler("initUI", function()
+    return initUI()
+end)
+
+registerHandler("buildUI", function()
+    return buildUI()
+end)
+
+registerHandler("getRulesetUiXml", function()
+    return getRulesetUiXml()
+end)
+
+registerHandler("lionheart_loadButtonBar", function()
+    return lionheart_loadButtonBar()
+end)
+
+registerHandler("engine_buttonBarLoadJson()", function(player, value, id, buttonConfig)
+    return engine_buttonBarLoadJson(player, value, id, buttonConfig)
+end)
+
+registerHandler("aggiornaSchedeUnita", function()
+    return aggiornaSchedeUnita()
+end)
+end)
+__bundle_register("rulesets.lionheart.persistence", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: lionheart_save()
+-- ============================================================
+function lionheart_save()
+    return lionheart_onSave()
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_onSave()
+-- ============================================================
+function lionheart_onSave()
+
+    local players_saved = {}
+
+    local p1 = Player[COLOR.ARMY1]
+    if p1 and p1.seated then
+        players_saved[1] = {
+            steam_id   = p1.steam_id,
+            steam_name = p1.steam_name,
+            color      = COLOR.ARMY1,
+            slot       = 1,
+            seated     = p1.seated
+        }
+    end
+
+    local p2 = Player[COLOR.ARMY2]
+    if p2 and p2.seated then
+        players_saved[2] = {
+            steam_id   = p2.steam_id,
+            steam_name = p2.steam_name,
+            color      = COLOR.ARMY2,
+            slot       = 2,
+            seated     = p2.seated
+        }
+    end
+
+    local saveData = {
+        engine = {
+            phase = ENGINE and ENGINE.phase or nil,
+            turn  = ENGINE and ENGINE.turn or nil
+        },
+        players_saved = players_saved,
+        dice_contest = DICE_CONTEST,
+        turn         = TURN,
+        colorArmy1 = colorArmy1,
+        colorArmy2 = colorArmy2,
+        wounds_data   = wounds_data,
+    }
+
+    return JSON.encode(saveData)
+end
+
+-- ============================================================
+-- FUNZIONE: manual_save()
+-- ============================================================
+function manual_save()
+    local data = lionheart_onSave()
+    restoreState(data)
+    return data
+end
+
+-- ============================================================
+-- FUNZIONE: restoreState()
+-- ============================================================
+function restoreState(save_state)
+
+    if not save_state or save_state == "" then
+        return false
+    end
+
+    local ok, data = pcall(JSON.decode, save_state)
+
+    if not ok or not data then
+        print("restoreState: JSON decode fallito")
+        return false
+    end
+
+    ENGINE = ENGINE or {}
+
+    if data.engine then
+        ENGINE.phase = data.engine.phase or ENGINE.phase
+        ENGINE.turn  = data.engine.turn or ENGINE.turn
+    end
+
+    players_saved = data.players_saved or {}
+
+    if data.turn then
+        TURN = data.turn
+    end
+
+    if data.dice_contest then
+        DICE_CONTEST = data.dice_contest
+    end
+
+    colorArmy1 = data.colorArmy1 or COLOR.NOARMY
+    colorArmy2 = data.colorArmy2 or COLOR.NOARMY
+
+    if data.wounds_data then
+        wounds_data = data.wounds_data
+    end
+
+    Wait.time(function()
+        deployment_scanTable()
+        callHandler("aggiornaSchedeUnita")
+    end, 2)
+
+    return true
+end
+
+-- ============================================================
+-- FUNZIONE: restorePlayersColors()
+-- ============================================================
+function restorePlayersColors()
+
+    if not players_saved then return end
+
+    local currentPlayers = Player.getPlayers()
+
+    for _, saved in pairs(players_saved) do
+        for _, p in ipairs(currentPlayers) do
+            if tostring(p.steam_id) == tostring(saved.steam_id) then
+                p.changeColor(saved.color)
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: restoreDiceUiState()
+-- ============================================================
+function restoreDiceUiState()
+
+    if not DICE_CONTEST or not diceUrls then return end
+
+    local resetUrl = diceUrls[1]
+
+    if DICE_CONTEST.rolledNumberArmy1 then
+        UI.setAttribute("diceArmy1", "image", diceUrls[DICE_CONTEST.rolledNumberArmy1])
+    else
+        UI.setAttribute("diceArmy1", "image", resetUrl)
+    end
+
+    if DICE_CONTEST.rolledNumberArmy2 then
+        UI.setAttribute("diceArmy2", "image", diceUrls[DICE_CONTEST.rolledNumberArmy2])
+    else
+        UI.setAttribute("diceArmy2", "image", resetUrl)
+    end
+end
+end)
+__bundle_register("rulesets.lionheart.phases", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: initPhases()
+-- ============================================================
+function initPhases()
+
+    if DEBUG then print("lionheart_initPhases") end
+
+    linee_rettangolo = true
+    linee_deploy     = false
+
+    local phases_json = [[
+    {
+        "SITTING": {
+            "title": "PHASE: SITTING",
+            "desc": "Select both players",
+            "before": "before_sitting",
+            "after": "after_sitting",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClick",
+            "enforceOwnership": false,
+            "inputMode": "FREE",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Select Red",
+                    "textColor": "White",
+                     "color": "Red",
+                    "callback": "sitting_btn_all"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Select Green",
+                    "textColor": "White",
+                    "color": "Green",
+                    "callback": "sitting_btn_all"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "DEPLOY",
+                    "conditions": ["requirement_met"]
+                }
+            ]
+        },
+        "DEPLOY": {
+            "title": "PHASE: DEPLOY",
+            "desc": "Deploy your units behind the spawning line",
+            "before": "before_deploy",
+            "after": "after_deploy",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "enforceOwnership": true,
+            "inputMode": "OWNER",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Deploy Army1",
+                    "textColor": "White",
+                    "color": "Red",
+                    "callback": "deploy_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Deploy Army2",
+                    "textColor": "White",
+                    "color": "Green",
+                    "callback": "deploy_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Deploy",
+                    "textColor": "Black",
+                    "color": "Grey",
+                    "callback": "deploy_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "INITIATIVE_ROLL",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+        "INITIATIVE_ROLL": {
+            "title": "PHASE: INITIATIVE ROLL",
+            "desc": "Roll dice",
+            "before": "before_initiative_roll",
+            "after": "after_initiative_roll",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClickAndRoll",
+            "enforceOwnership": true,
+            "inputMode": "OWNER",
+            "buttons": {
+              "BTN_ARMY1": {
+                "action": "ARMY1_CLICK",
+                "label": "Roll Army 1",
+                "textColor": "White",
+                "color": "Red",
+                "callback": "roll_btn_all"
+              },
+              "BTN_ARMY2": {
+                "action": "ARMY2_CLICK",
+                "label": "Roll Army 2",
+                "textColor": "White",
+                "color": "Green",
+                "callback": "roll_btn_all"
+              }
+            },
+            "transitions": [{
+              "to": "INITIATIVE_CHOICE",
+              "conditions": ["winner"]
+            }]
+        },
+        "INITIATIVE_CHOICE": {
+            "title": "PHASE: INITIATIVE CHOICE",
+            "desc": "Assign initiative",
+            "before": "before_initiative_choice",
+            "after": "after_initiative_choice",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK"],
+            "render": "2BtnClickAndRoll",
+            "enforceOwnership": false,
+            "inputMode": "FREE",
+            "buttons": {
+              "BTN_ARMY1": {
+                "action": "ARMY1_CLICK",
+                "label": "Option 1",
+                "textColor": "White",
+                "color": "Red",
+                "callback": "assign_initiative_btn_all"
+              },
+              "BTN_ARMY2": {
+                "action": "ARMY2_CLICK",
+                "label": "Option 2",
+                "textColor": "White",
+                "color": "Green",
+                "callback": "assign_initiative_btn_all"
+              }
+            },
+            "transitions": [{
+              "to": "MOVE",
+              "conditions": ["assignment"]
+            }]
+        },
+        "MOVE": {
+            "title": "PHASE: MOVE",
+            "desc": "Move your army",
+            "before": "before_move",
+            "after": "after_move",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "enforceOwnership": true,
+            "inputMode": "INITIATIVE",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Done",
+                    "textColor": "White",
+                    "color": "Red",
+                    "callback": "move_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Done",
+                    "textColor": "White",
+                    "color": "Green",
+                    "callback": "move_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Move",
+                    "textColor": "Black",
+                    "color": "Grey",
+                    "callback": "move_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "SHOOT",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+        "SHOOT": {
+            "title": "PHASE: SHOOT",
+            "desc": "Open fire on targets",
+            "before": "before_shoot",
+            "after": "after_shoot",
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "enforceOwnership": true,
+            "inputMode": "INITIATIVE",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Done",
+                    "textColor": "White",
+                    "color": "Red",
+                    "callback": "shoot_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Done",
+                    "textColor": "White",
+                    "color": "Green",
+                    "callback": "shoot_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Shoot",
+                    "textColor": "Black",
+                    "color": "Grey",
+                    "callback": "shoot_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "ATTACK",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+        "ATTACK": {
+            "title": "PHASE: ATTACK",
+            "desc": "Resolve combat",
+            "before": "before_attack",
+            "after": "after_attack",            
+            "allowedActions": ["ARMY1_CLICK", "ARMY2_CLICK", "CONFIRM"],
+            "render": "3BtnClick",
+            "enforceOwnership": true,
+            "inputMode": "INITIATIVE",
+            "buttons": {
+                "BTN_ARMY1": {
+                    "action": "ARMY1_CLICK",
+                    "label": "Army 1 Done",
+                    "textColor": "White",
+                    "color": "Red",
+                    "callback": "attack_btn_army1"
+                },
+                "BTN_ARMY2": {
+                    "action": "ARMY2_CLICK",
+                    "label": "Army 2 Done",
+                    "textColor": "White",
+                    "color": "Green",
+                    "callback": "attack_btn_army2"
+                },
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Confirm Attack",
+                    "textColor": "Black",
+                    "color": "Grey",
+                    "callback": "attack_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "MORALE",
+                    "conditions": ["both_players_selected", "confirm_ready"]
+                }
+            ]
+        },
+        "MORALE": {
+            "title": "PHASE: MORALE",
+            "desc": "Test morale",
+            "before": "before_morale",
+            "after": "after_morale",            
+            "allowedActions": ["CONFIRM"],
+            "render": "1BtnClick",
+            "enforceOwnership": true,
+            "inputMode": "FREE",
+            "turnStart": true,
+            "buttons": {
+                "BTN_SINGLE": {
+                    "action": "CONFIRM",
+                    "label": "Next Turn",
+                    "textColor": "Black",
+                    "color": "Grey",
+                    "callback": "morale_btn_single"
+                }
+            },
+            "transitions": [
+                {
+                    "to": "INITIATIVE_ROLL",
+                    "conditions": ["confirm_immediate"]
+                }
+            ]
+        }
+    }
+    ]]
+
+    local decoded = JSON.decode(phases_json)
+    if not decoded then
+        print("JSON decode FALLITO")
+        return
+    end
+
+    local phasesData = decoded[1] or decoded
+    
+    if not ENGINE then
+        ENGINE = {
+            phase = "SITTING",
+            turn = 1,
+            phases = phasesData
+        }
+    else
+        ENGINE.phases = phasesData
+    
+        if not ENGINE.phase then
+            ENGINE.phase = "SITTING"
+        end
+    
+        if not ENGINE.turn then
+            ENGINE.turn = 1
+        end
+    end
+
+    if not TURN then
+        TURN = {
+            phase = ENGINE.phase,
+            activeArmy = nil,
+            firstArmy = nil,
+            completed = {
+                Army1 = false,
+                Army2 = false
+            }
+        }
+    end
+end
+end)
+__bundle_register("rulesets.lionheart.lib", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: lionheart_loadButtonBar()
+-- ============================================================
+function lionheart_loadButtonBar(callback)
+
+    WebRequest.get(LIONHEART_BUTTONBAR_URL, function(request)
+        if request.is_error then
+            printToAll("[LIONHEART] Errore download buttonbar.json", {r=1,g=0.3,b=0.3})
+
+            if callback then callback(false) end
+            return
+        end
+
+        if DEBUG then print("lionheart_loadButtonBar") end
+        local ok = callHandler("engine_buttonBarLoadJson", request.text)
+        if callback then callback(ok) end
+
+    end)
+end
+-- ============================================================
+-- FUNZIONE: restart()
+-- ============================================================
+function restart()
+
+    initPhases()
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    ENGINE.phase = "SITTING"
+    ENGINE.turn = 1
+ 
+    colorArmy1 = COLOR.NOARMY
+    colorArmy2 = COLOR.NOARMY
+
+    DICE_CONTEST = {
+        rolledNumberArmy1 = nil,
+        rolledNumberArmy2 = nil,
+        winner = nil,
+        initiative = nil
+    }
+    
+    TURN = {
+        phase = "SITTING",
+        activeArmy = nil,
+        firstArmy = nil,
+        completed = {
+            Army1 = false,
+            Army2 = false
+        }
+    }
+
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+
+    callHandler("initUI")
+    callHandler("resetPlayers")
+    callHandler("restoreDiceUiState")
+    callHandler("updateCenterPanel")
+    callHandler("aggiornaLinee")
+    callHandler("deployment_resetRuntimeOnly")
+    callHandler("deployment_clearSpawnedModels")
+    fadeOut("RESTART")
+end
+-- ============================================================
+-- FUNZIONE: getArmySlotByColor()
+-- ============================================================
+function getArmySlotByColor(color)
+    if color == COLOR.ARMY1 then return "Army1" end
+    if color == COLOR.ARMY2 then return "Army2" end
+    return nil
+end
+-- ============================================================
+-- FUNZIONE: getColorByArmySlot()
+-- ============================================================
+function getColorByArmySlot(armySlot)
+    if armySlot == "Army1" then return COLOR.ARMY1 end
+    if armySlot == "Army2" then return COLOR.ARMY2 end
+    return nil
+end
+-- ============================================================
+-- FUNZIONE: resetPlayers()
+-- ============================================================
+function blinkObject(id)
+    local visible = true
+
+    Wait.time(function()
+        visible = not visible
+        UI.setAttribute(id, "active", visible and "true" or "false")
+    end, 0.4, -1) 
+end
+-- ============================================================
+-- FUNZIONE: resetPlayers()
+-- ============================================================
+function resetPlayers()
+
+    for _, p in ipairs(Player.getPlayers()) do
+        if p then
+        p.changeColor(COLOR.NOARMY)
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: countSeated()
+-- ============================================================
+function countSeated()
+    numeroPlayerSeated = 0
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p and p.seated then
+                if p.color == "Green" then numeroPlayerSeated=numeroPlayerSeated+1 end
+                if p.color == "Red" then numeroPlayerSeated=numeroPlayerSeated+1 end                
+            end
+        end
+    end
+    return numeroPlayerSeated
+end
+-- ============================================================
+-- FUNZIONE: isOtherPlayerSeated()
+-- ============================================================
+function isOtherPlayerSeated(player)
+
+    local function checkPlayer(player)
+        if player.color ~= COLOR.NOARMY then 
+            return true
+        end    
+    end    
+
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.steam_name ~= player.steam_name then
+                return checkPlayer(p)
+            end
+        end
+    end
+    return false
+end
+-- ============================================================
+-- FUNZIONE: isArmy1Seated()
+-- ============================================================
+function isArmy1Seated()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.color == COLOR.ARMY1 then 
+                return true
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: isArmy2Seated()
+-- ============================================================
+function isArmy2Seated()
+    for _, p in ipairs(Player.getPlayers()) do
+        if p and p.seated then
+            if p.color == COLOR.ARMY2 then 
+                return true
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: onPlayerConnect()
+-- ============================================================
+function onPlayerConnect(player)
+    if DEBUG then print("onPlayerConnect") end
+    fadeOut(player.steam_name .." joined the game")
+    print(player.color .." joined the game")
+    restorePlayersColors()
+end
+-- ============================================================
+-- FUNZIONE: onPlayerDisconnect()
+-- ============================================================
+function onPlayerDisconnect(player)
+    if DEBUG then print("onPlayerDisconnect") end
+    fadeOut(player.steam_name .." left the game")
+    print(player.color .." left the game")
+end
+--=============================================================
+--FUNZIONE: onPlayerChangeColor()
+--=============================================================
+function onPlayerChangeColor(color)
+
+    if not color then return end
+    if color == COLOR.GM or color == COLOR.NOARMY then 
+
+            if not isArmy1Seated() then
+                colorArmy1 = COLOR.NOARMY
+            end
+
+            if not isArmy2Seated() then
+                colorArmy2 = COLOR.NOARMY
+            end        
+    end
+
+    if COLOR.ARMY1 == color then colorArmy1 = color end
+    if COLOR.ARMY2 == color then colorArmy2 = color end
+
+    callHandler("updateCenterPanel")
+end
+--=============================================================
+--FUNZIONE: getArmyByButton()
+--=============================================================
+function getArmyByButton(id)
+    for k,v in pairs(ARMY) do
+        if v.button == id then
+            return k
+        end
+    end
+    return nil
+end
+--=============================================================
+--FUNZIONE: getArmyByColor()
+--=============================================================
+function getArmyByColor(player)
+
+    for k,v in pairs(ARMY) do
+        if v.color == player.color then
+            return k
+        end
+    end
+    return nil
+end
+-- ============================================================
+-- FUNZIONE: aggiornaLinee()
+-- ============================================================
+function aggiornaLinee()
+
+-- ------------------------------------------------------------
+-- COORDINATE TAVOLO NERO
+-- ------------------------------------------------------------
+TAVOLO_Y  = 3.35
+TAVOLO_LX = 90
+TAVOLO_LZ = 68
+
+-- ------------------------------------------------------------
+-- COORDINATE VERDE
+-- ------------------------------------------------------------
+VERDE_Y       = 2.36
+VERDE_Y_LINEE = 3.36
+VERDE_LX      = 48
+VERDE_LZ      = 32.23
+DEPLOY_CM     = 8
+    
+    local linee = {}
+
+    if linee_croce then
+        table.insert(linee, { points={{x=-TAVOLO_LX,y=TAVOLO_Y,z=0},{x=TAVOLO_LX,y=TAVOLO_Y,z=0}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
+        table.insert(linee, { points={{x=0,y=TAVOLO_Y,z=-TAVOLO_LZ},{x=0,y=TAVOLO_Y,z=TAVOLO_LZ}}, color={r=0.8,g=0.8,b=0.8}, thickness=0.3 })
+    end
+    if linee_deploy then
+        local y  = VERDE_Y_LINEE
+        table.insert(linee, { points={{x=-VERDE_LX,y=y,z=-(VERDE_LZ-DEPLOY_CM)},{x=VERDE_LX,y=y,z=-(VERDE_LZ-DEPLOY_CM)}}, color={r=0.9,g=0.2,b=0.2}, thickness=0.25 })
+        table.insert(linee, { points={{x=-VERDE_LX,y=y,z=(VERDE_LZ-DEPLOY_CM)}, {x=VERDE_LX,y=y,z=(VERDE_LZ-DEPLOY_CM)}},  color={r=0.2,g=0.8,b=0.2}, thickness=0.25 })
+    end
+    if linee_rettangolo then
+        local y = 1.70
+        table.insert(linee, { points={{x=-46.18,y=y,z=-37.55},{x=46.18,y=y,z=-37.55},{x=46.18,y=y,z=-62.38},{x=-46.18,y=y,z=-62.38},{x=-46.18,y=y,z=-37.55}}, color={r=1,g=0,b=0}, thickness=0.3 })
+        table.insert(linee, { points={{x=-46.18,y=y,z=37.55}, {x=46.18,y=y,z=37.55}, {x=46.18,y=y,z=62.38}, {x=-46.18,y=y,z=62.38}, {x=-46.18,y=y,z=37.55}},  color={r=0,g=1,b=0}, thickness=0.3 })
+    end
+    if linee_settori then
+        local cols=6; local rows=5
+        local sx=(VERDE_LX*2)/cols; local sz=(VERDE_LZ*2)/rows; local y=3.5
+        for c=0,cols do local x=-VERDE_LX+c*sx; table.insert(linee,{points={{x,y,-VERDE_LZ},{x,y,VERDE_LZ}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
+        for r=0,rows do local z=-VERDE_LZ+r*sz; table.insert(linee,{points={{-VERDE_LX,y,z},{VERDE_LX,y,z}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
+    end
+
+    Global.setVectorLines(linee)
+end    
+-- ============================================================
+-- FUNZIONE: dice_check()
+-- ============================================================
+function dice_check()
+
+   if not DICE_CONTEST.rolledNumberArmy1 or not DICE_CONTEST.rolledNumberArmy2 then return end
+
+    if DICE_CONTEST.rolledNumberArmy1 == DICE_CONTEST.rolledNumberArmy2 then
+        DICE_CONTEST.rolledNumberArmy1 = nil
+        DICE_CONTEST.rolledNumberArmy2 = nil
+        DICE_CONTEST.winner = nil
+        return
+    end
+
+    if DICE_CONTEST.rolledNumberArmy1 > DICE_CONTEST.rolledNumberArmy2 then
+        DICE_CONTEST.winner = 1
+    else
+        DICE_CONTEST.winner = 2
+    end   
+    
+    print("Winner is Army: " .. tostring(ARMY[DICE_CONTEST.winner].name))
+end
+-- ============================================================
+-- FUNZIONE: spinDie()
+-- ============================================================
+function spinDie(imageId, diceNumber, onEnd)
+
+    local delays = {0.05, 0.05, 0.06, 0.06, 0.08, 0.10, 0.12, 0.15, 0.18, 0.22, 0.28}
+    local index = 1
+
+    local function step()
+
+        local url = diceUrls[dice_roll()]
+        if diceNumber == 1 then
+            rolling1 = url
+        else
+            rolling2 = url
+        end
+
+        UI.setAttribute(imageId, "image", url)
+
+        if index >= #delays then
+            local finalValue = dice_roll()
+            local finalUrl = diceUrls[finalValue]
+
+            if diceNumber == 1 then
+                rolling1 = finalUrl
+            else
+                rolling2 = finalUrl
+            end
+
+            UI.setAttribute(imageId, "image", finalUrl)
+            
+
+            if onEnd then               
+                onEnd(finalValue)
+            end
+            return
+        end
+
+        local delay = delays[index]
+        index = index + 1
+        Wait.time(step, delay)
+    end
+
+    step()
+end
+-- ============================================================
+-- FUNZIONE: updateCenterPanel()
+-- ============================================================
+function updateCenterPanel()
+
+    if not ENGINE or not ENGINE.phases then
+        printToAll("ENGINE non inizializzato", "Red")
+        return
+    end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+
+    if not phase then
+        printToAll("Fase non trovata: " .. tostring(ENGINE.phase), "Red")
+        return
+    end
+
+    local renderer = RENDERERS[phase.render]
+
+    if renderer then
+        renderer(phase)
+    else
+        printToAll("Renderer non trovato: " .. tostring(phase.render), "Red")
+        return
+    end
+
+    -- ========================================================
+    -- TEXT PANEL
+    -- ========================================================
+
+    UI.setAttribute("versione", "text", VERSION.." - "..ACTIVE_RULESET)
+    UI.setAttribute("textFase", "text", phase.title .. " - TURN: " .. ENGINE.turn)
+    UI.setAttribute("textDesc", "text", phase.desc or "")
+
+    UI.setAttribute("army1", "text", army1)
+    UI.setAttribute("army2", "text", army2)
+    UI.setAttribute("army1", "color", colorArmy1 or COLOR.NOARMY)
+    UI.setAttribute("army2", "color", colorArmy2 or COLOR.NOARMY)
+
+    -- ========================================================
+    -- BUTTONS BASE
+    -- ========================================================
+ 
+    for slot, button in pairs(phase.buttons or {}) do
+      
+        if slot == BUTTONS.BTN_ARMY1 then
+            color = COLOR.ARMY1
+        elseif slot == BUTTONS.BTN_ARMY2 then
+            color = COLOR.ARMY2
+        end
+
+        UI.setAttribute(slot, "active", "true")
+        UI.setAttribute(slot, "color", button.color)
+        UI.setAttribute(slot, "text", button.label)
+        UI.setAttribute(slot, "textColor", button.textColor)
+    end
+-- ========================================================
+-- BUTTON STATE
+-- ========================================================
+
+if ENGINE.phase == "SITTING" then
+
+    if colorArmy1 ~= COLOR.NOARMY then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if colorArmy2 ~= COLOR.NOARMY then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+elseif ENGINE.phase == "DEPLOY" then
+
+    if TURN and TURN.completed and TURN.completed.Army1 then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if TURN and TURN.completed and TURN.completed.Army2 then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+elseif ENGINE.phase == "INITIATIVE_ROLL" then
+
+    if DICE_CONTEST and DICE_CONTEST.rolledNumberArmy1 ~= nil then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if DICE_CONTEST and DICE_CONTEST.rolledNumberArmy2 ~= nil then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+elseif phase and phase.inputMode == "INITIATIVE" then
+
+    if TURN and TURN.completed and TURN.completed.Army1 then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+    end
+
+    if TURN and TURN.completed and TURN.completed.Army2 then
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+    end
+
+end
+
+-- ========================================================
+-- INITIATIVE OUTLINE
+-- ========================================================
+
+if phase.inputMode == "INITIATIVE" then
+    if TURN and TURN.activeArmy == "Army1" then
+        UI.setAttribute("iconMoveArmy1", "active", "true")
+    elseif TURN and TURN.activeArmy == "Army2" then
+        UI.setAttribute("iconMoveArmy2", "active", "true")
+    end
+end
+
+end
+-- ============================================================
+-- FUNZIONE: advanceTurnAfterClick()
+-- ============================================================
+function advanceTurnAfterClick(slot)
+
+    if slot == BUTTONS.BTN_ARMY1 then
+        TURN.completed.Army1 = true
+    end
+
+    if slot == BUTTONS.BTN_ARMY2 then
+        TURN.completed.Army2 = true
+    end
+
+    if TURN.activeArmy == "Army1" then
+        if TURN.completed.Army2 then
+            TURN.activeArmy = nil
+        else
+            TURN.activeArmy = "Army2"
+        end
+        return
+    end
+
+    if TURN.activeArmy == "Army2" then
+        if TURN.completed.Army1 then
+            TURN.activeArmy = nil
+        else
+            TURN.activeArmy = "Army1"
+        end
+        return
+    end
+end
+-- ============================================================
+-- FUNZIONE: dice_reset_roll()
+-- ============================================================
+function dice_reset_roll()
+    DICE_CONTEST.rolledNumberArmy1 = nil
+    DICE_CONTEST.rolledNumberArmy2 = nil
+    DICE_CONTEST.winner = nil
+end
+-- ============================================================
+-- FUNZIONE: canUseButton()
+-- ============================================================
+function canUseButton(slot, player, value, id, button, phase)
+
+    local mode = phase and phase.inputMode or "FREE"
+
+    -- ========================================================
+    -- FREE: tutti possono cliccare
+    -- ========================================================
+    if mode == "FREE" then
+        return true
+    end
+
+    -- ========================================================
+    -- OWNER: solo il player del bottone
+    -- ========================================================
+    if mode == "OWNER" then
+
+        if slot == BUTTONS.BTN_ARMY1 then
+            if not player or player.color ~= COLOR.ARMY1 then
+                fadeOut("Not your button")
+                return false
+            end
+        end
+
+        if slot == BUTTONS.BTN_ARMY2 then
+            if not player or player.color ~= COLOR.ARMY2 then
+                fadeOut("Not your button")
+                return false
+            end
+        end
+
+        return true
+    end
+
+    -- ========================================================
+    -- INITIATIVE: gestione turno con TURN
+    -- ========================================================
+    if mode == "INITIATIVE" then
+
+        local activeColor = getColorByArmySlot(TURN.activeArmy)
+
+        -- se esiste un turno attivo, solo lui può cliccare
+        if activeColor then
+            if not player or player.color ~= activeColor then
+                fadeOut("Wait for your opponent")
+                return false
+            end
+        end
+        return true
+    end
+
+    return true
+end
+-- ============================================================
+-- FUNZIONE: resetTurnForPhase()
+-- ============================================================
+function resetTurnForPhase()
+
+    if DEBUG then print("resetTurnForPhase") end
+
+    if not DICE_CONTEST or not DICE_CONTEST.initiative then return end
+
+    local army = getArmySlotByColor(DICE_CONTEST.initiative.color)
+
+    TURN.phase = ENGINE.phase
+    TURN.firstArmy = army
+    TURN.activeArmy = army
+    TURN.completed.Army1 = false
+    TURN.completed.Army2 = false
+end
+-- ============================================================
+-- FUNZIONE: restoreDiceUiState()
+-- ============================================================
+function restoreDiceUiState()
+
+    if DEBUG then print("restoreDiceUiState") end
+
+    local resetUrl = diceUrls[1]
+
+    if DICE_CONTEST.rolledNumberArmy1 then
+        UI.setAttribute("diceArmy1", "image", diceUrls[DICE_CONTEST.rolledNumberArmy1])
+    else
+        UI.setAttribute("diceArmy1", "image", resetUrl)
+    end
+
+    if DICE_CONTEST.rolledNumberArmy2 then
+        UI.setAttribute("diceArmy2", "image", diceUrls[DICE_CONTEST.rolledNumberArmy2])
+    else
+        UI.setAttribute("diceArmy2", "image", resetUrl)
+    end
+end
+-- ============================================================
+-- FUNZIONE: stato()
+-- ============================================================
+function stato()
+
+    local save_state = lionheart_onSave()
+    local data = JSON.decode(save_state)
+
+    --print("========== SAVE STATE ==========")
+    --prettyPrintTable(data.engine)
+    --print("================================")
+    --prettyPrintTable(data.turn)
+    print("================================")
+    prettyPrintTable(data)
+    print("================================")    
+end
+-- ============================================================
+-- FUNZIONE: prettyPrintTable()
+-- ============================================================
+function prettyPrintTable(t, indent)
+    indent = indent or 0
+
+    if type(t) ~= "table" then
+        print(tostring(t))
+        return
+    end
+
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            print(string.rep("  ", indent) .. k .. ":")
+            prettyPrintTable(v, indent + 1)
+        else
+            print(string.rep("  ", indent) .. k .. ": " .. tostring(v))
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: initUI()
+-- ============================================================
+function initUI()
+    callHandler("buildUI")
+end
+-- ============================================================
+-- FUNZIONE: rulesetInit()
+-- ============================================================
+function rulesetInit(save_state)
+    
+    lionheart_loadButtonBar(function(ok)
+        -- slots popolati, ora buildUI genera XML con label già dentro
+        callHandler("initPhases")
+        callHandler("autoRegisterFromPhases")
+        callHandler("registerDefaultConditions")
+
+        if save_state and save_state ~= "" then
+            callHandler("restoreState", save_state)
+        end
+
+        engine_init()  -- chiama buildUI che usa ENGINE_BUTTONBAR.slots già pronti
+
+        if save_state and save_state ~= "" then
+            Wait.time(function()
+                callHandler("afterRestoreState", save_state)
+            end, 1)
+        end
+    end)
+end
+
+end)
+__bundle_register("rulesets.lionheart.phase_hooks", function(require, _LOADED, __bundle_register, __bundle_modules)
+function before_sitting(phaseName, phase)
+    TURN.phase = phaseName
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")    
+end
+
+function after_sitting(phaseName, phase)
+end
+
+function before_deploy(phaseName, phase)
+    TURN.phase = phaseName
+    TURN.completed = TURN.completed or { Army1 = false, Army2 = false }
+    linee_deploy = true
+    callHandler("deployment_init")
+    callHandler("aggiornaLinee")
+end
+
+function after_deploy(phaseName, phase)
+    linee_deploy = false
+    deployment_revealAllSpawned()
+    deployment_scanTable()
+    callHandler("aggiornaSchedeUnita")
+end
+
+function before_initiative_roll(phaseName, phase)
+    TURN.phase = phaseName
+end
+
+function after_initiative_roll(phaseName, phase)
+
+end
+
+function before_initiative_choice(phaseName, phase)
+    if DICE_CONTEST and DICE_CONTEST.winner then
+        UI.setAttribute("iconWinnerArmy"..DICE_CONTEST.winner, "active", "true")
+    end
+    TURN.phase = phaseName
+end
+
+function after_initiative_choice(phaseName, phase)
+    if DICE_CONTEST and DICE_CONTEST.winner then
+        UI.setAttribute("iconWinnerArmy"..DICE_CONTEST.winner, "active", "false")
+    end
+end
+
+function before_move(phaseName, phase)
+    if DICE_CONTEST and DICE_CONTEST.winner then
+        UI.setAttribute("iconWinnerArmy"..DICE_CONTEST.winner, "active", "false")
+    end
+
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+
+    TURN.phase = phaseName
+end
+
+function after_move(phaseName, phase)
+
+end
+
+function before_shoot(phaseName, phase)
+
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+    TURN.phase = phaseName
+end
+
+function after_shoot(phaseName, phase)
+
+end
+
+function before_attack(phaseName, phase)
+
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+    TURN.phase = phaseName
+end
+
+function after_attack(phaseName, phase)
+end
+
+function before_morale(phaseName, phase)
+    TURN.phase = phaseName
+end
+
+function after_morale(phaseName, phase)
+
+    ENGINE.turn = (ENGINE.turn or 1) + 1
+
+    UI.setAttribute("iconWinnerArmy1", "active", "false")
+    UI.setAttribute("iconWinnerArmy2", "active", "false")
+
+    UI.setAttribute("diceArmy1", "image", diceUrls[1])
+    UI.setAttribute("diceArmy2", "image", diceUrls[1])
+
+    DICE_CONTEST.initiative = nil
+    DICE_CONTEST.winner = nil
+    DICE_CONTEST.rolledNumberArmy1 = nil
+    DICE_CONTEST.rolledNumberArmy2 = nil
+
+    TURN.phase = nil
+    TURN.activeArmy = nil
+    TURN.firstArmy = nil
+    TURN.completed.Army1 = false
+    TURN.completed.Army2 = false
+end
+end)
+__bundle_register("rulesets.lionheart.callbacks", function(require, _LOADED, __bundle_register, __bundle_modules)
+
+DICE_CONTEST = {
+    rolledNumberArmy1 = nil,
+    rolledNumberArmy2 = nil,
+    winner = nil,
+    initiative = nil
+}
+
+TURN = {
+    activeArmy = "Army1" or "Army2" or nil,
+    completed = {
+        Army1 = false,
+        Army2 = false
+    }
+}
+
+LIONHEART_FORMATION = LIONHEART_FORMATION or {
+    horizontalSpacing = 3.18,
+    verticalSpacing = 2.42
+}
+
+LIONHEART_SHOOTING = LIONHEART_SHOOTING or {
+    activeShooter = nil,
+    activeTarget = nil,
+    activeAnimation = nil,
+    range = 30,
+    angle = 45
+}
+
+diceUrls = {
+    [1] = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/1d6.png",
+    [2] = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/2d6.png",
+    [3] = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/3d6.png",
+    [4] = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/4d6.png",
+    [5] = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/5d6.png",
+    [6] = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/6d6.png"
+}
+
+crownUrl = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png"
+leftArrowUrl = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr1.png"
+rightArrowUrl = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr1.png"
+
+LIONHEART_BUTTONBAR_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/buttonbar.json"
+
+
+ARMY = {
+    [1] = {
+        id = 1,
+        name = "ARMY1",
+        button = BUTTONS.BTN_ARMY1,
+        action = ACTION.ARMY1_CLICK,
+        color = COLOR.ARMY1
+    },
+    [2] = {
+        id = 2,
+        name = "ARMY2",
+        button = BUTTONS.BTN_ARMY2,
+        action = ACTION.ARMY2_CLICK,
+        color = COLOR.ARMY2
+    }
+}
+
+-- ============================================================
+-- FUNZIONE: sitting_btn_all()
+-- ============================================================
+function sitting_btn_all(player, value, id)
+    
+    local colorPlayer = player.color
+    
+    if id == BUTTONS.BTN_ARMY1 then          
+        if colorArmy1 == COLOR.NOARMY then
+            if colorArmy2 == colorPlayer then
+                colorArmy2 = COLOR.NOARMY
+            end
+            player.changeColor(COLOR.ARMY1)
+            colorArmy1 = COLOR.ARMY1
+            colorPlayer = COLOR.ARMY1
+        else 
+            if colorPlayer == colorArmy1 then
+                fadeOut(army1 .. " already using this color") 
+            else
+                fadeOut("color " .. army1 .. " already used")  
+            end
+        end
+    end
+
+    if id == BUTTONS.BTN_ARMY2 then 
+        if colorArmy2 == COLOR.NOARMY then
+            if colorArmy1 == colorPlayer then
+                colorArmy1 = COLOR.NOARMY
+            end
+            player.changeColor(COLOR.ARMY2)
+            colorArmy2 = COLOR.ARMY2
+            colorPlayer = COLOR.ARMY2
+        else 
+            if colorPlayer == colorArmy2 then
+                fadeOut(army2 .. " already using this color") 
+            else
+                fadeOut("color " .. army2 .. " already used")  
+            end
+        end
+    end     
+    return true
+end
+-- ============================================================
+-- FUNZIONE: deploy_btn_army1()
+-- ============================================================
+function deploy_btn_army1(player, value, id)
+    TURN.completed.Army1 = true
+    callHandler("deployment_loadArmySlot", 1, player)
+    return true
+end
+-- ============================================================
+-- FUNZIONE: deploy_btn_army2()
+-- ============================================================
+function deploy_btn_army2(player, value, id)
+    TURN.completed.Army2 = true
+    callHandler("deployment_loadArmySlot", 2, player)
+    return true
+end
+-- ============================================================
+-- FUNZIONE: deploy_btn_single()
+-- ============================================================
+function deploy_btn_single(player, value, id)
+   return callHandler("deployment_confirmDeploy", player)
+end
+-- ============================================================
+-- FUNZIONE: move_btn_army1()
+-- ============================================================
+function move_btn_army1(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY1)
+    return true
+end
+-- ============================================================
+-- FUNZIONE: move_btn_army2()
+-- ============================================================
+function move_btn_army2(player, value, id)
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY2)    
+    return true
+end
+-- ============================================================
+-- FUNZIONE: move_btn_single()
+-- ============================================================
+function move_btn_single(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    return true
+end
+-- ============================================================
+-- FUNZIONE: shoot_btn_army1()
+-- ============================================================
+function shoot_btn_army1(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY1)
+    return true
+end
+-- ============================================================
+-- FUNZIONE: shoot_btn_army2()
+-- ============================================================
+function shoot_btn_army2(player, value, id)
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY2)
+     return true
+end
+-- ============================================================
+-- FUNZIONE: shoot_btn_single()
+-- ============================================================
+function shoot_btn_single(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    return true
+end
+-- ============================================================
+-- FUNZIONE: attack_btn_army1()
+-- ============================================================
+function attack_btn_army1(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY1)
+    return true
+end
+-- ============================================================
+-- FUNZIONE: attack_btn_army2()
+-- ============================================================
+function attack_btn_army2(player, value, id)
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY2)
+    return true
+end
+-- ============================================================
+-- FUNZIONE: attack_btn_single()
+-- ============================================================
+function attack_btn_single(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    return true
+end
+-- ============================================================
+-- FUNZIONE: morale_btn_single()
+-- ============================================================
+function morale_btn_single(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    if DEBUG then print("morale_btn_single") end
+    return true
+end
+-- ============================================================
+-- FUNZIONE: roll_btn_all()
+-- ============================================================
+function roll_btn_all(player, value, id)
+
+    if id == BUTTONS.BTN_ARMY1 then
+        if DICE_CONTEST.rolledNumberArmy1 ~= nil then return false end
+
+        spinDie("diceArmy1", 1, function(finalValue)
+            DICE_CONTEST.rolledNumberArmy1 = finalValue
+            callHandler("dice_check")
+            if DICE_CONTEST.winner ~= nil then
+                callHandler("engine_transition")
+            end
+            callHandler("updateCenterPanel")
+        end)
+    end
+
+    if id == BUTTONS.BTN_ARMY2 then
+        if DICE_CONTEST.rolledNumberArmy2 ~= nil then return false end
+
+        spinDie("diceArmy2", 2, function(finalValue)
+            DICE_CONTEST.rolledNumberArmy2 = finalValue
+            callHandler("dice_check")
+            if DICE_CONTEST.winner ~= nil then
+                callHandler("engine_transition")
+            end
+            callHandler("updateCenterPanel")
+        end)
+    end
+
+    return false
+end
+-- ============================================================
+-- FUNZIONE: assign_initiative_btn_all()
+-- ============================================================
+function assign_initiative_btn_all(player, value, id)
+
+    local winner = ARMY[DICE_CONTEST.winner]
+    local clicker = ARMY[getArmyByColor(player)]
+    local clicked = ARMY[getArmyByButton(id)]
+    
+    if clicker.name ~= winner.name then
+        fadeOut(clicker.name.." can't assign anything")
+    else 
+        DICE_CONTEST.initiative = clicked
+        callHandler("resetTurnForPhase")
+        local army = callHandler("getArmySlotByColor", clicked.color)
+
+        TURN.firstArmy = army
+        TURN.activeArmy = army
+
+        TURN.completed.Army1 = false
+        TURN.completed.Army2 = false
+        fadeOut("Initiative assigned to "..clicked.name) 
+    end
+end
+-- ============================================================
+-- FUNZIONE: lionheart_getSelectedObjects()
+-- ============================================================
+function lionheart_getSelectedObjects()
+    for _, color in ipairs(getSeatedPlayers()) do
+        local selected = Player[color].getSelectedObjects()
+        if selected ~= nil and #selected > 0 then return selected end
+    end
+
+    local fallback = {"White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Black"}
+    for _, color in ipairs(fallback) do
+        if Player[color] ~= nil then
+            local selected = Player[color].getSelectedObjects()
+            if selected ~= nil and #selected > 0 then return selected end
+        end
+    end
+
+    return {}
+end
+-- ============================================================
+-- FUNZIONE: lionheart_showRange()
+-- ============================================================
+function lionheart_showRange(player, value, id, buttonConfig)
+    local selected = lionheart_getSelectedObjects()
+    if selected == nil or #selected < 1 then
+        printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local shooter = selected[1]
+    local pos = shooter.getPosition()
+    local fwd = shooter.getTransformForward()
+    local dir = Vector(fwd.x, 0, fwd.z):normalized()
+    local angle = math.rad(LIONHEART_SHOOTING.angle)
+    local points = {}
+
+    for i = 0, 30 do
+        local t = i / 30
+        local a = -angle + (2 * angle * t)
+        local d = Vector(dir.x * math.cos(a) - dir.z * math.sin(a), 0, dir.x * math.sin(a) + dir.z * math.cos(a))
+        local p = Vector(pos.x + d.x * LIONHEART_SHOOTING.range, pos.y + 0.1, pos.z + d.z * LIONHEART_SHOOTING.range)
+        table.insert(points, shooter.positionToLocal(p))
+    end
+
+    shooter.setVectorLines({{points = points, color = {1, 0.8, 0.1}, thickness = 0.1}})
+    LIONHEART_SHOOTING.activeShooter = shooter
+
+    Wait.time(function()
+        if shooter ~= nil then shooter.setVectorLines({}) end
+    end, 10)
+
+    return true
+end
+-- ============================================================
+-- FUNZIONE: lionheart_fire()
+-- ============================================================
+function lionheart_fire(player, value, id, buttonConfig)
+    local selected = lionheart_getSelectedObjects()
+    if selected == nil or #selected < 1 then
+        printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local shooter = selected[1]
+    if LIONHEART_SHOOTING.activeAnimation ~= nil then LIONHEART_SHOOTING.activeAnimation.active = false end
+
+    local enemyTag = "Army1"
+    if shooter.hasTag ~= nil and shooter.hasTag("Army1") then enemyTag = "Army2" end
+
+    local target = nil
+    local bestDist = 999999
+    for _, obj in ipairs(getAllObjects()) do
+        if obj ~= shooter and obj.hasTag ~= nil and obj.hasTag(enemyTag) then
+            local dist = (obj.getPosition() - shooter.getPosition()):magnitude()
+            if dist < bestDist then
+                bestDist = dist
+                target = obj
+            end
+        end
+    end
+
+    if target == nil then
+        printToAll("[TIRO] Nessun target", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    if LIONHEART_SHOOTING.activeTarget ~= nil then LIONHEART_SHOOTING.activeTarget.highlightOff() end
+    target.highlightOn({1,0.1,0.1}, 10)
+
+    LIONHEART_SHOOTING.activeTarget = target
+    LIONHEART_SHOOTING.activeShooter = shooter
+
+    local state = { active = true }
+    LIONHEART_SHOOTING.activeAnimation = state
+
+    local function loop()
+        if not state.active then
+            if shooter ~= nil then shooter.setVectorLines({}) end
+            return
+        end
+        if shooter == nil or target == nil then return end
+
+        shooter.setVectorLines({{points = {shooter.positionToLocal(shooter.getPosition()), shooter.positionToLocal(target.getPosition())}, color = {1, 0.8, 0.1}, thickness = 0.25}})
+        Wait.frames(loop, 5)
+    end
+
+    loop()
+    return true
+end
+-- ============================================================
+-- FUNZIONE: lionheart_stopFire()
+-- ============================================================
+function lionheart_stopFire(player, value, id, buttonConfig)
+    if LIONHEART_SHOOTING.activeAnimation ~= nil then LIONHEART_SHOOTING.activeAnimation.active = false end
+    if LIONHEART_SHOOTING.activeShooter ~= nil then LIONHEART_SHOOTING.activeShooter.setVectorLines({}) end
+    if LIONHEART_SHOOTING.activeTarget ~= nil then LIONHEART_SHOOTING.activeTarget.highlightOff() end
+
+    LIONHEART_SHOOTING.activeAnimation = nil
+    LIONHEART_SHOOTING.activeShooter = nil
+    LIONHEART_SHOOTING.activeTarget = nil
+    return true
+end
+-- ============================================================
+-- FUNZIONE: lionheart_lineLeft()
+-- ============================================================
+function lionheart_lineLeft(player, value, id, buttonConfig) return lionheart_applyFormation("lineLeft") end
+-- ============================================================
+-- FUNZIONE: lionheart_lineRight()
+-- ============================================================
+function lionheart_lineRight(player, value, id, buttonConfig) return lionheart_applyFormation("lineRight") end
+-- ============================================================
+-- FUNZIONE: lionheart_columnUp()
+-- ============================================================
+function lionheart_columnUp(player, value, id, buttonConfig) return lionheart_applyFormation("columnUp") end
+-- ============================================================
+-- FUNZIONE: lionheart_columnDown()
+-- ============================================================
+function lionheart_columnDown(player, value, id, buttonConfig) return lionheart_applyFormation("columnDown") end
+-- ============================================================
+-- FUNZIONE: lionheart_applyFormation()
+-- ============================================================
+function lionheart_applyFormation(mode)
+    local selected = lionheart_getSelectedObjects()
+    if selected == nil or #selected < 2 then
+        printToAll("[FORMAZIONE] Seleziona almeno 2 basi", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local leader = selected[1]
+    local right = leader.getTransformRight()
+    local forward = leader.getTransformForward()
+
+    for i = 2, #selected do
+        local obj = selected[i]
+        local index = i - 1
+        local pos = nil
+
+        if mode == "lineLeft" then
+            pos = leader.getPosition() - right * (LIONHEART_FORMATION.horizontalSpacing * index)
+        elseif mode == "lineRight" then
+            pos = leader.getPosition() + right * (LIONHEART_FORMATION.horizontalSpacing * index)
+        elseif mode == "columnUp" then
+            pos = leader.getPosition() + forward * (LIONHEART_FORMATION.verticalSpacing * index)
+        elseif mode == "columnDown" then
+            pos = leader.getPosition() - forward * (LIONHEART_FORMATION.verticalSpacing * index)
+        end
+
+        if pos ~= nil then
+            obj.setPosition(pos)
+            obj.setRotation(leader.getRotation())
+        end
+    end
+
+    return true
+end
+end)
+__bundle_register("rulesets.lionheart.conditions", function(require, _LOADED, __bundle_register, __bundle_modules)
+function registerDefaultConditions()
+
+    registerCondition(COND.REQUIREMENT_MET, function(action)
+        return colorArmy1 == COLOR.ARMY1 and colorArmy2 == COLOR.ARMY2
+    end)
+
+    registerCondition(COND.BOTH_PLAYERS_SELECTED, function(action)
+        return TURN and TURN.completed and TURN.completed.Army1 and TURN.completed.Army2
+    end)
+
+    registerCondition(COND.CONFIRM_READY, function(action)
+        return action and action.type and action.type == ACTION.CONFIRM and TURN and TURN.completed and TURN.completed.Army1 and TURN.completed.Army2
+    end)
+
+    registerCondition(COND.CONFIRM_IMMEDIATE, function(action)
+        return action and action.type == ACTION.CONFIRM
+    end)
+
+    registerCondition(COND.WINNER, function(action)
+        return DICE_CONTEST and DICE_CONTEST.winner ~= nil
+    end)
+
+    registerCondition(COND.ASSIGNMENT, function(action)
+        return DICE_CONTEST and DICE_CONTEST.initiative ~= nil
+    end)
+
+    registerCondition(COND.AUTO_ADVANCE, function(action)
+        return true
+    end)
+end
+end)
+__bundle_register("rulesets.lionheart.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
+function getRulesetUiXml()
+    return [[
+    <!-- TOP -->
+    
+    <Panel id="panelVersion"
+           rectAlignment="UpperCenter"
+           width="420"
+           height="30"
+           color="rgba(0,0,0,0.35)"
+           offsetXY="-700 -218">
+           <Text id="versione" text="" fontSize="14" fontStyle="Bold" color="Yellow" alignment="MiddleCenter"/>
+    </Panel>
+    <Panel id="panelTop"
+            rectAlignment="UpperCenter"
+            width="420"
+            height="120"
+            color="rgba(0,0,0,0.25)"
+            offsetXY="0 -70">
+            <VerticalLayout spacing="6" padding="10 10 10 10">
+            <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
+                <Text id="textFase"
+                        text="FASE"
+                        fontSize="18"
+                        fontStyle="Bold"
+                        outline="#000000"
+                        outlineSize="2"
+                        color="Yellow"/>
+            </HorizontalLayout>
+            <Text id="textDesc" text="Descrizione"
+                fontSize="13"
+                fontStyle="Bold"
+                color="rgba(0.8,0.8,0.8,1)"
+                alignment="MiddleCenter"/>
+                <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
+                <Text id="army1"
+                    text="Army 1"
+                    fontSize="14"
+                    fontStyle="Bold"
+                    color="Grey"
+                    alignment="MiddleCenter"/>
+                <Text id="army2"
+                    text="Army 2"
+                    fontSize="14"
+                    fontStyle="Bold"
+                    color="Grey"
+                    alignment="MiddleCenter"/>
+                </HorizontalLayout>
+            </VerticalLayout>
+    </Panel>
+    <Panel id="panelBtnUp"
+        rectAlignment="UpperCenter"
+        width="420"
+        height="50"
+        color="rgba(0,0,0,0.35)"
+        offsetXY="0 -192">
+        <VerticalLayout spacing="6" padding="10 10 10 10">
+            <HorizontalLayout>
+                <Row>
+                    <Button id="BTN_ARMY1" class="panel"
+                        text="BTN_ARMY1"
+                        width="180"
+                        fontSize="14"
+                        fontStyle="Bold"
+                        image="Sprites/Layout/Button"
+                        color="rgba(0.7,0.15,0.15,1)"
+                        textColor="#FFFFFF"
+                        onClick="onBtnArmy1"/>
+                </Row>
+                <Row>
+                    <Button id="BTN_ARMY2" class="panel"
+                        text="BTN_ARMY2"
+                        width="180"
+                        fontSize="14"
+                        fontStyle="Bold"
+                        image="Sprites/Layout/Button"
+                        color="rgba(0.15,0.6,0.15,1)"
+                        textColor="White"
+                        onClick="onBtnArmy2"/>
+                </Row>
+            </HorizontalLayout>
+        </VerticalLayout>
+    </Panel>
+    <Panel id="panelBtnDown"
+       rectAlignment="UpperCenter"
+        width="420"
+        height="50"
+        color="rgba(0,0,0,0.37)"
+        offsetXY="0 -244">
+            <VerticalLayout spacing="6" padding="10 10 10 10">
+                <HorizontalLayout childAlignment="MiddleCenter">
+                    <Row>
+                        <Button id="BTN_SINGLE" class="panel"
+                            text="BTN_SINGLE"
+                            width="380"
+                            fontSize="14"
+                            fontStyle="Bold"
+                            color="Grey"
+                            textColor="Black"
+                            outline="#000000"
+                            outlineSize="1.2"
+                            onClick="onBtnScelta"/>
+                    </Row>
+                </HorizontalLayout>
+            </VerticalLayout>
+    </Panel>
+    <Panel id="panelDices"
+        rectAlignment="UpperCenter"
+        width="420"
+        height="100"
+        color="rgba(0,0,0,0.35)"
+        offsetXY="0 -296">
+            <HorizontalLayout spacing="6" childAlignment=" MiddleCenter" height="60">
+                <Image id="diceArmy1" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/1d6.png" preserveAspect="1"/>
+                <Image id="diceArmy2" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/1d6.png" preserveAspect="1"/>
+            </HorizontalLayout>
+    </Panel>
+    <Panel id="iconWinnerArmy1"
+       rectAlignment="UpperCenter"
+       width="50"
+       height="30"
+       offsetXY="-170 -201"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image
+        outline="#000000"
+        outlineSize="0.6"
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
+    </Panel>
+    <Panel id="iconWinnerArmy2"
+       rectAlignment="UpperCenter"
+       width="50"
+       height="30"
+       offsetXY="170 -201"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image
+        outline="#000000"
+        outlineSize="0.6"
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
+    </Panel>
+    <Panel id="iconMoveArmy1"
+       rectAlignment="UpperCenter"
+       width="40"
+       height="20"
+       offsetXY="-35 -208"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image
+        outline="#000000"
+        outlineSize="0.6"
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr11.png" preserveAspect="1"/>
+    </Panel>
+    <Panel id="iconMoveArmy2"
+       rectAlignment="UpperCenter"
+       width="40"
+       height="20"
+       offsetXY="35 -208"
+       color="rgba(0,0,0,0.0)"
+       active="false">
+        <Image
+        outline="#000000"
+        outlineSize="0.6"
+        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr22.png" preserveAspect="1"/>
+    </Panel>
+    ]]
+end
+
+end)
+__bundle_register("rulesets.lionheart.deployment.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+require("rulesets.lionheart.data")
+require("rulesets.lionheart.deployment.state")
+require("rulesets.lionheart.deployment.config")
+require("rulesets.lionheart.deployment.spawner")
+require("rulesets.lionheart.deployment.army_loader")
+require("rulesets.lionheart.deployment.scanner")
+require("rulesets.lionheart.deployment.validator")
+end)
+__bundle_register("rulesets.lionheart.deployment.validator", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DEPLOYMENT / VALIDATOR
+-- Porting diretto di verificaDeploy
+-- ============================================================
+function deployment_validateDeploy()
+
+    printToAll("[DEPLOY] verificaDeploy", {r=0.9,g=0.8,b=0.1})
+
+    local zone = LIONHEART_DATA.deployment.zone or {}
+
+    local X_MAX = zone.xMax
+    local Z_NEAR = zone.zNear
+    local Z_FAR = zone.zFar
+
+    local errori = {
+        [1] = {fuori = {}, sbagliata = {}},
+        [2] = {fuori = {}, sbagliata = {}}
+    }
+
+    local basi_errate = {}
+
+    for _, obj in ipairs(getAllObjects()) do
+
+        local slot = deployment_getObjectArmySlot(obj)
+        if slot ~= nil then
+
+            local pos = obj.getPosition()
+
+            local z_abs = math.abs(pos.z)
+            local x_abs = math.abs(pos.x)
+
+            local z_ok = z_abs >= Z_NEAR and z_abs <= Z_FAR
+            local x_ok = x_abs <= X_MAX
+
+            local z_sign_ok = (slot == 1 and pos.z < 0) or (slot == 2 and pos.z > 0)
+
+            local nome = obj.getName()
+            if not z_ok or not x_ok then
+                table.insert(errori[slot].fuori, nome)
+                table.insert(basi_errate, obj)
+
+            elseif not z_sign_ok then
+                table.insert(errori[slot].sbagliata, nome)
+                table.insert(basi_errate, obj)
+            end
+        end
+    end
+
+    -- evidenzia errori
+    for _, obj in ipairs(basi_errate) do
+        if obj then
+            obj.highlightOn({r=1,g=0.1,b=0.1}, 15)
+        end
+    end
+
+    local totale = 0
+
+    for slot = 1, 2 do
+        local e = errori[slot]
+        local n = #e.fuori + #e.sbagliata
+        totale = totale + n
+
+        if n > 0 then
+            local armyName = (DEPLOYMENT.armies[slot] and DEPLOYMENT.armies[slot].displayName)
+                or ("Army"..slot)
+
+            printToAll("── Army "..slot.." ("..armyName..") ──", {r=1,g=0.8,b=0.2})
+
+            for _, nn in ipairs(e.fuori) do
+                printToAll("  Fuori zona: "..nn, {r=1,g=0.7,b=0.3})
+            end
+
+            for _, nn in ipairs(e.sbagliata) do
+                printToAll("  Zona sbagliata: "..nn, {r=1,g=0.4,b=0.4})
+            end
+        end
+    end
+
+    -- conta basi
+    local basi_trovate = 0
+    for _, obj in ipairs(getAllObjects()) do
+        if deployment_getObjectArmySlot(obj) ~= nil then
+            basi_trovate = basi_trovate + 1
+        end
+    end
+
+    if basi_trovate == 0 then
+        printToAll("[DEPLOY] Nessuna base trovata!", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    if totale == 0 then
+        printToAll("[DEPLOY] OK — tutte le basi nelle zone corrette!", {r=0.4,g=0.9,b=0.4})
+        return true
+    end
+
+    return false
+end
+-- ============================================================
+-- FUNZIONE: deployment_confirmDeploy
+-- ============================================================
+function deployment_confirmDeploy(player)
+    if not deployment_areBothArmiesLoaded() then
+        fadeOut("Devi caricare entrambi gli eserciti prima di confermare.")
+        return false
+    end
+
+    if not LIONHEART_DATA.deployment.positioningOnTable then
+        if not deployment_validateDeploy() then
+            fadeOut("Correggi il posizionamento e premi di nuovo Confirm Deploy.")
+            return false
+        end
+    end
+
+    return true
+end
+
+function deployment_debugDrawDeployArea()
+    local zone = LIONHEART_DATA.deployment.zone or {}
+
+    local X_MAX  = zone.xMax
+    local Z_NEAR = zone.zNear
+    local Z_FAR  = zone.zFar
+    local Y      = zone.y or 3
+
+    local colorArmy1 = {1, 0, 0}
+    local colorArmy2 = {0, 0.4, 1}
+
+    -- Army1: zona z negativa
+    deployment_debugDrawRect(
+        -X_MAX, -Z_FAR,
+         X_MAX, -Z_NEAR,
+         Y,
+         colorArmy1
+    )
+
+    -- Army2: zona z positiva
+    deployment_debugDrawRect(
+        -X_MAX, Z_NEAR,
+         X_MAX, Z_FAR,
+         Y,
+         colorArmy2
+    )
+
+    printToAll("[DEPLOY DEBUG] Aree deploy tracciate", {r=0.8,g=0.8,b=0.2})
+end
+
+function deployment_debugDrawRect(x1, z1, x2, z2, y, color)
+    local p1 = {x=x1, y=y, z=z1}
+    local p2 = {x=x2, y=y, z=z1}
+    local p3 = {x=x2, y=y, z=z2}
+    local p4 = {x=x1, y=y, z=z2}
+
+    Global.setVectorLines({
+        {
+            points = {p1, p2, p3, p4, p1},
+            color = color,
+            thickness = 0.15,
+            rotation = {0,0,0}
+        }
+    })
+end
+end)
+__bundle_register("rulesets.lionheart.deployment.scanner", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DEPLOYMENT / SCANNER
+-- Ricostruzione unità da oggetti TTS.
+-- ============================================================
+
+function deployment_scanTable()
+    
+    local groups = {
+        [1] = {},
+        [2] = {}
+    }
+
+    wounds_data = wounds_data or {}
+
+    for _, obj in ipairs(getAllObjects()) do
+        local slot = deployment_getObjectArmySlot(obj)
+
+        if slot ~= nil then
+            local baseInfo = deployment_readBaseInfo(obj, slot)
+
+            if baseInfo ~= nil then
+                local key = baseInfo.unitType .. "_" .. tostring(baseInfo.unitNumber)
+                local group = groups[slot][key]
+
+                if group == nil then
+                    local unitTypeData = LIONHEART_DATA.unitTypes and LIONHEART_DATA.unitTypes[baseInfo.unitType] or {}
+                    group = {
+                        tipo = baseInfo.unitType,
+                        unita_num = baseInfo.unitNumber,
+                        valore = baseInfo.modifier,
+                        arma = baseInfo.weapon,
+                        fpb = unitTypeData.fpb,
+                        basi_max = unitTypeData.basi,
+                        fazione = tostring(slot),
+                        basi = {}
+                    }
+                    groups[slot][key] = group
+                end
+
+                table.insert(group.basi, {
+                    nickname = obj.getName(),
+                    guid = obj.getGUID(),
+                    seq = baseInfo.baseSeq
+                })
+
+                wounds_data[obj.getName()] = baseInfo.wounds or 0
+                obj.highlightOff()
+            end
+        end
+    end
+
+    DEPLOYMENT.scanned[1] = deployment_groupsToList(groups[1], 1)
+    DEPLOYMENT.scanned[2] = deployment_groupsToList(groups[2], 2)
+
+    return DEPLOYMENT.scanned[1], DEPLOYMENT.scanned[2]
+end
+
+function deployment_getObjectArmySlot(obj)
+    if obj == nil then return nil end
+
+    if obj.hasTag and obj.hasTag("Army1") then return 1 end
+    if obj.hasTag and obj.hasTag("Army2") then return 2 end
+
+    local tags = obj.getTags and obj.getTags() or {}
+    for _, tag in ipairs(tags) do
+        if tag == "Army1" then return 1 end
+        if tag == "Army2" then return 2 end
+    end
+
+    return nil
+end
+
+function deployment_readBaseInfo(obj, slot)
+    local metadata = nil
+
+    if obj.getVar ~= nil then
+        local raw = obj.getVar("lh_metadata_json")
+
+        if raw ~= nil and raw ~= "" then
+            local ok, decoded = pcall(JSON.decode, raw)
+            if ok and type(decoded) == "table" then
+                metadata = decoded
+            end
+        end
+    end
+
+    if type(metadata) == "table" and metadata.kind == "UNIT_BASE" then
+        local unitNumber = deployment_extractUnitNumberFromNickname(metadata.nickname or obj.getName())
+        return {
+            unitType = metadata.unitType,
+            unitNumber = unitNumber,
+            baseSeq = metadata.baseSeq,
+            modifier = metadata.modifier,
+            weapon = metadata.weapon,
+            wounds = metadata.wounds or 0
+        }
+    end
+
+    return deployment_parseNickname(obj.getName())
+end
+
+function deployment_parseNickname(nickname)
+    if nickname == nil or nickname == "" then return nil end
+
+    local unitType, unitNumber, baseSeq, rest = string.match(nickname, "^([^_]+)_(%d+)%.(%d+)_?(.*)$")
+    if unitType == nil then return nil end
+
+    local modifier = nil
+    local weapon = nil
+
+    if rest ~= nil and rest ~= "" then
+        local p1, p2 = string.match(rest, "^([^_]+)_?(.*)$")
+        modifier = p1
+        if p2 ~= nil and p2 ~= "" then weapon = p2 end
+    end
+
+    return {
+        unitType = unitType,
+        unitNumber = tonumber(unitNumber),
+        baseSeq = tonumber(baseSeq),
+        modifier = modifier,
+        weapon = weapon,
+        wounds = wounds_data and wounds_data[nickname] or 0
+    }
+end
+
+function deployment_extractUnitNumberFromNickname(nickname)
+    local _, n = string.match(nickname or "", "^([^_]+)_(%d+)")
+    return tonumber(n) or 1
+end
+
+function deployment_groupsToList(groups, slot)
+    local list = {}
+
+    for _, unit in pairs(groups) do
+        local armyMeta = DEPLOYMENT.armies and DEPLOYMENT.armies[slot] or nil
+        local armyTag = armyMeta and armyMeta.tag or ("ARMY" .. tostring(slot))
+
+        unit.nome_display = armyTag .. "_" .. unit.tipo .. "_" .. tostring(unit.unita_num)
+
+        table.sort(unit.basi, function(a, b)
+            return (a.seq or 0) < (b.seq or 0)
+        end)
+
+        table.insert(list, unit)
+    end
+
+    table.sort(list, function(a, b)
+        if a.tipo ~= b.tipo then return a.tipo < b.tipo end
+        return (a.unita_num or 0) < (b.unita_num or 0)
+    end)
+
+    return list
+end
+
+end)
+__bundle_register("rulesets.lionheart.deployment.army_loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DEPLOYMENT / ARMY LOADER
+-- Callback ponte -> load army slot.
+-- ============================================================
+
+function deployment_loadArmySlot(slot, player)
+    
+    slot = tonumber(slot)
+
+    if not deployment_isValidSlot(slot) then
+        printToAll("[DEPLOY] slot esercito non valido: " .. tostring(slot), {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    if deployment_isArmyLoaded(slot) then
+        printToAll("[DEPLOY] Army" .. slot .. " già caricata", {r=1,g=0.8,b=0.2})
+        return false
+    end
+
+    if deployment_isBusy(slot) then
+        printToAll("[DEPLOY] Army" .. slot .. " già in caricamento", {r=1,g=0.8,b=0.2})
+        return false
+    end
+
+    local function doLoad()
+        local url = deployment_getArmyUrl(slot)
+        if url == nil or url == "" then
+            printToAll("[DEPLOY] URL Army" .. slot .. " non configurato", {r=1,g=0.3,b=0.3})
+            return false
+        end
+
+        deployment_setBusy(slot, true)
+
+        local playerName = player and player.steam_name or "---"
+        local playerColor = player and player.color or "---"
+
+        printToAll("[DEPLOY] Download Army" .. slot .. "...", {r=0.8,g=0.8,b=0.8})
+
+        WebRequest.get(url, function(req)
+            if req.is_error then
+                deployment_setBusy(slot, false)
+                deployment_addError("Errore Army" .. slot .. ": " .. tostring(req.error))
+                printToAll("[DEPLOY] Errore Army" .. slot .. ": " .. tostring(req.error), {r=1,g=0.3,b=0.3})
+                return
+            end
+
+            local ok, armyData = pcall(JSON.decode, req.text)
+            if not ok or type(armyData) ~= "table" then
+                deployment_setBusy(slot, false)
+                deployment_addError("Parsing Army" .. slot .. " fallito")
+                printToAll("[DEPLOY] Parsing Army" .. slot .. " fallito", {r=1,g=0.3,b=0.3})
+                return
+            end
+
+            if not deployment_validateArmyData(slot, armyData) then
+                deployment_setBusy(slot, false)
+                return
+            end
+
+            deployment_applyArmyPlayer(slot, playerName, playerColor)
+
+            local spawned = deployment_spawnArmy(slot, armyData)
+            deployment_markArmyLoaded(slot, spawned == true)
+            deployment_setBusy(slot, false)
+
+            if spawned then
+                printToAll("[DEPLOY] Army" .. slot .. " caricata", {r=0.4,g=0.9,b=0.4})
+            end
+
+            if updateCenterPanel then updateCenterPanel() end
+        end)
+
+        return true
+    end
+
+    if DEPLOYMENT.initialized then
+        return doLoad()
+    end
+
+    deployment_init(function(ok)
+        if ok then doLoad() end
+    end)
+
+    return true
+end
+
+function deployment_validateArmyData(slot, armyData)
+    if armyData.unita == nil or type(armyData.unita) ~= "table" then
+        deployment_addError("Army" .. tostring(slot) .. " senza array unita")
+        printToAll("[DEPLOY] Army" .. tostring(slot) .. " senza array unita", {r=1,g=0.3,b=0.3})
+        return false
+    end
+    return true
+end
+
+function deployment_applyArmyPlayer(slot, playerName, playerColor)
+    DEPLOYMENT.armies[slot] = DEPLOYMENT.armies[slot] or {}
+    DEPLOYMENT.armies[slot].player = playerName
+    DEPLOYMENT.armies[slot].color = playerColor
+
+    -- Compatibilità soft con vecchio ARMY, se esiste.
+    if ARMY ~= nil and ARMY[slot] ~= nil then
+        ARMY[slot].player = playerName
+        ARMY[slot].color = playerColor
+    end
+end
+
+end)
+__bundle_register("rulesets.lionheart.deployment.spawner", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DEPLOYMENT / SPAWNER
+-- Porting pulito di generaUnitaFromJson.
+-- ============================================================
+
+function deployment_spawnArmy(slot, armyData)
+    if armyData == nil then
+        printToAll("[DEPLOY] armyData nullo", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local armyTag = deployment_getArmyTag(slot)
+    local counters = {}
+
+    deployment_applyArmyMeta(slot, armyData)
+
+    for _, unitData in ipairs(armyData.unita or {}) do
+        deployment_spawnUnit(slot, armyTag, unitData, counters)
+    end
+
+    return true
+end
+
+function deployment_applyArmyMeta(slot, armyData)
+    DEPLOYMENT.armies[slot] = DEPLOYMENT.armies[slot] or {}
+    DEPLOYMENT.armies[slot].tag = armyData.tag
+    DEPLOYMENT.armies[slot].name = armyData.nome
+    DEPLOYMENT.armies[slot].displayName = armyData.nome_display
+
+    -- Compatibilità soft con vecchio ARMY, se presente.
+    if ARMY ~= nil and ARMY[slot] ~= nil then
+        ARMY[slot].tag = armyData.tag
+        ARMY[slot].nome = armyData.nome
+        ARMY[slot].nome_display = armyData.nome_display
+    end
+end
+
+function deployment_spawnUnit(slot, armyTag, unitData, counters)
+    if unitData == nil then return end
+
+    local unitType = unitData.tipo
+    if unitType == nil then
+        printToAll("[DEPLOY] unità senza tipo", {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    counters[unitType] = (counters[unitType] or 0) + 1
+    local unitNumber = counters[unitType]
+
+    for _, baseData in ipairs(unitData.basi or {}) do
+        deployment_spawnBase(slot, armyTag, unitData, baseData, unitNumber)
+    end
+end
+
+function deployment_spawnBase(slot, armyTag, unitData, baseData, unitNumber)
+    if baseData == nil then return end
+
+    local templateKey = deployment_getTemplateKey(unitData, baseData)
+    local templateData = deployment_getTemplate(templateKey)
+
+    if templateData == nil then
+        printToAll("[DEPLOY] template non trovato: " .. tostring(templateKey), {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    local nickname = deployment_buildBaseNickname(unitData, baseData, unitNumber)
+    local pos = deployment_buildBasePosition(slot, baseData)
+    local rot = deployment_buildBaseRotation(slot)
+
+    local spawnParams = deployment_buildSpawnParams(nickname, unitData, templateData, pos, rot)
+
+    spawnObjectJSON({
+        json = JSON.encode(spawnParams),
+        callback_function = function(obj)
+            deployment_onBaseSpawned(obj, slot, armyTag, nickname, unitData, baseData)
+        end
+    })
+end
+
+function deployment_getTemplateKey(unitData, baseData)
+    return baseData.model or unitData.model or baseData.template or unitData.template or unitData.tipo
+end
+
+function deployment_getTemplate(templateKey)
+    if templateKey == nil then return nil end
+
+    local key = tostring(templateKey)
+
+    if DEPLOYMENT.templateIndex and DEPLOYMENT.templateIndex[key] then
+        return DEPLOYMENT.templateIndex[key]
+    end
+
+    if DEPLOYMENT.templates and DEPLOYMENT.templates[key] then
+        return DEPLOYMENT.templates[key]
+    end
+
+    -- Fallback stile vecchio getByNameFromJson su lista.
+    if type(DEPLOYMENT.templates) == "table" then
+        for _, t in ipairs(DEPLOYMENT.templates) do
+            if type(t) == "table" then
+                local name = t.name or t.nome or t.id or t.key or t.tipo or t.model
+                if tostring(name) == key then
+                    return t
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+function deployment_buildBaseNickname(unitData, baseData, unitNumber)
+    local nickname = tostring(unitData.tipo) .. "_" .. tostring(unitNumber) .. "." .. tostring(baseData.seq)
+
+    if unitData.modificatore ~= nil then
+        nickname = nickname .. "_" .. tostring(unitData.modificatore)
+    end
+
+    if baseData.arma ~= nil then
+        nickname = nickname .. "_" .. tostring(baseData.arma)
+    end
+
+    return nickname
+end
+
+function deployment_buildBasePosition(slot, baseData)
+    local deploy = LIONHEART_DATA.deployment or {}
+    local offsetZ = deploy.offsetZ or 45.00
+    local y = deploy.spawnY or 1.70
+
+    local sourcePos = baseData.posizione or {x=0, z=0}
+    local zOffset = tonumber(slot) == 1 and -offsetZ or offsetZ
+
+    return {
+        x = sourcePos.x or 0,
+        y = y,
+        z = (sourcePos.z or 0) + zOffset
+    }
+end
+
+function deployment_buildBaseRotation(slot)
+    return {
+        x = 0,
+        y = tonumber(slot) == 1 and 0 or 180,
+        z = 0
+    }
+end
+
+function deployment_buildSpawnParams(nickname, unitData, templateData, pos, rot)
+    local mesh = templateData.customMesh or templateData.CustomMesh
+
+    if mesh ~= nil then
+        mesh.MaterialIndex = 3
+    end
+
+    return {
+        name = "Custom_Model",
+        nickname = nickname,
+        description = unitData.nome_display or "",
+        Transform = {
+            posX = pos.x,
+            posY = pos.y,
+            posZ = pos.z,
+            rotX = rot.x,
+            rotY = rot.y,
+            rotZ = rot.z,
+            scaleX = 1,
+            scaleY = 1,
+            scaleZ = 1
+        },
+        CustomMesh = mesh
+    }
+end
+
+function deployment_onBaseSpawned(obj, slot, armyTag, nickname, unitData, baseData)
+    
+    if obj == nil then
+        printToAll("[DEPLOY] spawn fallito: " .. tostring(nickname), {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    Wait.frames(function()
+        if obj == nil then return end
+
+        obj.setName(nickname)
+        obj.setDescription(unitData.nome_display or "")
+        obj.setLock(true)
+        obj.auto_raise = true
+
+        local finalArmyTag = armyTag or deployment_getArmyTag(slot)
+
+        obj.addTag(finalArmyTag)
+
+        deployment_applyBaseMetadata(obj, slot, finalArmyTag, nickname, unitData, baseData)
+        deployment_applyBaseVisibility(obj, slot)
+        deployment_applyBaseWounds(obj, nickname, unitData, baseData)
+
+        Wait.time(function()
+            if obj ~= nil then
+                obj.setLock(false)
+            end
+        end, 1.0)
+    end, 2)
+end
+
+function deployment_applyBaseTags(obj, slot, armyTag, unitData, baseData)
+    obj.addTag(armyTag)
+end
+
+function deployment_applyBaseMetadata(obj, slot, armyTag, nickname, unitData, baseData)
+    local metadata = {
+        ruleset = "LIONHEART",
+        kind = "UNIT_BASE",
+        armySlot = tonumber(slot),
+        armyTag = armyTag,
+        nickname = nickname,
+        unitType = unitData.tipo,
+        unitName = unitData.nome_display,
+        baseSeq = baseData.seq,
+        modifier = unitData.modificatore,
+        weapon = baseData.arma,
+        wounds = baseData.ferite or 0
+    }
+
+    obj.setVar("lh_metadata_json", JSON.encode(metadata))
+end
+
+function deployment_applyBaseVisibility(obj, slot)
+    if DEBUG then return end
+
+    local enemySlot = tonumber(slot) == 1 and 2 or 1
+    local enemyColor = nil
+
+    if DEPLOYMENT.armies and DEPLOYMENT.armies[enemySlot] then
+        enemyColor = DEPLOYMENT.armies[enemySlot].color
+    end
+
+    if (enemyColor == nil or enemyColor == "---") and ARMY ~= nil and ARMY[enemySlot] ~= nil then
+        enemyColor = ARMY[enemySlot].color
+    end
+
+    if enemyColor ~= nil and enemyColor ~= "---" then
+        obj.setInvisibleTo({enemyColor})
+    end
+end
+
+function deployment_applyBaseWounds(obj, nickname, unitData, baseData)
+    local wounds = baseData.ferite or 0
+
+    wounds_data = wounds_data or {}
+    wounds_data[nickname] = wounds
+
+    if wounds <= 0 then
+        if aggiornaTagInjured ~= nil then
+            aggiornaTagInjured(obj, 0)
+        end
+        return
+    end
+
+    local unitTypeData = LIONHEART_DATA.unitTypes and LIONHEART_DATA.unitTypes[unitData.tipo] or nil
+    local fpb = unitTypeData and unitTypeData.fpb or 3
+
+    if aggiornaTintaBase ~= nil then
+        aggiornaTintaBase(obj, wounds, fpb)
+    end
+
+    if aggiornaTagInjured ~= nil then
+        aggiornaTagInjured(obj, wounds)
+    end
+end
+
+function deployment_clearSpawnedModels()
+
+    printToAll("[DEPLOY] Rimozione modelli spawnati...", {r=0.8,g=0.8,b=0.2})
+
+    local removed = 0
+
+    for _, obj in ipairs(getAllObjects()) do
+
+        -- Metodo robusto: usa tag
+        if deployment_isSpawnedUnit(obj) then
+            obj.destruct()
+            removed = removed + 1
+        end
+    end
+
+    printToAll("[DEPLOY] Rimossi "..removed.." oggetti", {r=0.4,g=0.9,b=0.4})
+end
+
+function deployment_isSpawnedUnit(obj)
+    if obj == nil then return false end
+
+    if obj.hasTag then
+        if obj.hasTag("Army1") or obj.hasTag("Army2") then
+            return true
+        end
+    end
+
+    return false
+end
+
+function deployment_revealAllSpawned()
+
+    print("deployment_revealAllSpawned")
+
+    for _, obj in ipairs(getAllObjects()) do
+        if deployment_getObjectArmySlot(obj) ~= nil then
+            obj.setInvisibleTo({})
+        end
+    end
+end
+
+end)
+__bundle_register("rulesets.lionheart.deployment.config", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DEPLOYMENT / CONFIG
+-- Caricamento remoto main/config/regolamento/template.
+-- ============================================================
+
+function deployment_init(callback)
+    if DEPLOYMENT.initialized == true then
+        if callback then callback(true) end
+        return
+    end
+
+    if DEPLOYMENT.loading == true then
+        if callback then callback(false) end
+        return
+    end
+
+    DEPLOYMENT.loading = true
+
+    deployment_loadMainConfig(function(okMain)
+        deployment_loadRulesetData(function(okRules)
+            deployment_loadRuntimeConfig(function(okConfig)
+                deployment_loadTemplates(function(okTemplates)
+                    DEPLOYMENT.loading = false
+                    DEPLOYMENT.initialized = okMain and okRules and okTemplates
+
+                    if DEPLOYMENT.initialized then
+                        printToAll("[DEPLOY] configurazione deployment pronta", {r=0.4,g=0.9,b=0.4})
+                    else
+                        printToAll("[DEPLOY] configurazione deployment incompleta", {r=1,g=0.6,b=0})
+                    end
+
+                    if callback then callback(DEPLOYMENT.initialized) end
+                end)
+            end)
+        end)
+    end)
+end
+
+function deployment_loadMainConfig(callback)
+    local url = DEPLOYMENT.urls.main
+
+    if url == nil or url == "" then
+        deployment_addError("MAIN_URL non configurato")
+        if callback then callback(false) end
+        return
+    end
+
+    WebRequest.get(url, function(req)
+        if req.is_error then
+            deployment_addError("Errore main.json: " .. tostring(req.error))
+            printToAll("[DEPLOY] Errore main.json: " .. tostring(req.error), {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        local ok, data = pcall(JSON.decode, req.text)
+        if not ok or type(data) ~= "table" then
+            deployment_addError("Parsing main.json fallito")
+            printToAll("[DEPLOY] Parsing main.json fallito", {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        DEPLOYMENT.urls.regolamento      = data.REGOLAMENTO_URL or DEPLOYMENT.urls.regolamento
+        DEPLOYMENT.urls.config           = data.CONFIG_URL or DEPLOYMENT.urls.config
+        DEPLOYMENT.urls.army1            = data.ARMY1_URL or DEPLOYMENT.urls.army1
+        DEPLOYMENT.urls.army2            = data.ARMY2_URL or DEPLOYMENT.urls.army2
+        DEPLOYMENT.urls.elementiScenario = data.ELEMENTI_SCENARIO_URL or DEPLOYMENT.urls.elementiScenario
+        DEPLOYMENT.urls.grounds          = data.GROUNDS_URL or DEPLOYMENT.urls.grounds
+        DEPLOYMENT.urls.template         = data.TEMPLATE_URL or DEPLOYMENT.urls.template
+
+        if callback then callback(true) end
+    end)
+end
+
+function deployment_loadRulesetData(callback)
+    local url = DEPLOYMENT.urls.regolamento
+
+    if url == nil or url == "" then
+        deployment_addError("REGOLAMENTO_URL non configurato")
+        if callback then callback(false) end
+        return
+    end
+
+    WebRequest.get(url, function(req)
+        if req.is_error then
+            deployment_addError("Errore regolamento: " .. tostring(req.error))
+            printToAll("[DEPLOY] Errore regolamento: " .. tostring(req.error), {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        local ok, data = pcall(JSON.decode, req.text)
+        if not ok or type(data) ~= "table" then
+            deployment_addError("Parsing regolamento fallito")
+            printToAll("[DEPLOY] Parsing regolamento fallito", {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        LIONHEART_DATA.phases = data.fasi or {}
+        LIONHEART_DATA.unitTypes = data.dati_unita or {}
+        LIONHEART_DATA.shootingWeapons = data.armi_tiro or {}
+
+        if callback then callback(true) end
+    end)
+end
+
+function deployment_loadRuntimeConfig(callback)
+    local url = DEPLOYMENT.urls.config
+
+    if url == nil or url == "" then
+        if callback then callback(true) end
+        return
+    end
+
+    WebRequest.get(url, function(req)
+        if req.is_error then
+            deployment_addError("Errore config: " .. tostring(req.error))
+            printToAll("[DEPLOY] Errore config: " .. tostring(req.error), {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        local ok, data = pcall(JSON.decode, req.text)
+        if not ok or type(data) ~= "table" then
+            deployment_addError("Parsing config fallito")
+            printToAll("[DEPLOY] Parsing config fallito", {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        LIONHEART_DATA.config.visualizzazioneFerite = data.visualizzazione_ferite
+        LIONHEART_DATA.config.coloreUnitaBersaglioTiro = data.colore_bersaglio_tiro
+
+        LIONHEART_DATA.deployment.positioningOnTable = data.posizionamento_su_tavolo
+        LIONHEART_DATA.deployment.deployCm = data.deploy_cm
+
+        if data.spawn_y then LIONHEART_DATA.deployment.spawnY = data.spawn_y end
+        if data.offset_z then LIONHEART_DATA.deployment.offsetZ = data.offset_z end
+
+        if data.army1_url then DEPLOYMENT.urls.army1 = data.army1_url end
+        if data.army2_url then DEPLOYMENT.urls.army2 = data.army2_url end
+
+        if data.verde then
+            LIONHEART_DATA.table.green = {
+                y = data.verde.y,
+                yLines = data.verde.y_linee,
+                lx = data.verde.lx,
+                lz = data.verde.lz
+            }
+        end
+
+        if data.tavolo then
+            LIONHEART_DATA.table.board = {
+                y = data.tavolo.y,
+                lx = data.tavolo.lx,
+                lz = data.tavolo.lz
+            }
+        end
+
+        if callback then callback(true) end
+    end)
+end
+
+function deployment_loadTemplates(callback)
+    local url = DEPLOYMENT.urls.template
+
+    if url == nil or url == "" then
+        deployment_addError("TEMPLATE_URL non configurato")
+        if callback then callback(false) end
+        return
+    end
+
+    WebRequest.get(url, function(req)
+        if req.is_error then
+            deployment_addError("Errore template: " .. tostring(req.error))
+            printToAll("[DEPLOY] Errore template: " .. tostring(req.error), {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        local ok, data = pcall(JSON.decode, req.text)
+        if not ok or data == nil then
+            deployment_addError("Parsing template fallito")
+            printToAll("[DEPLOY] Parsing template fallito", {r=1,g=0.3,b=0.3})
+            if callback then callback(false) end
+            return
+        end
+
+        DEPLOYMENT.templates = data
+        deployment_buildTemplateIndex()
+
+        if callback then callback(true) end
+    end)
+end
+
+function deployment_buildTemplateIndex()
+    DEPLOYMENT.templateIndex = {}
+
+    local templates = DEPLOYMENT.templates
+    if type(templates) ~= "table" then return end
+
+    if type(templates.Army) == "table" then
+        for _, army in ipairs(templates.Army) do
+            if type(army) == "table" and type(army.modelli) == "table" then
+                for _, model in ipairs(army.modelli) do
+                    if type(model) == "table" then
+                        if model.nickname then
+                            DEPLOYMENT.templateIndex[tostring(model.nickname)] = model
+                        end
+
+                        if model.name then
+                            DEPLOYMENT.templateIndex[tostring(model.name)] = model
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- fallback mappa semplice
+    for k, v in pairs(templates) do
+        if type(k) == "string" and type(v) == "table" then
+            DEPLOYMENT.templateIndex[k] = v
+        end
+    end
+end
+end)
+__bundle_register("rulesets.lionheart.deployment.state", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DEPLOYMENT / STATE
+-- Stato runtime del deploy.
+-- ============================================================
+
+DEPLOYMENT = DEPLOYMENT or {
+    initialized = false,
+    loading = false,
+
+    urls = {
+        main = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/main.json",
+        regolamento = "",
+        config = "",
+        army1 = "",
+        army2 = "",
+        elementiScenario = "",
+        grounds = "",
+        template = ""
+    },
+
+    templates = {},
+    templateIndex = {},
+
+    armies = {
+        [1] = nil,
+        [2] = nil
+    },
+
+    armyLoaded = {
+        [1] = false,
+        [2] = false
+    },
+
+    armyBusy = {
+        [1] = false,
+        [2] = false
+    },
+
+    scanned = {
+        [1] = {},
+        [2] = {}
+    },
+
+    errors = {}
+}
+
+function deployment_reset()
+    DEPLOYMENT.initialized = false
+    DEPLOYMENT.loading = false
+    DEPLOYMENT.templates = {}
+    DEPLOYMENT.templateIndex = {}
+    DEPLOYMENT.armies = { [1] = nil, [2] = nil }
+    DEPLOYMENT.armyLoaded = { [1] = false, [2] = false }
+    DEPLOYMENT.armyBusy = { [1] = false, [2] = false }
+    DEPLOYMENT.scanned = { [1] = {}, [2] = {} }
+    DEPLOYMENT.errors = {}
+end
+
+function deployment_resetRuntimeOnly()
+    DEPLOYMENT.armies = { [1] = nil, [2] = nil }
+    DEPLOYMENT.armyLoaded = { [1] = false, [2] = false }
+    DEPLOYMENT.armyBusy = { [1] = false, [2] = false }
+    DEPLOYMENT.scanned = { [1] = {}, [2] = {} }
+    DEPLOYMENT.errors = {}
+end
+
+function deployment_isValidSlot(slot)
+    local s = tonumber(slot)
+    return s == 1 or s == 2
+end
+
+function deployment_isArmyLoaded(slot)
+    if not deployment_isValidSlot(slot) then return false end
+    return DEPLOYMENT.armyLoaded[tonumber(slot)] == true
+end
+
+function deployment_markArmyLoaded(slot, value)
+    if not deployment_isValidSlot(slot) then return end
+    DEPLOYMENT.armyLoaded[tonumber(slot)] = value ~= false
+end
+
+function deployment_isBusy(slot)
+    if not deployment_isValidSlot(slot) then return false end
+    return DEPLOYMENT.armyBusy[tonumber(slot)] == true
+end
+
+function deployment_setBusy(slot, value)
+    if not deployment_isValidSlot(slot) then return end
+    DEPLOYMENT.armyBusy[tonumber(slot)] = value == true
+end
+
+function deployment_areBothArmiesLoaded()
+    return DEPLOYMENT.armyLoaded[1] == true and DEPLOYMENT.armyLoaded[2] == true
+end
+
+function deployment_addError(message)
+    DEPLOYMENT.errors = DEPLOYMENT.errors or {}
+    table.insert(DEPLOYMENT.errors, tostring(message))
+end
+
+function deployment_getArmyTag(slot)
+    return "Army" .. tostring(slot)
+end
+
+function deployment_getArmyUrl(slot)
+    if tonumber(slot) == 1 then return DEPLOYMENT.urls.army1 end
+    if tonumber(slot) == 2 then return DEPLOYMENT.urls.army2 end
+    return nil
+end
+
+end)
+__bundle_register("rulesets.lionheart.data", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART DATA
+-- Dati regolamento condivisi dai moduli Lionheart.
+-- Non è stato runtime del deploy.
+-- ============================================================
+
+LIONHEART_DATA = LIONHEART_DATA or {
+    phases = {},
+    unitTypes = {},
+    shootingWeapons = {},
+    table = {},
+    deployment = {
+        offsetZ = 45.00,
+        spawnY = 1.70,
+        deployCm = nil,
+        positioningOnTable = nil
+    },
+    config = {
+        visualizzazioneFerite = nil,
+        coloreUnitaBersaglioTiro = nil
+    }
+}
+
+LIONHEART_DATA.deployment.zone = {
+    xMax = 48.50,
+    zNear = 24,
+    zFar = 32.88
+}
+
+function lionheart_data_reset()
+    LIONHEART_DATA.phases = {}
+    LIONHEART_DATA.unitTypes = {}
+    LIONHEART_DATA.shootingWeapons = {}
+    LIONHEART_DATA.table = {}
+    LIONHEART_DATA.deployment = {
+        offsetZ = 45.00,
+        spawnY = 1.70,
+        deployCm = nil,
+        positioningOnTable = nil
+    }
+    LIONHEART_DATA.config = {
+        visualizzazioneFerite = nil,
+        coloreUnitaBersaglioTiro = nil
+    }
+end
+
+end)
+__bundle_register("engine.renderers", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- RENDERER BUILT-IN
+-- Questi renderer sono disponibili per qualsiasi ruleset.
+-- I ruleset possono aggiungere renderer custom tramite:
+--   registerRenderer("nomeLayout", function(phase) ... end)
+-- ============================================================
+RENDERERS = {}
+
+-- ============================================================
+-- RENDERER: 1BtnClick
+-- Mostra solo BTN_SINGLE (panelBtnDown).
+-- ============================================================
+RENDERERS["1BtnClick"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "false")
+    UI.setAttribute("panelBtnDown", "active", "true")
+    UI.setAttribute("panelBtnDown", "offsetXY", "0 -192")
+    UI.setAttribute("BTN_SINGLE",   "active", "true")
+    UI.setAttribute("panelDices",   "active", "false")
+
+end
+-- ============================================================
+-- RENDERER: 2BtnClick
+-- Mostra BTN_ARMY1 e BTN_ARMY2 (panelBtnUp).
+-- ============================================================
+RENDERERS["2BtnClick"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelDices",   "active", "false")
+
+end
+-- ============================================================
+-- RENDERER: 2BtnClickAndRoll
+-- Mostra BTN_ARMY1, BTN_ARMY2 e il panel dadi.
+-- ============================================================
+RENDERERS["2BtnClickAndRoll"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelDices",   "active", "true")
+    UI.setAttribute("panelDices",   "offsetXY", "0 -244")
+
+end
+-- ============================================================
+-- RENDERER: 3BtnClick
+-- Mostra BTN_ARMY1 e BTN_ARMY2 finché entrambi non hanno
+-- confermato, poi switcha a BTN_SINGLE.
+--
+-- AGGIORNATO: legge ENGINE.state.Army1Done / Army2Done
+-- (slot normalizzati) invece di TURN.completed (stato ruleset).
+-- Questo rende il renderer indipendente dal ruleset attivo.
+--
+-- Compatibilità: i ruleset che popolano TURN.completed nei
+-- propri callbacks non devono cambiare nulla — engine_execute
+-- ora aggiorna ENGINE.state in parallelo, trasparentemente.
+-- ============================================================
+RENDERERS["3BtnClick"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelDices",   "active", "false")
+
+    -- AGGIORNATO: ENGINE.state invece di TURN.completed
+    local bothDone = ENGINE.state
+                  and ENGINE.state.Army1Done
+                  and ENGINE.state.Army2Done
+
+    if bothDone then
+        UI.setAttribute("panelBtnUp",   "active", "false")
+        UI.setAttribute("panelBtnDown", "active", "true")
+        UI.setAttribute("panelBtnDown", "offsetXY", "0 -192")
+        UI.setAttribute("BTN_SINGLE",   "active", "true")
+    end
+
+end
+
+end)
+__bundle_register("engine.conditions", function(require, _LOADED, __bundle_register, __bundle_modules)
+function checkConditions(conditions, action)
+
+    if DEBUG then print("checkConditions") end
+
+    if not conditions then
+        return true
+    end
+
+    if type(conditions) == "string" then
+        return checkCondition(conditions, action)
+    end
+
+    for i = 1, #conditions do
+        if not checkCondition(conditions[i], action) then
+            return false
+        end
+    end
+
+    return true
+end
+
+function checkCondition(cond, action)
+    local result = callCondition(cond, action)
+    if DEBUG then print("Condition: "..cond.." ".. tostring(result)) end
+    return result
+end
+end)
+__bundle_register("engine.input", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: engine_handleButton()
+-- ============================================================
+function engine_handleButton(slot, player, value, id)
+
+    if DEBUG then print("engine_handleButton") end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase or not phase.buttons then return end
+
+    local button = phase.buttons[slot]
+    if not button then return end
+
+    if phase.enforceOwnership then
+        local ok = callHandler("canUseButton", slot, player, value, id, button, phase)
+        if ok == false then
+            return
+        end
+    end
+
+    local allowed = true
+
+    if button.callback then
+        local result = callHandler(button.callback, player, value, id, button)
+
+        if result == false then
+            allowed = false
+        end
+    end
+
+    if not allowed then
+        return
+    end
+
+    if button.action then
+        engine_handleAction({
+            type = button.action,
+            player = player
+        })
+    end
+
+    --callHandler("updateCenterPanel")
+    --callHandler("aggiornaLinee")
+end
+-- ============================================================
+-- FUNZIONE: onBtnArmy1()
+-- ============================================================
+function onBtnArmy1(player, value, id)
+    engine_handleButton("BTN_ARMY1", player, value, id)
+end
+
+-- ============================================================
+-- FUNZIONE: onBtnArmy2()
+-- ============================================================
+function onBtnArmy2(player, value, id)
+    engine_handleButton("BTN_ARMY2", player, value, id)
+end
+
+-- ============================================================
+-- FUNZIONE: onBtnScelta()
+-- ============================================================
+function onBtnScelta(player, value, id)
+    engine_handleButton("BTN_SINGLE", player, value, id)
+end
+end)
+__bundle_register("engine.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
+local MAX_UNIT_CARDS = 25
+
+-- ============================================================
+-- FUNZIONE: getEngineUiXml()
+-- ============================================================
+function getEngineUiXml()
+
+    engine_buttonBarInit()
+
+    local buttons = ""
+    local positions = {
+        {x=-281, y=10.5}, {x=-167, y=10.5}, {x=-57, y=10.5},
+        {x=55,   y=10.5}, {x=166,  y=10.5}, {x=280, y=10.5},
+        {x=-281, y=-40.5},{x=-167, y=-40.5},{x=-57, y=-40.5},
+        {x=55,   y=-40.5},{x=166,  y=-40.5},{x=280, y=-40.5},
+    }
+    local widths = {110,100,102,102,100,110,110,100,102,102,100,110}
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+        local slot    = ENGINE_BUTTONBAR.slots[i]
+        local id      = engine_buttonBarSlotId(i)
+        local pos     = positions[i]
+        local w       = widths[i]
+        local label   = slot and slot.label    or ""
+        local color   = slot and slot.color    or "rgba(0.15,0.15,0.15,1)"
+        local tcol    = slot and slot.textColor or "White"
+        local active  = (slot and slot.visible) and "true" or "false"
+        local onclick = slot and slot.onClick  or "engine_buttonBarClick"
+        local icon    = slot and slot.icon     or ""
+        local iconW   = slot and slot.iconWidth  or 32
+        local iconH   = slot and slot.iconHeight or 32
+
+        buttons = buttons .. string.format(
+            '<Button id="%s" icon="%s" iconWidth="%d" iconHeight="%d" text="%s" fontSize="13" width="%d" height="41" ' ..
+            'position="%d %g 0" color="%s" textColor="%s" active="%s" ' ..
+            'onClick="%s" image="Sprites/Layout/Button" ' ..
+            'outline="#3A2A1AFF" outlineSize="1"/>\n',
+            id, icon, iconW, iconH, label, w, pos.x, pos.y, color, tcol, active, onclick
+        )
+    end
+
+    local cards = ""
+    for i = 1, MAX_UNIT_CARDS do
+        cards = cards .. string.format(
+            '<Panel id="unit_card_%d" width="280" height="60" ' ..
+            'color="rgba(0,0,0,0.7)" active="false" ' ..
+            'onClick="onUnitCardClick" onClickArg="%d">' ..
+            '<VerticalLayout padding="4 4 4 4" spacing="2">' ..
+                '<Text id="unit_card_tipo_%d" text="" fontSize="9" fontStyle="Bold" ' ..
+                'color="White" alignment="MiddleCenter"/>' ..
+                '<Text id="unit_card_fig_%d" text="" fontSize="9" ' ..
+                'color="rgba(200,200,200,1)" alignment="MiddleCenter"/>' ..
+                '<Panel id="unit_card_bar_%d" height="6" width="70" color="#1B5E20FF"/>' ..
+            '</VerticalLayout>' ..
+            '</Panel>\n',
+            i, i, i, i, i
+        )
+    end
+
+    local panels = [[
+        <Panel id="logo_panel" rectAlignment="UpperCenter" width="550" height="250" offsetXY="-700 0">
+            <Image image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/logo/warforge01.png" preserveAspect="1"/>
+        </Panel>
+        <Panel id="warning" rectAlignment="LowerCenter" width="600" height="30" color="rgba(0,0,0,0.0)" offsetXY="0 700">
+            <Text id="textWarning" text="" fontSize="26" fontStyle="Bold" color="rgba(212,175,55,0.9)" outline="#000000" outlineSize="2" alignment="MiddleCenter"/>
+        </Panel>
+        <Panel id="warforgeBar" position="0 -440 0">
+            <Image id="warforgeBarBg" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/bbar02.png" height="500" preserveAspect="true"/>
+        ]] .. buttons .. [[
+        </Panel>
+
+        <!-- Schede unità -->
+        
+        <Panel id="unit_cards_panel" rectAlignment="LowerCenter" width="700" height="70" offsetXY="-80 150"
+               active="false">  
+               <HorizontalLayout id="unit_cards_layout" spacing="4" padding="4 4 4 4">
+               ]] .. cards .. [[
+                </HorizontalLayout>
+        </Panel>
+      
+        <!-- Pannello modale dettaglio unità -->
+        <!-- 
+        <Panel id="unit_detail_overlay"
+               rectAlignment="MiddleCenter"
+               width="1920" height="1080"
+               color="rgba(0,0,0,0.6)"
+               active="false"
+               onClick="onUnitDetailClose">
+            <Panel id="unit_detail_panel"
+                   rectAlignment="MiddleCenter"
+                   width="400" height="300"
+                   color="rgba(15,15,15,0.97)">
+                <VerticalLayout padding="16 16 16 16" spacing="8">
+                    <Text id="unit_detail_title"  text="" fontSize="18" fontStyle="Bold" color="rgba(220,170,50,1)" alignment="MiddleCenter"/>
+                    <Text id="unit_detail_tipo"   text="" fontSize="13" color="White"/>
+                    <Text id="unit_detail_basi"   text="" fontSize="13" color="White"/>
+                    <Text id="unit_detail_figure" text="" fontSize="13" color="White"/>
+                    <Text id="unit_detail_arma"   text="" fontSize="13" color="White"/>
+                    <Text id="unit_detail_morale" text="" fontSize="13" color="White"/>
+                    <Text id="unit_detail_valore" text="" fontSize="13" color="White"/>
+                    <Button text="X CHIUDI" fontSize="12"
+                            color="rgba(0.6,0.1,0.1,1)" textColor="White"
+                            width="120" height="30"
+                            onClick="onUnitDetailClose"/>
+                </VerticalLayout>
+            </Panel>
+        </Panel>  
+        -->
+    ]]
+
+    return panels
+end
+
+-- ============================================================
+-- FUNZIONE: buildUI()
+-- ============================================================
+function buildUI()
+    local enginePanels = getEngineUiXml()
+    local rulesetXml   = callHandler("getRulesetUiXml") or ""
+    local header = [[<XmlLayout>]]
+    local bottom = "</XmlLayout>"
+    local xml = header .. rulesetXml .. enginePanels .. bottom      
+    UI.setXml(xml)
+end
+
+-- ============================================================
+-- FUNZIONE: aggiornaSchedeUnita()
+-- Popola le 10 card placeholder con i dati delle unità
+-- Solo UI.setAttribute — nessun setXmlTable
+-- ============================================================
+function aggiornaSchedeUnita()
+
+    -- Nascondi tutte le card
+    for i = 1, MAX_UNIT_CARDS do
+        UI.setAttribute("unit_card_" .. i, "active", "false")
+        UI.setAttribute("unit_card_" .. i, "text",   "")
+        UI.setAttribute("unit_card_" .. i, "onClickArg", tostring(i))
+    end
+
+    -- Raccoglie tutte le unità attive da entrambi gli eserciti
+    local unita_attive = {}
+    for slot = 1, 2 do
+        local esercito = DEPLOYMENT.scanned[slot]
+        if esercito then
+            for _, unita in ipairs(esercito) do
+                local basi_p = lionheart_basiPresentiUnita(unita)
+                if basi_p > 0 then
+                    table.insert(unita_attive, { unita=unita, slot=slot })
+                end
+            end
+        end
+    end
+
+    if #unita_attive == 0 then
+        UI.setAttribute("unit_cards_panel", "active", "false")
+        return
+    end
+
+    -- Popola le card disponibili
+    local n = math.min(#unita_attive, MAX_UNIT_CARDS)
+    for i = 1, n do
+        local entry   = unita_attive[i]
+        local unita   = entry.unita
+        print("[SCHEDE] card " .. i .. " -> " .. unita.tipo .. "_" .. unita.unita_num)
+        local slot    = entry.slot
+        local fpb     = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 1
+        local fig_att = lionheart_figureTotaliUnita(unita)
+        local fig_max = (unita.basi_max or #unita.basi) * fpb
+        local perc    = fig_max > 0 and (fig_att / fig_max) or 0
+
+        local col
+        if perc > 0.6     then col = slot == 1 and "#1B5E20FF" or "#0D47A1FF"
+        elseif perc > 0.3 then col = "#E65100FF"
+        else                    col = "#B71C1CFF" end
+
+        local nome = unita.tipo .. "_" .. unita.unita_num
+        local label = nome .. "\n" .. fig_att .. "/" .. fig_max
+
+        UI.setAttribute("unit_card_"      .. i, "active", "true")
+        UI.setAttribute("unit_card_tipo_" .. i, "text",   unita.tipo .. "_" .. unita.unita_num)
+        UI.setAttribute("unit_card_fig_"  .. i, "text",   fig_att .. "/" .. fig_max)
+        -- barra salute colorata
+        UI.setAttribute("unit_card_bar_"  .. i, "color",  col)
+
+    end
+
+    print("[SCHEDE] unit_cards_panel attivato, n=" .. tostring(n))
+    UI.setAttribute("unit_cards_panel", "active", "true")
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_basiPresentiUnita(unita)
+-- ============================================================
+function lionheart_basiPresentiUnita(unita)
+    local count = 0
+    for _, base in ipairs(unita.basi) do
+        local obj = getObjectFromGUID(base.guid)
+        if obj then count = count + 1 end
+    end
+    return count
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_figureTotaliUnita(unita)
+-- ============================================================
+function lionheart_figureTotaliUnita(unita)
+    local fpb    = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 0
+    local figure = 0
+    for _, base in ipairs(unita.basi) do
+        local wounds = wounds_data and wounds_data[base.nickname] or 0
+        figure = figure + math.max(0, fpb - wounds)
+    end
+    return figure
+end
+
+-- ============================================================
+-- FUNZIONE: onUnitCardClick
+-- ============================================================
+function onUnitCardClick(player, value, id)
+    local nome, slot_str = string.match(tostring(value), "^(.+)|(%d+)$")
+    local slot = tonumber(slot_str)
+    if not slot or not nome then return end
+
+    local esercito = DEPLOYMENT.scanned[slot]
+    if not esercito then return end
+
+    for _, unita in ipairs(esercito) do
+        local n = unita.tipo .. "_" .. unita.unita_num
+        if n == nome then
+            apriDettaglioUnita(unita, slot)
+            return
+        end
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: apriDettaglioUnita(unita, slot)
+-- ============================================================
+function apriDettaglioUnita(unita, slot)
+    local fpb     = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 1
+    local fig_att = lionheart_figureTotaliUnita(unita)
+    local fig_max = (unita.basi_max or #unita.basi) * fpb
+    local basi_p  = lionheart_basiPresentiUnita(unita)
+    local perc    = fig_max > 0 and (fig_att / fig_max) or 0
+
+    local salute
+    if perc > 0.6     then salute = "BUONA"
+    elseif perc > 0.3 then salute = "CRITICA"
+    else                    salute = "GRAVE" end
+
+    local val_str = (unita.valore == "S" or unita.valore == 1)  and "Superiore" or
+                    (unita.valore == "I" or unita.valore == -1) and "Inferiore"  or "Normale"
+
+    UI.setAttribute("unit_detail_title",  "text", unita.nome_display or (unita.tipo.."_"..unita.unita_num))
+    UI.setAttribute("unit_detail_tipo",   "text", "Tipo: "    .. unita.tipo)
+    UI.setAttribute("unit_detail_basi",   "text", "Basi: "    .. basi_p .. "/" .. (unita.basi_max or #unita.basi))
+    UI.setAttribute("unit_detail_figure", "text", "Figure: "  .. fig_att .. "/" .. fig_max)
+    UI.setAttribute("unit_detail_arma",   "text", "Arma: "    .. (unita.arma or "---"))
+    UI.setAttribute("unit_detail_morale", "text", "Salute: "  .. salute)
+    UI.setAttribute("unit_detail_valore", "text", "Qualita: " .. val_str)
+    UI.setAttribute("unit_detail_overlay","active", "true")
+end
+
+-- ============================================================
+-- FUNZIONE: onUnitDetailClose
+-- ============================================================
+function onUnitDetailClose(player, value, id)
+    UI.setAttribute("unit_detail_overlay", "active", "false")
+end
+
+end)
+__bundle_register("engine.buttonbar.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+require("engine.buttonbar.ui")
+require("engine.buttonbar.state")
+require("engine.buttonbar.config")
+
+end)
+__bundle_register("engine.buttonbar.config", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- WARFORGE ENGINE / BUTTONBAR CONFIG
+-- L'engine riceve SOLO testo JSON gia' scaricato.
+-- NON conosce URL, GitHub o ruleset.
+-- ============================================================
+
+function engine_buttonBarLoadJson(jsonText)
+
+    engine_buttonBarInit()
+
+    if jsonText == nil or jsonText == "" then
+        printToAll("[BUTTONBAR] JSON vuoto", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local ok, data = pcall(JSON.decode, jsonText)
+
+    if not ok or type(data) ~= "table" then
+        printToAll("[BUTTONBAR] JSON non valido", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local slots = data.buttonbar and data.buttonbar.slots or data.slots or {}
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+        
+        local cfg = slots[tostring(i)] or slots[i]
+
+        if cfg ~= nil then
+            ENGINE_BUTTONBAR.slots[i] = {
+                label = cfg.label or "",
+                class = cfg.class,
+                callBack = cfg.callBack,
+                onClick = cfg.onClick,
+                tooltip = cfg.tooltip or "",
+                visible = cfg.visible ~= false,
+                enabled = cfg.enabled ~= false,
+                color = cfg.color or "White",
+                colors = cfg.colors,
+                textColor = cfg.textColor or "Black",
+                icon = cfg.icon,
+                iconWidth = cfg.iconWidth,
+                iconHeight = cfg.iconHeight
+            }
+        else
+            ENGINE_BUTTONBAR.slots[i] = engine_buttonBarEmptySlot()
+        end
+    end
+
+    engine_buttonBarRender()
+    return true
+end
+
+end)
+__bundle_register("engine.buttonbar.state", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- WARFORGE ENGINE / BUTTONBAR STATE
+-- 12 slot neutri. Nessun riferimento a ruleset o URL remoti.
+-- ============================================================
+
+ENGINE_BUTTONBAR = ENGINE_BUTTONBAR or {
+    initialized = false,
+    slots = {},
+    slotCount = 12,
+    xmlPrefix = "WF_BAR_"
+}
+
+function engine_buttonBarEmptySlot()
+    return {
+        label = "",
+        onClick = nil,
+        tooltip = "",
+        visible = false,
+        enabled = false,
+        color = "rgba(0.15,0.15,0.15,1)",
+        textColor = "White"
+    }
+end
+
+function engine_buttonBarInit()
+
+    if DEBUG then print("engine_buttonBarInit") end
+
+    if ENGINE_BUTTONBAR.initialized then
+        return true
+    end
+
+    ENGINE_BUTTONBAR.slots = {}
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+        ENGINE_BUTTONBAR.slots[i] = engine_buttonBarEmptySlot()
+    end
+
+    ENGINE_BUTTONBAR.initialized = true
+    return true
+end
+
+function engine_buttonBarSlotId(slot)
+    return ENGINE_BUTTONBAR.xmlPrefix .. string.format("%02d", tonumber(slot))
+end
+
+function engine_buttonBarParseSlotFromId(id)
+    if id == nil then return nil end
+
+    local n = string.match(id, "(%d+)$")
+    if n == nil then return nil end
+
+    local slot = tonumber(n)
+    if slot == nil then return nil end
+    if slot < 1 or slot > ENGINE_BUTTONBAR.slotCount then return nil end
+
+    return slot
+end
+
+end)
+__bundle_register("engine.buttonbar.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- WARFORGE ENGINE / BUTTONBAR UI
+-- Aggiorna 12 Button XML esistenti: WF_BAR_01 ... WF_BAR_12
+-- ============================================================
+
+function engine_buttonBarRender()
+ 
+    if UI == nil then
+        return false
+    end
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+
+        local slot = ENGINE_BUTTONBAR.slots[i]
+        local id = engine_buttonBarSlotId(i)
+
+        UI.setAttribute(id, "text", slot.label or "")
+        UI.setAttribute(id, "tooltip", slot.tooltip or "")
+        UI.setAttribute(id, "active", slot.visible and "true" or "false")
+        UI.setAttribute(id, "interactable", slot.enabled and "true" or "false")
+        UI.setAttribute(id, "color", slot.color)
+        UI.setAttribute(id, "colors", slot.colors)
+        UI.setAttribute(id, "textColor", slot.textColor)
+        UI.setAttribute(id, "onClick", slot.onClick)
+        UI.setAttribute(id, "icon", slot.icon)
+        UI.setAttribute(id, "iconWidth", slot.iconWidth)
+        UI.setAttribute(id, "iconHeigth", slot.iconHeigth)
+    end
+
+    return true
+end
+
+function engine_buttonBarDebugPrint()
+
+    engine_buttonBarInit()
+
+    printToAll("[BUTTONBAR] configurazione corrente:", {r=0.6,g=0.8,b=1})
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+
+        local id = engine_buttonBarSlotId(i)
+        local slot = ENGINE_BUTTONBAR.slots[i]
+
+        if slot ~= nil then
+            print(slot.icon)
+            print(slot.iconWidth)
+            print(slot.iconHeigth)
+        end
+
+        -- printToAll(
+        --     tostring(id) ..
+        --     " label=" .. tostring(slot.label) ..
+        --     " onClick=" .. tostring(slot.onClick) ..
+        --     " url=" .. image.url,
+        --     {r=0.8,g=0.8,b=0.8}
+        -- )
+
+
+    end
+end
+
+end)
+__bundle_register("engine.core", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: engine_init()
+-- ============================================================
+function engine_init()
+
+    if DEBUG then print("engine_init") end
+
+    if not callHandler then
+        printToAll("ERRORE: callHandler non caricato", "Red")
+        return
+    end
+
+    if not ENGINE or not ENGINE.phases then
+        printToAll("ERRORE: ENGINE.phases non inizializzato", "Red")
+        return
+    end
+
+    if not ENGINE.phase then
+        printToAll("ERRORE: ENGINE.phase non inizializzata", "Red")
+        return
+    end
+
+    if not ENGINE.phases[ENGINE.phase] then
+        printToAll("ERRORE: fase non trovata: " .. tostring(ENGINE.phase), "Red")
+        return
+    end
+
+    callHandler("engine_validatePhases")
+    callHandler("initUI")
+
+    -- Aspetta che UI.setXml sia processato prima di renderizzare i pulsanti
+    Wait.frames(function()
+        engine_enterPhase(ENGINE.phase, nil)
+    end, 30)
+end
+-- ============================================================
+-- FUNZIONE: engine_validatePhases()
+-- ============================================================
+function engine_validatePhases()
+
+    if not ENGINE.phases then
+        error("ENGINE.phases NIL")
+    end
+
+    for phaseName, phaseData in pairs(ENGINE.phases) do
+
+        if not phaseData.allowedActions then
+            error("Manca allowedActions in fase: "..phaseName)
+        end
+
+        if not phaseData.transitions then
+            error("Manca transitions in fase: "..phaseName)
+        end
+
+        if not phaseData.render then
+            error("Manca render in fase: "..phaseName)
+        end
+
+        if phaseData.buttons then
+            for slot, btn in pairs(phaseData.buttons) do
+                if type(btn) ~= "table" then
+                    error("Button malformato in fase: "..phaseName.." slot: "..slot)
+                end
+                if btn.action and type(btn.action) ~= "string" then
+                    error("Button action non valida in fase: "..phaseName.." slot: "..slot)
+                end
+                if btn.label and type(btn.label) ~= "string" then
+                    error("Button label non valida in fase: "..phaseName.." slot: "..slot)
+                end
+                if btn.textColor and type(btn.textColor) ~= "string" then
+                    error("Button textColor non valida in fase: "..phaseName.." slot: "..slot)
+                end
+                if btn.callback and type(btn.callback) ~= "string" then
+                    error("Button callback non valida in fase: "..phaseName.." slot: "..slot)
+                end
+            end
+        end
+
+        for i = 1, #phaseData.transitions do
+            local t = phaseData.transitions[i]
+            if not t.to then
+                error("Transizione senza 'to' in fase: "..phaseName)
+            end
+            if not ENGINE.phases[t.to] then
+                error("Transizione verso fase inesistente: "..t.to.." (da "..phaseName..")")
+            end
+            if not t.conditions then
+                error("Transizione senza conditions in fase: "..phaseName)
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: engine_handleAction()
+-- ============================================================
+function engine_handleAction(action)
+
+    if DEBUG then print("engine_handleAction") end
+
+    if not engine_isAllowed(action.type) then
+        return
+    end
+
+    engine_execute(action)
+    engine_transition(action)
+    callHandler("updateCenterPanel")
+end
+-- ============================================================
+-- FUNZIONE: engine_isAllowed()
+-- ============================================================
+function engine_isAllowed(actionType)
+
+    if DEBUG then print("engine_isAllowed") end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase then return false end
+
+    for i = 1, #phase.allowedActions do
+        if actionType == phase.allowedActions[i] then
+            return true
+        end
+    end
+
+    return false
+end
+-- ============================================================
+-- FUNZIONE: engine_execute()
+-- RIPRISTINATA: aggiorna ENGINE.state con slot normalizzati.
+--
+-- ENGINE.state è lo stato che l'engine conosce — indipendente
+-- dal ruleset. I renderer built-in leggono da qui.
+-- I ruleset leggono il proprio stato (es. TURN.completed)
+-- che aggiornano nei propri callbacks. I due sistemi coesistono
+-- senza collisione.
+--
+-- Slot normalizzati ENGINE.state:
+--   Army1Done   (bool) — qualcuno ha cliccato BTN_ARMY1
+--   Army2Done   (bool) — qualcuno ha cliccato BTN_ARMY2
+--   ConfirmDone (bool) — qualcuno ha cliccato BTN_SINGLE
+--
+-- Nota: nomi volutamente diversi da Army1Click/Army2Click
+-- del legacy Global.-1.lua per evitare ambiguità.
+-- ============================================================
+function engine_execute(action)
+
+    if DEBUG then print("engine_execute: " .. tostring(action and action.type)) end
+
+    if not action or not action.type then return end
+
+    ENGINE.state = ENGINE.state or {}
+
+    if action.type == ACTION.ARMY1_CLICK then
+        ENGINE.state.Army1Done = true
+
+    elseif action.type == ACTION.ARMY2_CLICK then
+        ENGINE.state.Army2Done = true
+
+    elseif action.type == ACTION.CONFIRM then
+        ENGINE.state.ConfirmDone = true
+    end
+end
+-- ============================================================
+-- FUNZIONE: engine_transition()
+-- Fix precedente mantenuto: guardia anti-ciclo con visited.
+-- ============================================================
+function engine_transition(action)
+
+    if DEBUG then print("engine_transition") end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase then return end
+
+    -- Prima passa: transizione guidata dall'action
+    local transitioned = false
+
+    if action then
+        for i = 1, #phase.transitions do
+            local t = phase.transitions[i]
+
+            if checkConditions(t.conditions or {}, action) then
+                local oldPhaseName = ENGINE.phase
+                engine_exitPhase(oldPhaseName)
+                ENGINE.phase = t.to
+                engine_resetState()
+                engine_enterPhase(ENGINE.phase, oldPhaseName)
+                transitioned = true
+                break
+            end
+        end
+    end
+
+    if transitioned then return end
+
+    -- Seconda passa: auto-advance senza input
+    -- Guardia anti-ciclo tramite tabella visited
+    local visited = {}
+    local changed = true
+
+    while changed do
+        changed = false
+
+        if visited[ENGINE.phase] then
+            if DEBUG then
+                print("engine_transition: ciclo rilevato su fase " .. ENGINE.phase .. " — interrotto")
+            end
+            break
+        end
+        visited[ENGINE.phase] = true
+
+        local currentPhase = ENGINE.phases[ENGINE.phase]
+        if not currentPhase then return end
+
+        for i = 1, #currentPhase.transitions do
+            local t = currentPhase.transitions[i]
+
+            if checkConditions(t.conditions or {}, nil) then
+                local oldPhaseName = ENGINE.phase
+                engine_exitPhase(oldPhaseName)
+                ENGINE.phase = t.to
+                engine_resetState()
+                engine_enterPhase(ENGINE.phase, oldPhaseName)
+                changed = true
+                break
+            end
+        end
+    end
+end
+-- ============================================================
+-- FUNZIONE: engine_resetState()
+-- Azzera sia i slot normalizzati engine che quelli legacy
+-- ============================================================
+function engine_resetState()
+
+    if DEBUG then print("engine_resetState") end
+
+    ENGINE.state = {
+        -- Slot normalizzati (letti dai renderer built-in)
+        Army1Done   = false,
+        Army2Done   = false,
+        ConfirmDone = false,
+        -- Slot legacy mantenuti per compatibilità
+        -- con condizioni che leggono Army1Click/Army2Click
+        Army1Click   = false,
+        Army2Click   = false,
+        ConfirmClick = false,
+    }
+end
+-- ============================================================
+-- FUNZIONE: engine_enterPhase()
+-- ============================================================
+function engine_enterPhase(newPhaseName, oldPhaseName)
+
+    if DEBUG then print("engine_enterPhase: " .. tostring(newPhaseName)) end
+
+    local phase = ENGINE.phases[newPhaseName]
+    if not phase then return end
+
+    if phase.before then
+        callHandler(phase.before, newPhaseName, phase)
+    end
+end
+-- ============================================================
+-- FUNZIONE: engine_exitPhase()
+-- ============================================================
+function engine_exitPhase(oldPhaseName)
+
+    if DEBUG then print("engine_exitPhase: " .. tostring(oldPhaseName)) end
+
+    local phase = ENGINE.phases[oldPhaseName]
+    if not phase then return end
+
+    if phase.after then
+        callHandler(phase.after, oldPhaseName, phase)
+    end
+end
+-- ============================================================
+-- FUNZIONE: engine_buttonBarClick()
+-- ============================================================
+function engine_buttonBarClick(player, value, id)
+
+    engine_buttonBarInit()
+
+    local slotNumber = engine_buttonBarParseSlotFromId(id)
+
+    if slotNumber == nil then
+        printToAll("[BUTTONBAR] id bottone non valido: " .. tostring(id), {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local slot = ENGINE_BUTTONBAR.slots[slotNumber]
+
+    if slot == nil then return false end
+    if slot.enabled ~= true then return false end
+
+    if slot.callBack == nil or slot.callBack == "" then
+        printToAll("[BUTTONBAR] slot senza callBack: " .. tostring(slotNumber), {r=1,g=0.6,b=0})
+        return false
+    end
+
+     return callHandler(slot.callBack, player, value, id, slot)
+end
+end)
+__bundle_register("engine.boot", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- WARFORGE BOOT
+-- ============================================================
+function warforge_boot(rulesetName, save_state)
+    if clear then clear() end
+    if VERSION then printToAll(VERSION, "Yellow") end
+    if DEBUG then print("warforge_boot") end
+
+    engine_reset()
+    math.randomseed(os.time())
+    callHandler("rulesetInit", save_state)
+
+    SAVE_STATE = save_state
+end
+-- ============================================================
+-- autoRegisterFromPhases
+-- ============================================================
+function autoRegisterFromPhases()
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+
+    for phaseName, phase in pairs(ENGINE.phases or {}) do
+
+        if phase.before and _G[phase.before] then
+            ENGINE.handlers[phase.before] = _G[phase.before]
+        end
+
+        if phase.after and _G[phase.after] then
+            ENGINE.handlers[phase.after] = _G[phase.after]
+        end
+
+        for slot, button in pairs(phase.buttons or {}) do
+            if button.callback and _G[button.callback] then
+                ENGINE.handlers[button.callback] = _G[button.callback]
+            end
+        end
+    end
+end
+-- ============================================================
+-- engine_reset
+-- ============================================================
+function engine_reset()
+
+    ENGINE = ENGINE or {}
+
+    ENGINE.phase = nil
+    ENGINE.phases = nil
+    ENGINE.turn = nil
+
+    -- NON azzerare handlers/conditions qui
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    TURN = nil
+    DICE_CONTEST = nil
+    DEFAULT = nil
+end
+end)
+__bundle_register("engine.dispatcher", function(require, _LOADED, __bundle_register, __bundle_modules)
+ENGINE = ENGINE or {}
+ENGINE.handlers   = ENGINE.handlers   or {}
+ENGINE.conditions = ENGINE.conditions or {}
+
+-- ============================================================
+-- FUNZIONE: registerHandler()
+-- ============================================================
+function registerHandler(name, func)
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+    ENGINE.handlers[name] = func
+end
+-- ============================================================
+-- FUNZIONE: callHandler()
+-- ============================================================
+function callHandler(name, ...)
+
+    ENGINE = ENGINE or {}
+    ENGINE.handlers = ENGINE.handlers or {}
+
+    if ENGINE.handlers[name] then
+        if DEBUG and name ~= "onSave" then print(name) end
+        return ENGINE.handlers[name](...)
+    end
+
+    print("Handler non registrato: " .. tostring(name))
+    return true
+end
+-- ============================================================
+-- FUNZIONE: registerCondition()
+-- ============================================================
+function registerCondition(name, fn)
+    ENGINE = ENGINE or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+    ENGINE.conditions[name] = fn
+end
+-- ============================================================
+-- FUNZIONE: callCondition()
+-- ============================================================
+function callCondition(name, ...)
+    ENGINE = ENGINE or {}
+    ENGINE.conditions = ENGINE.conditions or {}
+
+    if ENGINE.conditions[name] then
+        return ENGINE.conditions[name](...)
+    end
+
+    print("Condition non registrata: " .. tostring(name))
+    return false
+end
+-- ============================================================
+-- FUNZIONE: registerRenderer()
+-- NUOVO: permette ai ruleset di registrare layout UI custom
+--        senza modificare engine/renderers.ttslua.
+--        Uso nel loader del ruleset:
+--
+--          registerRenderer("mioLayout", function(phase)
+--              UI.setAttribute("panelBtnUp", "active", "true")
+--              ...
+--          end)
+--
+--        Poi nelle fasi JSON:
+--          "render": "mioLayout"
+--
+--        Se il nome collide con un renderer built-in,
+--        il renderer del ruleset ha la precedenza.
+-- ============================================================
+function registerRenderer(name, fn)
+    RENDERERS = RENDERERS or {}
+    RENDERERS[name] = fn
+end
+
+end)
+__bundle_register("common.utils", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: engine_handleChat()
+-- ============================================================
+    function engine_handleChat(message, player)
+
+        if message == "!restart" then restart() return false end
+        if message == "!clear" then clear() return false end
+
+        return false
+    end
+-- ============================================================
+-- FUNZIONE: error()
+-- ============================================================
+    function error(warning) 
+        return fadeOut(warning)
+    end
+-- ============================================================
+-- FUNZIONE: fadeOut()
+-- ============================================================
+    function fadeOut(warning)
+
+        local alpha = 1
+        
+        UI.setAttribute("textWarning", "active", "true")
+        UI.setAttribute("textWarning", "text", warning)
+
+        local function step()
+            alpha = alpha - 0.05
+            if alpha <= 0 then
+                UI.setAttribute("textWarning", "active", "false")
+                return
+            end
+        
+            UI.setAttribute("textWarning", "color", "rgba(255,215,0," .. alpha .. ")")
+            Wait.time(step, 0.2)
+        end
+
+        step()
+    end
+-- ============================================================
+-- FUNZIONE: clear()
+-- ============================================================
+   function clear() for i=0,250 do print("") end end
+-- ============================================================
+-- FUNZIONE: getVersion()
+-- ============================================================
+    function getVersion()
+        return VERSION
+    end   
+-- ============================================================
+-- FUNZIONE: dice_roll()
+-- ============================================================
+    function dice_roll()
+        return math.random(1,6)
+    end
+
+end)
+__bundle_register("common.constants", function(require, _LOADED, __bundle_register, __bundle_modules)
+ACTION = {
+    ARMY1_CLICK = "ARMY1_CLICK",
+    ARMY2_CLICK = "ARMY2_CLICK",
+    CONFIRM     = "CONFIRM"
+}
+
+COND = {
+    BOTH_PLAYERS_SELECTED = "both_players_selected",
+    CONFIRM_READY         = "confirm_ready",
+    CONFIRM_IMMEDIATE     = "confirm_immediate",
+    AUTO_ADVANCE          = "auto_advance",
+    REQUIREMENT_MET       = "requirement_met",
+    WINNER                = "winner",
+    ASSIGNMENT            = "assignment"
+}
+
+COLOR = {
+    ARMY1 = "Red",
+    ARMY2 = "Green",
+    NOARMY = "Grey",
+    GM = "BLACK"
+}
+
+BUTTONS = {
+    BTN_ARMY1 = "BTN_ARMY1",
+    BTN_ARMY2 = "BTN_ARMY2",
+    BTN_SINGLE = "BTN_SINGLE"
+}
+end)
+return __bundle_require("Global.-1.lua")
