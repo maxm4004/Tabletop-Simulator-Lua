@@ -32,10 +32,7 @@
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_lineLeft",
-        "icon": nil, 
-        "iconWidth": 45, 
-        "iconHeight": 45     
+        "callBack": "lionheart_lineLeft"    
       },
       "4": {
         "label": "Line Right", 
@@ -44,10 +41,7 @@
         "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_lineRight",        
-        "icon": "", 
-        "iconWidth": 32, 
-        "iconHeight": 32      
+        "callBack": "lionheart_lineRight"           
       },
       "5": {
         "label": "Check Fire",
