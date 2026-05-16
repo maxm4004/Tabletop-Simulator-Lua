@@ -10,8 +10,8 @@
         "onClick": "engine_buttonBarClick",        
         "callBack": "lionheart_showRange",
         "icon": "icon_slot_1", 
-        "iconWidth": 48, 
-        "iconHeight": 48
+        "iconWidth": 64, 
+        "iconHeight": 64
       },
       "2": {
         "label": "Clear",
@@ -21,9 +21,9 @@
         "textColor": "#2B1E10FF",
         "onClick": "engine_buttonBarClick",        
         "callBack": "clear",  
-        "icon": "icon_slot_1", 
-        "iconWidth": 32, 
-        "iconHeight": 32
+        "icon": "icon_slot_2", 
+        "iconWidth": 48, 
+        "iconHeight": 48
       },
       "3": {
         "label": "Line Left",      
