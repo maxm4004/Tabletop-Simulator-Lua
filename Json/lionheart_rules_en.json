@@ -1,0 +1,223 @@
+{
+    "version": "1.0",
+    "units": {
+        "AI": {
+            "name": "Armoured Infantry",
+            "abbreviation": "AI",
+            "figures_per_base": 4,
+            "bases": 3,
+            "total_figures": 12,
+            "morale_threshold": 6,
+            "movement": {
+                "open": 16,
+                "wood": 8,
+                "rough": 8,
+                "ford": 8,
+                "pivot": 5
+            },
+            "shooting_div": 3,
+            "movement_notes": "Can change facing 90° but cannot move",
+            "special_rules": []
+        },
+        "UI": {
+            "name": "Unarmoured Infantry",
+            "abbreviation": "UI",
+            "figures_per_base": 3,
+            "bases": 4,
+            "total_figures": 12,
+            "morale_threshold": 6,
+            "movement": {
+                "open": 20,
+                "wood": 10,
+                "rough": 10,
+                "ford": 10,
+                "pivot": 5
+            },
+            "shooting_div": 3,
+            "movement_notes": "Can change facing 90° but cannot move",
+            "special_rules": []
+        },
+        "SK": {
+            "name": "Skirmish",
+            "abbreviation": "SK",
+            "figures_per_base": 2,
+            "bases": 4,
+            "total_figures": 8,
+            "morale_threshold": 4,
+            "movement": {
+                "open": 20,
+                "wood": 20,
+                "rough": 16,
+                "ford": 10,
+                "pivot": 10
+            },
+            "shooting_div": 4,
+            "movement_notes": "Can change facing 90°/180° and then move full distance. Can evade charges by turning 180°. Can pass through friendly units",
+            "special_rules": ["Free formation change", "Charge evasion", "Pass through friendlies", "Does not count in army losses"]
+        },
+        "AC": {
+            "name": "Armoured Cavalry",
+            "abbreviation": "AC",
+            "figures_per_base": 3,
+            "bases": 2,
+            "total_figures": 6,
+            "morale_threshold": 3,
+            "movement": {
+                "open": 30,
+                "wood": 10,
+                "rough": 10,
+                "ford": 15,
+                "pivot": 6
+            },
+            "shooting_div": null,
+            "movement_notes": "Can change facing 90° and then move half distance, but cannot charge",
+            "special_rules": ["+1 vs all in first melee turn", "Loses first turn bonus in rough/wood", "3D6 per 2 figures in first melee turn"]
+        },
+        "UC": {
+            "name": "Unarmoured Cavalry",
+            "abbreviation": "UC",
+            "figures_per_base": 3,
+            "bases": 2,
+            "total_figures": 6,
+            "morale_threshold": 3,
+            "movement": {
+                "open": 35,
+                "wood": 16,
+                "rough": 16,
+                "ford": 20,
+                "pivot": 8
+            },
+            "shooting_div": null,
+            "movement_notes": "Can change facing 90° and then move half distance, but cannot charge",
+            "special_rules": ["+1 vs all in first melee turn", "Loses first turn bonus in rough/wood", "3D6 per 2 figures in first melee turn"]
+        },
+        "SKC": {
+            "name": "Skirmish Cavalry",
+            "abbreviation": "SKC",
+            "figures_per_base": 2,
+            "bases": 2,
+            "total_figures": 4,
+            "morale_threshold": 2,
+            "movement": {
+                "open": 40,
+                "wood": 20,
+                "rough": 30,
+                "ford": 30,
+                "pivot": 12
+            },
+            "shooting_div": 1,
+            "movement_notes": "Can change facing 90°/180° and then move full distance. Can evade charges by turning 180°",
+            "special_rules": ["1D6 per figure", "With Bow: 360° shooting arc", "Charge evasion", "Does not count in army losses"]
+        },
+        "CinC": {
+            "name": "Commander in Chief",
+            "abbreviation": "CinC",
+            "figures_per_base": 0,
+            "bases": 1,
+            "total_figures": 0,
+            "morale_threshold": 0,
+            "movement": {
+                "open": 35,
+                "wood": 16,
+                "rough": 16,
+                "ford": 20,
+                "pivot": 8
+            },
+            "shooting_div": null,
+            "movement_notes": "As UC",
+            "special_rules": ["Does not count in army losses"]
+        }
+    },
+    "shooting_weapons": {
+        "ARC": {
+            "name": "Bow",
+            "range_cm": 30,
+            "angle_degrees": 45,
+            "min_to_hit": {
+                "SK": 5, "UI": 5, "AI": 6, "SKC": 5, "UC": 5, "AC": 6
+            }
+        },
+        "ARCL": {
+            "name": "Longbow",
+            "range_cm": 35,
+            "angle_degrees": 45,
+            "min_to_hit": {
+                "SK": 5, "UI": 4, "AI": 5, "SKC": 5, "UC": 5, "AC": 5
+            }
+        },
+        "BAL": {
+            "name": "Crossbow",
+            "range_cm": 35,
+            "angle_degrees": 45,
+            "min_to_hit": {
+                "SK": 5, "UI": 4, "AI": 5, "SKC": 5, "UC": 5, "AC": 5
+            }
+        },
+        "FROM": {
+            "name": "Sling",
+            "range_cm": 20,
+            "angle_degrees": 45,
+            "min_to_hit": {
+                "SK": 6, "UI": 5, "AI": 6, "SKC": 6, "UC": 5, "AC": 6
+            }
+        },
+        "GIAV": {
+            "name": "Javelin",
+            "range_cm": 10,
+            "angle_degrees": 45,
+            "min_to_hit": {
+                "SK": 6, "UI": 5, "AI": 6, "SKC": 6, "UC": 5, "AC": 6
+            }
+        },
+        "HAN": {
+            "name": "Handgun",
+            "range_cm": 10,
+            "angle_degrees": 45,
+            "min_to_hit": {
+                "SK": 6, "UI": 5, "AI": 5, "SKC": 5, "UC": 4, "AC": 5
+            }
+        }
+    },
+    "melee": {
+        "min_to_hit": {
+            "AI":  { "AI": 6, "UI": 5, "SK": 3, "AC": 6, "UC": 5, "SKC": 4 },
+            "UI":  { "AI": 6, "UI": 5, "SK": 3, "AC": 6, "UC": 6, "SKC": 4 },
+            "SK":  { "AI": 6, "UI": 6, "SK": 5, "AC": 6, "UC": 6, "SKC": 6 },
+            "AC":  { "AI": 5, "UI": 4, "SK": 3, "AC": 6, "UC": 5, "SKC": 4 },
+            "UC":  { "AI": 5, "UI": 4, "SK": 3, "AC": 6, "UC": 5, "SKC": 4 },
+            "SKC": { "AI": 6, "UI": 5, "SK": 3, "AC": 6, "UC": 5, "SKC": 4 }
+        },
+        "modifiers": [
+            { "condition": "Superior unit", "effect": "+1 to hit roll" },
+            { "condition": "AI/UI/SK in rough or wood", "effect": "+1 vs all" },
+            { "condition": "Spearmen vs AC/UC", "effect": "+1 to hit roll" },
+            { "condition": "AI/UI/SK behind walls, fortifications or stakes", "effect": "+1 to hit roll" },
+            { "condition": "AC/UC in first melee turn", "effect": "+1 vs all" },
+            { "condition": "AC/UC in rough/wood", "effect": "Lose first turn bonus" },
+            { "condition": "Unit hit on flank", "effect": "Halve dice vs all units in contact (except SK)" }
+        ]
+    },
+    "morale": {
+        "min_result": 4,
+        "die": "1D6",
+        "modifiers": [
+            { "condition": "Superior unit", "value": 1 },
+            { "condition": "After winning a melee (more losses inflicted)", "value": 1 },
+            { "condition": "Inferior unit", "value": -1 },
+            { "condition": "Second morale test", "value": -1 },
+            { "condition": "Hit on flank by one or more enemy units", "value": -1 }
+        ],
+        "when_to_test": "When a unit drops below 50% of its starting figures",
+        "fail": "Unit is removed from the battlefield",
+        "pass": "Continues fighting. Test again if further losses are suffered"
+    },
+    "victory": {
+        "condition": "Army loses more than 50% of its total units",
+        "note": "SK units do not count towards army losses"
+    },
+    "deployment": {
+        "zone_cm": 10,
+        "who_goes_first": "Player with fewer SKC units. Tie: roll 1D6",
+        "terrain": "2-4 elements (wood or rough ground) approx 30x20 cm each"
+    }
+}
