@@ -2422,6 +2422,18 @@ function lionheart_applyFormation(mode)
 
     return true
 end
+-- ============================================================
+-- FUNZIONE: lionheart_infoUnita()
+-- ============================================================
+function lionheart_infoUnita(player, value, id, buttonConfig)
+    local selected = lionheart_getSelectedObjects()
+    if selected == nil or #selected < 1 then
+        printToAll("[INFO] Seleziona una base", {r=1,g=0.6,b=0})
+        return false
+    end
+    mostraPopupUnita(selected[1])
+    return true
+end
 end)
 __bundle_register("rulesets.lionheart.conditions", function(require, _LOADED, __bundle_register, __bundle_modules)
 function registerDefaultConditions()
@@ -3944,7 +3956,7 @@ function onBtnScelta(player, value, id)
 end
 end)
 __bundle_register("engine.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
-local MAX_UNIT_CARDS = 25
+local MAX_UNIT_CARDS = 10
 
 -- ============================================================
 -- FUNZIONE: getEngineUiXml()
@@ -3972,34 +3984,20 @@ function getEngineUiXml()
         local tcol    = slot and slot.textColor or "White"
         local active  = (slot and slot.visible) and "true" or "false"
         local onclick = slot and slot.onClick  or "engine_buttonBarClick"
-        local icon    = slot and slot.icon     or ""
-        local iconW   = slot and slot.iconWidth  or 32
-        local iconH   = slot and slot.iconHeight or 32
+
+        local icon  = ""
+        local iconW = ""
+        local iconH = ""
+        if slot and slot.icon       then icon  = 'icon="'       .. slot.icon       .. '"' end
+        if slot and slot.iconWidth  then iconW = 'iconWidth="'  .. slot.iconWidth  .. '"' end
+        if slot and slot.iconHeight then iconH = 'iconHeight="' .. slot.iconHeight .. '"' end
 
         buttons = buttons .. string.format(
-            '<Button id="%s" icon="%s" iconWidth="%d" iconHeight="%d" text="%s" fontSize="13" width="%d" height="41" ' ..
+            '<Button id="%s" %s %s %s text="%s" fontSize="13" width="%d" height="41" ' ..
             'position="%d %g 0" color="%s" textColor="%s" active="%s" ' ..
             'onClick="%s" image="Sprites/Layout/Button" ' ..
             'outline="#3A2A1AFF" outlineSize="1"/>\n',
             id, icon, iconW, iconH, label, w, pos.x, pos.y, color, tcol, active, onclick
-        )
-    end
-
-    local cards = ""
-    for i = 1, MAX_UNIT_CARDS do
-        cards = cards .. string.format(
-            '<Panel id="unit_card_%d" width="280" height="60" ' ..
-            'color="rgba(0,0,0,0.7)" active="false" ' ..
-            'onClick="onUnitCardClick" onClickArg="%d">' ..
-            '<VerticalLayout padding="4 4 4 4" spacing="2">' ..
-                '<Text id="unit_card_tipo_%d" text="" fontSize="9" fontStyle="Bold" ' ..
-                'color="White" alignment="MiddleCenter"/>' ..
-                '<Text id="unit_card_fig_%d" text="" fontSize="9" ' ..
-                'color="rgba(200,200,200,1)" alignment="MiddleCenter"/>' ..
-                '<Panel id="unit_card_bar_%d" height="6" width="70" color="#1B5E20FF"/>' ..
-            '</VerticalLayout>' ..
-            '</Panel>\n',
-            i, i, i, i, i
         )
     end
 
@@ -4011,47 +4009,44 @@ function getEngineUiXml()
             <Text id="textWarning" text="" fontSize="26" fontStyle="Bold" color="rgba(212,175,55,0.9)" outline="#000000" outlineSize="2" alignment="MiddleCenter"/>
         </Panel>
         <Panel id="warforgeBar" position="0 -440 0">
-            <Image id="warforgeBarBg" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/bbar02.png" height="500" preserveAspect="true"/>
+           <Image id="warforgeBarBg" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/bbar01.png" height="500" preserveAspect="true"/>
         ]] .. buttons .. [[
         </Panel>
 
-        <!-- Schede unità -->
-        
-        <Panel id="unit_cards_panel" rectAlignment="LowerCenter" width="700" height="70" offsetXY="-80 150"
-               active="false">  
-               <HorizontalLayout id="unit_cards_layout" spacing="4" padding="4 4 4 4">
-               ]] .. cards .. [[
-                </HorizontalLayout>
-        </Panel>
-      
-        <!-- Pannello modale dettaglio unità -->
-        <!-- 
-        <Panel id="unit_detail_overlay"
+        <!-- Popup dettaglio unità selezionata -->
+        <Panel id="unit_popup"
                rectAlignment="MiddleCenter"
-               width="1920" height="1080"
-               color="rgba(0,0,0,0.6)"
-               active="false"
-               onClick="onUnitDetailClose">
-            <Panel id="unit_detail_panel"
-                   rectAlignment="MiddleCenter"
-                   width="400" height="300"
-                   color="rgba(15,15,15,0.97)">
-                <VerticalLayout padding="16 16 16 16" spacing="8">
-                    <Text id="unit_detail_title"  text="" fontSize="18" fontStyle="Bold" color="rgba(220,170,50,1)" alignment="MiddleCenter"/>
-                    <Text id="unit_detail_tipo"   text="" fontSize="13" color="White"/>
-                    <Text id="unit_detail_basi"   text="" fontSize="13" color="White"/>
-                    <Text id="unit_detail_figure" text="" fontSize="13" color="White"/>
-                    <Text id="unit_detail_arma"   text="" fontSize="13" color="White"/>
-                    <Text id="unit_detail_morale" text="" fontSize="13" color="White"/>
-                    <Text id="unit_detail_valore" text="" fontSize="13" color="White"/>
-                    <Button text="X CHIUDI" fontSize="12"
-                            color="rgba(0.6,0.1,0.1,1)" textColor="White"
-                            width="120" height="30"
-                            onClick="onUnitDetailClose"/>
-                </VerticalLayout>
-            </Panel>
-        </Panel>  
-        -->
+               width="320" height="260"
+               color="rgba(15,15,15,0.95)"
+               outline="#C8A830FF"
+               outlineSize="2"
+               offsetXY="400 0"
+               active="false">
+            <VerticalLayout padding="14 14 14 14" spacing="6">
+                <HorizontalLayout childAlignment="MiddleCenter" spacing="8">
+                    <Text id="unit_popup_title"
+                          text=""
+                          fontSize="15"
+                          fontStyle="Bold"
+                          color="#C8A830FF"
+                          alignment="MiddleCenter"/>
+                    <Button text="X"
+                            fontSize="11"
+                            color="#CC2200FF"
+                            textColor="White"
+                            width="24" height="24"
+                            onClick="onUnitPopupClose"/>
+                </HorizontalLayout>
+                <Panel height="1" color="#C8A830AA"/>
+                <Text id="unit_popup_esercito" text="" fontSize="11" color="#BBBBBBFF"/>
+                <Text id="unit_popup_basi"     text="" fontSize="11" color="#BBBBBBFF"/>
+                <Text id="unit_popup_figure"   text="" fontSize="11" color="#BBBBBBFF"/>
+                <Text id="unit_popup_arma"     text="" fontSize="11" color="#BBBBBBFF"/>
+                <Text id="unit_popup_salute"   text="" fontSize="11" color="#BBBBBBFF"/>
+                <Text id="unit_popup_qualita"  text="" fontSize="11" color="#BBBBBBFF"/>
+                <Text id="unit_popup_wounds"   text="" fontSize="11" color="#FF6600FF"/>
+            </VerticalLayout>
+        </Panel>
     ]]
 
     return panels
@@ -4063,75 +4058,78 @@ end
 function buildUI()
     local enginePanels = getEngineUiXml()
     local rulesetXml   = callHandler("getRulesetUiXml") or ""
-    local header = [[<XmlLayout>]]
+    local header = [[<XmlLayout xmlns="XmlLayout"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="XmlLayout ../../../Configuration/XmlLayout.xsd">]]
     local bottom = "</XmlLayout>"
-    local xml = header .. rulesetXml .. enginePanels .. bottom      
-    UI.setXml(xml)
+    UI.setXml(header .. rulesetXml .. enginePanels .. bottom)
 end
 
 -- ============================================================
--- FUNZIONE: aggiornaSchedeUnita()
--- Popola le 10 card placeholder con i dati delle unità
--- Solo UI.setAttribute — nessun setXmlTable
+-- FUNZIONE: mostraPopupUnita(obj)
+-- Mostra il popup con le info dell'unità selezionata
+-- Chiamare da onObjectPickUp o da menu contestuale
 -- ============================================================
-function aggiornaSchedeUnita()
+function mostraPopupUnita(obj)
+    if obj == nil then return end
 
-    -- Nascondi tutte le card
-    for i = 1, MAX_UNIT_CARDS do
-        UI.setAttribute("unit_card_" .. i, "active", "false")
-        UI.setAttribute("unit_card_" .. i, "text",   "")
-        UI.setAttribute("unit_card_" .. i, "onClickArg", tostring(i))
-    end
+    local slot = nil
+    if obj.hasTag("Army1") then slot = 1 end
+    if obj.hasTag("Army2") then slot = 2 end
+    if slot == nil then return end
 
-    -- Raccoglie tutte le unità attive da entrambi gli eserciti
-    local unita_attive = {}
-    for slot = 1, 2 do
-        local esercito = DEPLOYMENT.scanned[slot]
-        if esercito then
-            for _, unita in ipairs(esercito) do
-                local basi_p = lionheart_basiPresentiUnita(unita)
-                if basi_p > 0 then
-                    table.insert(unita_attive, { unita=unita, slot=slot })
-                end
+    local nickname = obj.getName()
+    local baseInfo = deployment_parseNickname(nickname)
+    if not baseInfo then return end
+
+    -- Trova unità in DEPLOYMENT.scanned
+    local unita = nil
+    local esercito = DEPLOYMENT.scanned[slot]
+    if esercito then
+        for _, u in ipairs(esercito) do
+            if u.tipo == baseInfo.unitType and u.unita_num == baseInfo.unitNumber then
+                unita = u
+                break
             end
         end
     end
 
-    if #unita_attive == 0 then
-        UI.setAttribute("unit_cards_panel", "active", "false")
-        return
-    end
+    if not unita then return end
 
-    -- Popola le card disponibili
-    local n = math.min(#unita_attive, MAX_UNIT_CARDS)
-    for i = 1, n do
-        local entry   = unita_attive[i]
-        local unita   = entry.unita
-        print("[SCHEDE] card " .. i .. " -> " .. unita.tipo .. "_" .. unita.unita_num)
-        local slot    = entry.slot
-        local fpb     = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 1
-        local fig_att = lionheart_figureTotaliUnita(unita)
-        local fig_max = (unita.basi_max or #unita.basi) * fpb
-        local perc    = fig_max > 0 and (fig_att / fig_max) or 0
+    local fpb     = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 1
+    local fig_att = lionheart_figureTotaliUnita(unita)
+    local fig_max = (unita.basi_max or #unita.basi) * fpb
+    local basi_p  = lionheart_basiPresentiUnita(unita)
+    local perc    = fig_max > 0 and (fig_att / fig_max) or 0
+    local wounds  = wounds_data and wounds_data[nickname] or 0
 
-        local col
-        if perc > 0.6     then col = slot == 1 and "#1B5E20FF" or "#0D47A1FF"
-        elseif perc > 0.3 then col = "#E65100FF"
-        else                    col = "#B71C1CFF" end
+    local salute
+    if perc > 0.6     then salute = "BUONA"
+    elseif perc > 0.3 then salute = "CRITICA"
+    else                    salute = "GRAVE" end
 
-        local nome = unita.tipo .. "_" .. unita.unita_num
-        local label = nome .. "\n" .. fig_att .. "/" .. fig_max
+    local val_str = (unita.valore == "S" or unita.valore == 1)  and "Superiore" or
+                    (unita.valore == "I" or unita.valore == -1) and "Inferiore"  or "Normale"
 
-        UI.setAttribute("unit_card_"      .. i, "active", "true")
-        UI.setAttribute("unit_card_tipo_" .. i, "text",   unita.tipo .. "_" .. unita.unita_num)
-        UI.setAttribute("unit_card_fig_"  .. i, "text",   fig_att .. "/" .. fig_max)
-        -- barra salute colorata
-        UI.setAttribute("unit_card_bar_"  .. i, "color",  col)
+    local army_name = (DEPLOYMENT.armies and DEPLOYMENT.armies[slot] and DEPLOYMENT.armies[slot].displayName)
+                      or ("Army " .. slot)
 
-    end
+    UI.setAttribute("unit_popup_title",    "text", unita.nome_display or (unita.tipo .. "_" .. unita.unita_num))
+    UI.setAttribute("unit_popup_esercito", "text", "Esercito: " .. army_name)
+    UI.setAttribute("unit_popup_basi",     "text", "Basi: "    .. basi_p .. "/" .. (unita.basi_max or #unita.basi))
+    UI.setAttribute("unit_popup_figure",   "text", "Figure: "  .. fig_att .. "/" .. fig_max)
+    UI.setAttribute("unit_popup_arma",     "text", "Arma: "    .. (unita.arma or "---"))
+    UI.setAttribute("unit_popup_salute",   "text", "Salute: "  .. salute)
+    UI.setAttribute("unit_popup_qualita",  "text", "Qualita: " .. val_str)
+    UI.setAttribute("unit_popup_wounds",   "text", wounds > 0 and ("Ferite base: " .. wounds .. "/" .. fpb) or "")
+    UI.setAttribute("unit_popup",          "active", "true")
+end
 
-    print("[SCHEDE] unit_cards_panel attivato, n=" .. tostring(n))
-    UI.setAttribute("unit_cards_panel", "active", "true")
+-- ============================================================
+-- FUNZIONE: onUnitPopupClose
+-- ============================================================
+function onUnitPopupClose(player, value, id)
+    UI.setAttribute("unit_popup", "active", "false")
 end
 
 -- ============================================================
@@ -4160,58 +4158,10 @@ function lionheart_figureTotaliUnita(unita)
 end
 
 -- ============================================================
--- FUNZIONE: onUnitCardClick
+-- FUNZIONE: aggiornaSchedeUnita() — mantenuta per compatibilità
 -- ============================================================
-function onUnitCardClick(player, value, id)
-    local nome, slot_str = string.match(tostring(value), "^(.+)|(%d+)$")
-    local slot = tonumber(slot_str)
-    if not slot or not nome then return end
-
-    local esercito = DEPLOYMENT.scanned[slot]
-    if not esercito then return end
-
-    for _, unita in ipairs(esercito) do
-        local n = unita.tipo .. "_" .. unita.unita_num
-        if n == nome then
-            apriDettaglioUnita(unita, slot)
-            return
-        end
-    end
-end
-
--- ============================================================
--- FUNZIONE: apriDettaglioUnita(unita, slot)
--- ============================================================
-function apriDettaglioUnita(unita, slot)
-    local fpb     = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 1
-    local fig_att = lionheart_figureTotaliUnita(unita)
-    local fig_max = (unita.basi_max or #unita.basi) * fpb
-    local basi_p  = lionheart_basiPresentiUnita(unita)
-    local perc    = fig_max > 0 and (fig_att / fig_max) or 0
-
-    local salute
-    if perc > 0.6     then salute = "BUONA"
-    elseif perc > 0.3 then salute = "CRITICA"
-    else                    salute = "GRAVE" end
-
-    local val_str = (unita.valore == "S" or unita.valore == 1)  and "Superiore" or
-                    (unita.valore == "I" or unita.valore == -1) and "Inferiore"  or "Normale"
-
-    UI.setAttribute("unit_detail_title",  "text", unita.nome_display or (unita.tipo.."_"..unita.unita_num))
-    UI.setAttribute("unit_detail_tipo",   "text", "Tipo: "    .. unita.tipo)
-    UI.setAttribute("unit_detail_basi",   "text", "Basi: "    .. basi_p .. "/" .. (unita.basi_max or #unita.basi))
-    UI.setAttribute("unit_detail_figure", "text", "Figure: "  .. fig_att .. "/" .. fig_max)
-    UI.setAttribute("unit_detail_arma",   "text", "Arma: "    .. (unita.arma or "---"))
-    UI.setAttribute("unit_detail_morale", "text", "Salute: "  .. salute)
-    UI.setAttribute("unit_detail_valore", "text", "Qualita: " .. val_str)
-    UI.setAttribute("unit_detail_overlay","active", "true")
-end
-
--- ============================================================
--- FUNZIONE: onUnitDetailClose
--- ============================================================
-function onUnitDetailClose(player, value, id)
-    UI.setAttribute("unit_detail_overlay", "active", "false")
+function aggiornaSchedeUnita()
+    -- non più usata con il nuovo sistema popup
 end
 
 end)
@@ -4255,7 +4205,6 @@ function engine_buttonBarLoadJson(jsonText)
                 label = cfg.label or "",
                 class = cfg.class,
                 callBack = cfg.callBack,
-                onClick = cfg.onClick,
                 tooltip = cfg.tooltip or "",
                 visible = cfg.visible ~= false,
                 enabled = cfg.enabled ~= false,
@@ -4361,10 +4310,9 @@ function engine_buttonBarRender()
         UI.setAttribute(id, "color", slot.color)
         UI.setAttribute(id, "colors", slot.colors)
         UI.setAttribute(id, "textColor", slot.textColor)
-        UI.setAttribute(id, "onClick", slot.onClick)
         UI.setAttribute(id, "icon", slot.icon)
         UI.setAttribute(id, "iconWidth", slot.iconWidth)
-        UI.setAttribute(id, "iconHeigth", slot.iconHeigth)
+        UI.setAttribute(id, "iconHeight", slot.iconHeight)
     end
 
     return true
@@ -4384,18 +4332,8 @@ function engine_buttonBarDebugPrint()
         if slot ~= nil then
             print(slot.icon)
             print(slot.iconWidth)
-            print(slot.iconHeigth)
+            print(slot.iconHeight)
         end
-
-        -- printToAll(
-        --     tostring(id) ..
-        --     " label=" .. tostring(slot.label) ..
-        --     " onClick=" .. tostring(slot.onClick) ..
-        --     " url=" .. image.url,
-        --     {r=0.8,g=0.8,b=0.8}
-        -- )
-
-
     end
 end
 
