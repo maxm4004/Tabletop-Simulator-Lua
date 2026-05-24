@@ -6,7 +6,7 @@
         "tooltip": "Mostra gittata",
         "color": "#D8C7A3FF",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
-        "textColor": "#222222",
+        "textColor": "#FFFFFF|FF0000",
         "onClick": "engine_buttonBarClick",        
         "callBack": "lionheart_showRange",
         "icon": "icon_slot_1", 
