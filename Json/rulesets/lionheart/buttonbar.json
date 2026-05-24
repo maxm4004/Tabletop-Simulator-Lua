@@ -2,113 +2,52 @@
   "buttonbar": {
     "slots": {
       "1": {
-        "label": "Fire",
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
+        "label": "Unit Info",
+        "tooltip": "Show in a popup unit info",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
         "textColor": "#FFFFFF|FF0000",
-        "onClick": "engine_buttonBarClick",        
-        "callBack": "lionheart_showRange",
-        "icon": "icon_slot_1", 
-        "iconWidth": 48, 
-        "iconHeight": 48
+        "onClick": "engine_buttonBarClick",
+        "callBack": "lionheart_infoUnita"  
       },
       "2": {
         "label": "Clear",
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
+        "tooltip": "Clear chata",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|FF0000",
         "onClick": "engine_buttonBarClick",        
-        "callBack": "clear",  
-        "icon": "icon_slot_1", 
-        "iconWidth": 48, 
-        "iconHeight": 48
+        "callBack": "clear"
       },
       "3": {
         "label": "Line Left",      
         "tooltip": "form a line starting from the left",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|FF0000",
         "onClick": "engine_buttonBarClick",        
-        "callBack": "lionheart_lineLeft".
-        "icon": "icon_slot_1", 
-        "iconWidth": 42, 
-        "iconHeight": 42
+        "callBack": "lionheart_lineLeft"
       },
       "4": {
         "label": "Line Right", 
         "tooltip": "form a line starting from the right",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|FF0000",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_lineRight",
-        "icon": "icon_slot_1", 
-        "iconWidth": 42, 
-        "iconHeight": 42        
+        "callBack": "lionheart_lineRight",      
       },
       "5": {
-        "label": "Unit Info",
-        "tooltip": "Show in a popup unit info",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
+        "label": "Column Up", 
+        "tooltip": "form a column to up",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|FF0000",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_infoUnita",
-        "icon": "icon_slot_1", 
-        "iconWidth": 42, 
-        "iconHeight": 42               
+        "callBack": "lionheart_columnUp",    
       },
       "6": {
-        "label": "Check Fire",  
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
+        "label": "Column down", 
+        "tooltip": "form a column to down",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|FF0000",
         "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_showRange",
-        "icon": "icon_slot_1", 
-        "iconWidth": 42, 
-        "iconHeight": 42        
-      },
-      "7": {
-        "label": "Check Fire",       
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
-        "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_showRange"
-      },
-      "8": {
-        "label": "Check Fire",     
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
-        "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_showRange"
-      },
-      "9": {
-        "label": "Check Fire",        
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
-        "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_showRange"
-      },
-      "10": {
-        "label": "Check Fire",        
-        "tooltip": "Mostra gittata",
-        "color": "#D8C7A3FF",
-        "colors": "#D8C7A3FF|#EFE2C6FF|#C89A3CFF|#8A8A8AFF",
-        "textColor": "#2B1E10FF",
-        "onClick": "engine_buttonBarClick",
-        "callBack": "lionheart_showRange"
-        "iconHeight": 32      
+        "callBack": "lionheart_columnDown",    
       }
     }
   }
