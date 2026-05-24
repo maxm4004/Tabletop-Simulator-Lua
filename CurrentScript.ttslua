@@ -42,7 +42,7 @@ local __bundle_require, __bundle_loaded, __bundle_register, __bundle_modules = (
 	return require, loaded, register, modules
 end)(nil)
 __bundle_register("Global.-1.lua", function(require, _LOADED, __bundle_register, __bundle_modules)
-VERSION = "WARFORGE - v1.35.20"
+VERSION = "WARFORGE - v1.35.25"
 ACTIVE_RULESET = "LIONHEART"
 --ACTIVE_RULESET = "DEFAULT"
 SAVE_STATE = nil
@@ -739,6 +739,14 @@ end)
 registerHandler("aggiornaSchedeUnita", function()
     return aggiornaSchedeUnita()
 end)
+
+registerHandler("deployment_scanTable", function()
+    return deployment_scanTable()
+end)
+
+registerHandler("deployment_revealAllSpawned", function()
+    return deployment_revealAllSpawned()
+end)
 end)
 __bundle_register("rulesets.lionheart.persistence", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
@@ -1286,7 +1294,7 @@ function restart()
     callHandler("aggiornaLinee")
     callHandler("deployment_resetRuntimeOnly")
     callHandler("deployment_clearSpawnedModels")
-    fadeOut("RESTART")
+    fadeOut("RESTART", nil)
 end
 -- ============================================================
 -- FUNZIONE: getArmySlotByColor()
@@ -1390,7 +1398,7 @@ end
 -- ============================================================
 function onPlayerConnect(player)
     if DEBUG then print("onPlayerConnect") end
-    fadeOut(player.steam_name .." joined the game")
+    fadeOut(player.steam_name .." joined the game", nil)
     print(player.color .." joined the game")
     restorePlayersColors()
 end
@@ -1399,8 +1407,7 @@ end
 -- ============================================================
 function onPlayerDisconnect(player)
     if DEBUG then print("onPlayerDisconnect") end
-    fadeOut(player.steam_name .." left the game")
-    print(player.color .." left the game")
+    fadeOut(player.steam_name .." left the game", nil)
 end
 --=============================================================
 --FUNZIONE: onPlayerChangeColor()
@@ -1735,14 +1742,14 @@ function canUseButton(slot, player, value, id, button, phase)
 
         if slot == BUTTONS.BTN_ARMY1 then
             if not player or player.color ~= COLOR.ARMY1 then
-                fadeOut("Not your button")
+                fadeOut("Not your button", player)
                 return false
             end
         end
 
         if slot == BUTTONS.BTN_ARMY2 then
             if not player or player.color ~= COLOR.ARMY2 then
-                fadeOut("Not your button")
+                fadeOut("Not your button", player)
                 return false
             end
         end
@@ -1760,7 +1767,7 @@ function canUseButton(slot, player, value, id, button, phase)
         -- se esiste un turno attivo, solo lui può cliccare
         if activeColor then
             if not player or player.color ~= activeColor then
-                fadeOut("Wait for your opponent")
+                fadeOut("Wait for your opponent", player)
                 return false
             end
         end
@@ -1897,8 +1904,8 @@ end
 
 function after_deploy(phaseName, phase)
     linee_deploy = false
-    deployment_revealAllSpawned()
-    deployment_scanTable()
+    callHandler("deployment_revealAllSpawned")
+    callHandler("deployment_scanTable")
     callHandler("aggiornaSchedeUnita")
 end
 
@@ -2062,9 +2069,9 @@ function sitting_btn_all(player, value, id)
             colorPlayer = COLOR.ARMY1
         else 
             if colorPlayer == colorArmy1 then
-                fadeOut(army1 .. " already using this color") 
+                fadeOut(army1 .. " already using this color", player) 
             else
-                fadeOut("color " .. army1 .. " already used")  
+                fadeOut("color " .. army1 .. " already used", player)  
             end
         end
     end
@@ -2079,9 +2086,9 @@ function sitting_btn_all(player, value, id)
             colorPlayer = COLOR.ARMY2
         else 
             if colorPlayer == colorArmy2 then
-                fadeOut(army2 .. " already using this color") 
+                fadeOut(army2 .. " already using this color", player) 
             else
-                fadeOut("color " .. army2 .. " already used")  
+                fadeOut("color " .. army2 .. " already used", player)   
             end
         end
     end     
@@ -2233,7 +2240,7 @@ function assign_initiative_btn_all(player, value, id)
     local clicked = ARMY[getArmyByButton(id)]
     
     if clicker.name ~= winner.name then
-        fadeOut(clicker.name.." can't assign anything")
+        fadeOut(clicker.name.." can't assign anything", player) 
     else 
         DICE_CONTEST.initiative = clicked
         callHandler("resetTurnForPhase")
@@ -2244,26 +2251,24 @@ function assign_initiative_btn_all(player, value, id)
 
         TURN.completed.Army1 = false
         TURN.completed.Army2 = false
-        fadeOut("Initiative assigned to "..clicked.name) 
+        fadeOut("Initiative assigned to "..clicked.name, nil)
     end
 end
 -- ============================================================
 -- FUNZIONE: lionheart_getSelectedObjects()
 -- ============================================================
-function lionheart_getSelectedObjects()
-    for _, color in ipairs(getSeatedPlayers()) do
-        local selected = Player[color].getSelectedObjects()
-        if selected ~= nil and #selected > 0 then return selected end
+function lionheart_getSelectedObjects(player)
+    if player then
+        local selected = Player[player.color].getSelectedObjects()
+        if selected and #selected > 0 then return selected end
+        return {}
     end
 
-    local fallback = {"White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Black"}
-    for _, color in ipairs(fallback) do
-        if Player[color] ~= nil then
-            local selected = Player[color].getSelectedObjects()
-            if selected ~= nil and #selected > 0 then return selected end
-        end
+    -- fallback senza player (comportamento precedente)
+    for _, p in ipairs(getSeatedPlayers()) do
+        local selected = Player[p.color].getSelectedObjects()
+        if selected and #selected > 0 then return selected end
     end
-
     return {}
 end
 -- ============================================================
@@ -2426,12 +2431,29 @@ end
 -- FUNZIONE: lionheart_infoUnita()
 -- ============================================================
 function lionheart_infoUnita(player, value, id, buttonConfig)
-    local selected = lionheart_getSelectedObjects()
-    if selected == nil or #selected < 1 then
-        printToAll("[INFO] Seleziona una base", {r=1,g=0.6,b=0})
+
+    local selected = lionheart_getSelectedObjects(player)
+    if not selected or #selected < 1 then
+        printToColor("[INFO] Select a unit", player.color, {r=1,g=0.6,b=0})
         return false
     end
-    mostraPopupUnita(selected[1])
+
+    local obj = selected[1]
+
+    -- Verifica che l'unità appartenga all'esercito del player
+    local playerSlot = getArmyByColor(player)
+    if playerSlot == nil then return false end
+
+    local armyTag = "Army" .. tostring(playerSlot)
+
+    printToColor(armyTag, player.color)
+
+    if not obj.hasTag(armyTag) then
+        printToColor("[INFO] Not your unit", player.color, {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    mostraPopupUnita(obj, player)
     return true
 end
 end)
@@ -2468,83 +2490,188 @@ function registerDefaultConditions()
 end
 end)
 __bundle_register("rulesets.lionheart.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- FUNZIONE: getRulesetUiXml()
+-- ============================================================
 function getRulesetUiXml()
+
+    -- Genera 2 popup identici con id diversi
+    local popups = ""
+    local offsets = { "0 -150", "0 -150" }  -- stessa posizione, visibilità gestita da visibility
+
+    for slot = 1, 2 do
+        local p  = "unit_popup_" .. slot
+        local ox = offsets[slot]
+
+        popups = popups .. string.format([[
+    <Panel id="%s"
+           rectAlignment="MiddleCenter"
+           width="400" height="460"
+           color="rgba(0,0,0,0.5)"
+           offsetXY="%s"
+           active="false">
+
+        <Button text="X"
+                fontSize="11" fontStyle="Bold"
+                color="#8B1A1AFF" textColor="White"
+                width="26" height="26"
+                position="185 215 0"
+                onClick="onUnitPopupClose"/>
+
+        <Image id="%s_icon"
+               image="ai"
+               width="120" height="130"
+               position="-140 155 0"
+               preserveAspect="true"/>
+
+        <Text id="%s_title"
+              text="" fontSize="18" fontStyle="Bold"
+              color="#F0C040FF" alignment="UpperLeft"
+              position="45 205 0" width="220" height="30"
+              outline="#000000" outlineSize="1"/>
+
+        <Text id="%s_subtitle"
+              text="" fontSize="14"
+              color="#FFFFFFFF" alignment="UpperLeft"
+              position="45 180 0" width="220" height="20"/>
+
+        <Text id="%s_basi"
+              text="" fontSize="14"
+              color="#FFFFFFFF" alignment="UpperLeft"
+              position="45 155 0" width="220" height="20"/>
+
+        <Text id="%s_figure"
+              text="" fontSize="14"
+              color="#FFFFFFFF" alignment="UpperLeft"
+              position="45 130 0" width="220" height="20"/>
+
+        <Text id="%s_salute"
+              text="" fontSize="14" fontStyle="Bold"
+              color="#F0C040FF" alignment="UpperLeft"
+              position="45 105 0" width="220" height="20"/>
+
+        <Panel width="380" height="1" position="0 80 0" color="#F0C04066"/>
+
+        <Text text="MOVEMENT" fontSize="14" fontStyle="Bold"
+              color="#F0C040FF" alignment="MiddleCenter"
+              position="0 65 0" width="380" height="18"
+              outline="#000000" outlineSize="1"/>
+
+        <Text text="Open"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-140 45 0" width="70" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="Wood"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-70 45 0"  width="70" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="Rough" fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="0 45 0"   width="70" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="Ford"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="70 45 0"  width="70" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="Pivot" fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="140 45 0" width="70" height="16" outline="#000000" outlineSize="1"/>
+
+        <Text id="%s_mov_open"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-140 27 0" width="70" height="18"/>
+        <Text id="%s_mov_wood"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-70 27 0"  width="70" height="18"/>
+        <Text id="%s_mov_rough" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="0 27 0"   width="70" height="18"/>
+        <Text id="%s_mov_ford"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="70 27 0"  width="70" height="18"/>
+        <Text id="%s_mov_pivot" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="140 27 0" width="70" height="18"/>
+
+        <Panel width="380" height="1" position="0 10 0" color="#F0C04066"/>
+
+        <Text text="MELEE" fontSize="14" fontStyle="Bold"
+              color="#F0C040FF" alignment="MiddleCenter"
+              position="0 -5 0" width="380" height="18"
+              outline="#000000" outlineSize="1"/>
+
+        <Text text="AI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-150 -23 0" width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="UI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-95 -23 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="SK"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-40 -23 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="AC"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="20 -23 0"   width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="UC"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="75 -23 0"   width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="SKC" fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="133 -23 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
+
+        <Text id="%s_mel_ai"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-150 -42 0" width="55" height="18"/>
+        <Text id="%s_mel_ui"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-95 -42 0"  width="55" height="18"/>
+        <Text id="%s_mel_sk"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-40 -42 0"  width="55" height="18"/>
+        <Text id="%s_mel_ac"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="20 -42 0"   width="55" height="18"/>
+        <Text id="%s_mel_uc"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="75 -42 0"   width="55" height="18"/>
+        <Text id="%s_mel_skc" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="133 -42 0"  width="55" height="18"/>
+
+        <Panel width="380" height="1" position="0 -60 0" color="#F0C04066"/>
+
+        <Text id="%s_shoot_label"
+              text="SHOOTING" fontSize="14" fontStyle="Bold"
+              color="#F0C040FF" alignment="MiddleCenter"
+              position="0 -75 0" width="380" height="18"
+              outline="#000000" outlineSize="1"/>
+
+        <Text text="AI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-150 -93 0" width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="UI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-95 -93 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="SK"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-40 -93 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="AC"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="20 -93 0"   width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="UC"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="75 -93 0"   width="55" height="16" outline="#000000" outlineSize="1"/>
+        <Text text="SKC" fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="133 -93 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
+
+        <Text id="%s_sho_ai"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-150 -112 0" width="55" height="18"/>
+        <Text id="%s_sho_ui"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-95 -112 0"  width="55" height="18"/>
+        <Text id="%s_sho_sk"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="-40 -112 0"  width="55" height="18"/>
+        <Text id="%s_sho_ac"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="20 -112 0"   width="55" height="18"/>
+        <Text id="%s_sho_uc"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="75 -112 0"   width="55" height="18"/>
+        <Text id="%s_sho_skc" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="133 -112 0"  width="55" height="18"/>
+
+        <Panel width="380" height="1" position="0 -130 0" color="#F0C04066"/>
+
+        <Text text="SPECIAL RULES" fontSize="14" fontStyle="Bold"
+              color="#F0C040FF" alignment="MiddleCenter"
+              position="0 -145 0" width="380" height="18"
+              outline="#000000" outlineSize="1"/>
+
+        <Text id="%s_special"
+              text="" fontSize="11"
+              color="#DDDDDDFF" alignment="UpperCenter"
+              position="-100 -185 0" width="370" height="60"/>
+
+    </Panel>
+        ]], p, ox,
+            p, p, p, p, p, p, p,         -- icon, title, subtitle, basi, figure, salute
+            p, p, p, p, p,               -- mov_open..pivot
+            p, p, p, p, p, p,            -- mel_ai..skc
+            p,                           -- shoot_label
+            p, p, p, p, p, p,            -- sho_ai..skc
+            p                            -- special
+        )
+    end
+
     return [[
-    <!-- TOP -->
-    
-    <Panel id="panelVersion"
-           rectAlignment="UpperCenter"
-           width="420"
-           height="30"
-           color="rgba(0,0,0,0.35)"
-           offsetXY="-700 -218">
-           <Text id="versione" text="" fontSize="14" fontStyle="Bold" color="Yellow" alignment="MiddleCenter"/>
+    <Panel id="warning" rectAlignment="LowerCenter" width="600" height="30" color="rgba(0,0,0,0)" offsetXY="0 700">
+        <Text id="textWarning" text="" fontSize="26" fontStyle="Bold" color="rgba(212,175,55,0.9)" outline="#000000" outlineSize="2" alignment="MiddleCenter"/>
     </Panel>
     <Panel id="panelTop"
             rectAlignment="UpperCenter"
-            width="420"
-            height="120"
+            width="420" height="120"
             color="rgba(0,0,0,0.25)"
             offsetXY="0 -70">
             <VerticalLayout spacing="6" padding="10 10 10 10">
             <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
-                <Text id="textFase"
-                        text="FASE"
-                        fontSize="18"
-                        fontStyle="Bold"
-                        outline="#000000"
-                        outlineSize="2"
-                        color="Yellow"/>
+                <Text id="textFase" text="FASE" fontSize="18" fontStyle="Bold" outline="#000000" outlineSize="2" color="Yellow"/>
             </HorizontalLayout>
-            <Text id="textDesc" text="Descrizione"
-                fontSize="13"
-                fontStyle="Bold"
-                color="rgba(0.8,0.8,0.8,1)"
-                alignment="MiddleCenter"/>
-                <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
-                <Text id="army1"
-                    text="Army 1"
-                    fontSize="14"
-                    fontStyle="Bold"
-                    color="Grey"
-                    alignment="MiddleCenter"/>
-                <Text id="army2"
-                    text="Army 2"
-                    fontSize="14"
-                    fontStyle="Bold"
-                    color="Grey"
-                    alignment="MiddleCenter"/>
-                </HorizontalLayout>
+            <Text id="textDesc" text="Descrizione" fontSize="13" fontStyle="Bold" color="rgba(0.8,0.8,0.8,1)" alignment="MiddleCenter"/>
+            <HorizontalLayout spacing="6" childAlignment="MiddleCenter">
+                <Text id="army1" text="Army 1" fontSize="14" fontStyle="Bold" color="Grey" alignment="MiddleCenter"/>
+                <Text id="army2" text="Army 2" fontSize="14" fontStyle="Bold" color="Grey" alignment="MiddleCenter"/>
+            </HorizontalLayout>
             </VerticalLayout>
     </Panel>
     <Panel id="panelBtnUp"
         rectAlignment="UpperCenter"
-        width="420"
-        height="50"
+        width="420" height="50"
         color="rgba(0,0,0,0.35)"
         offsetXY="0 -192">
         <VerticalLayout spacing="6" padding="10 10 10 10">
             <HorizontalLayout>
                 <Row>
                     <Button id="BTN_ARMY1" class="panel"
-                        text="BTN_ARMY1"
-                        width="180"
-                        fontSize="14"
-                        fontStyle="Bold"
-                        image="Sprites/Layout/Button"
-                        color="rgba(0.7,0.15,0.15,1)"
-                        textColor="#FFFFFF"
+                        text="BTN_ARMY1" width="180" fontSize="14" fontStyle="Bold"
+                        image="Sprites/Layout/Button" color="rgba(0.7,0.15,0.15,1)" textColor="#FFFFFF"
                         onClick="onBtnArmy1"/>
                 </Row>
                 <Row>
                     <Button id="BTN_ARMY2" class="panel"
-                        text="BTN_ARMY2"
-                        width="180"
-                        fontSize="14"
-                        fontStyle="Bold"
-                        image="Sprites/Layout/Button"
-                        color="rgba(0.15,0.6,0.15,1)"
-                        textColor="White"
+                        text="BTN_ARMY2" width="180" fontSize="14" fontStyle="Bold"
+                        image="Sprites/Layout/Button" color="rgba(0.15,0.6,0.15,1)" textColor="White"
                         onClick="onBtnArmy2"/>
                 </Row>
             </HorizontalLayout>
@@ -2552,22 +2679,15 @@ function getRulesetUiXml()
     </Panel>
     <Panel id="panelBtnDown"
        rectAlignment="UpperCenter"
-        width="420"
-        height="50"
+        width="420" height="50"
         color="rgba(0,0,0,0.37)"
         offsetXY="0 -244">
             <VerticalLayout spacing="6" padding="10 10 10 10">
                 <HorizontalLayout childAlignment="MiddleCenter">
                     <Row>
                         <Button id="BTN_SINGLE" class="panel"
-                            text="BTN_SINGLE"
-                            width="380"
-                            fontSize="14"
-                            fontStyle="Bold"
-                            color="Grey"
-                            textColor="Black"
-                            outline="#000000"
-                            outlineSize="1.2"
+                            text="BTN_SINGLE" width="380" fontSize="14" fontStyle="Bold"
+                            color="Grey" textColor="Black" outline="#000000" outlineSize="1.2"
                             onClick="onBtnScelta"/>
                     </Row>
                 </HorizontalLayout>
@@ -2575,8 +2695,7 @@ function getRulesetUiXml()
     </Panel>
     <Panel id="panelDices"
         rectAlignment="UpperCenter"
-        width="420"
-        height="100"
+        width="420" height="100"
         color="rgba(0,0,0,0.35)"
         offsetXY="0 -296">
             <HorizontalLayout spacing="6" childAlignment=" MiddleCenter" height="60">
@@ -2584,55 +2703,185 @@ function getRulesetUiXml()
                 <Image id="diceArmy2" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/dice/1d6.png" preserveAspect="1"/>
             </HorizontalLayout>
     </Panel>
-    <Panel id="iconWinnerArmy1"
-       rectAlignment="UpperCenter"
-       width="50"
-       height="30"
-       offsetXY="-170 -201"
-       color="rgba(0,0,0,0.0)"
-       active="false">
-        <Image
-        outline="#000000"
-        outlineSize="0.6"
-        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
+    <Panel id="iconWinnerArmy1" rectAlignment="UpperCenter" width="50" height="30" offsetXY="-170 -201" color="rgba(0,0,0,0)" active="false">
+        <Image outline="#000000" outlineSize="0.6" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
     </Panel>
-    <Panel id="iconWinnerArmy2"
-       rectAlignment="UpperCenter"
-       width="50"
-       height="30"
-       offsetXY="170 -201"
-       color="rgba(0,0,0,0.0)"
-       active="false">
-        <Image
-        outline="#000000"
-        outlineSize="0.6"
-        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
+    <Panel id="iconWinnerArmy2" rectAlignment="UpperCenter" width="50" height="30" offsetXY="170 -201" color="rgba(0,0,0,0)" active="false">
+        <Image outline="#000000" outlineSize="0.6" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/crown.png" preserveAspect="1"/>
     </Panel>
-    <Panel id="iconMoveArmy1"
-       rectAlignment="UpperCenter"
-       width="40"
-       height="20"
-       offsetXY="-35 -208"
-       color="rgba(0,0,0,0.0)"
-       active="false">
-        <Image
-        outline="#000000"
-        outlineSize="0.6"
-        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr11.png" preserveAspect="1"/>
+    <Panel id="iconMoveArmy1" rectAlignment="UpperCenter" width="40" height="20" offsetXY="-35 -208" color="rgba(0,0,0,0)" active="false">
+        <Image outline="#000000" outlineSize="0.6" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr11.png" preserveAspect="1"/>
     </Panel>
-    <Panel id="iconMoveArmy2"
-       rectAlignment="UpperCenter"
-       width="40"
-       height="20"
-       offsetXY="35 -208"
-       color="rgba(0,0,0,0.0)"
-       active="false">
-        <Image
-        outline="#000000"
-        outlineSize="0.6"
-        image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr22.png" preserveAspect="1"/>
+    <Panel id="iconMoveArmy2" rectAlignment="UpperCenter" width="40" height="20" offsetXY="35 -208" color="rgba(0,0,0,0)" active="false">
+        <Image outline="#000000" outlineSize="0.6" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr22.png" preserveAspect="1"/>
     </Panel>
-    ]]
+    ]] .. popups
+end
+
+-- ============================================================
+-- FUNZIONE: mostraPopupUnita()
+-- ============================================================
+function mostraPopupUnita(obj, player)
+
+    if obj == nil then return end
+    local slot = nil
+    if obj.hasTag("Army1") then slot = 1 end
+    if obj.hasTag("Army2") then slot = 2 end
+    if slot == nil then return end
+
+    local nickname = obj.getName()
+    local baseInfo = deployment_parseNickname(nickname)
+    if not baseInfo then return end
+
+    local unita = nil
+    local esercito = DEPLOYMENT.scanned[slot]
+
+    if not esercito or #esercito == 0 then
+        callHandler("deployment_scanTable")
+        esercito = DEPLOYMENT.scanned[slot]
+    end
+
+    if esercito then
+        for _, u in ipairs(esercito) do
+            if u.tipo == baseInfo.unitType and u.unita_num == baseInfo.unitNumber then
+                unita = u
+                break
+            end
+        end
+    end
+    if not unita then return end
+
+    local p      = "unit_popup_" .. slot
+    local tipo   = unita.tipo
+    local arma   = unita.weapon
+    local rules  = LIONHEART_RULES and LIONHEART_RULES.units[tipo]
+    local fpb    = (LIONHEART_DATA.unitTypes[tipo] or {}).fpb or 1
+    local fig_att  = lionheart_figureTotaliUnita(unita)
+    local fig_max  = (unita.basi_max or #unita.basi) * fpb
+    local basi_p   = lionheart_basiPresentiUnita(unita)
+    local basi_max = unita.basi_max or #unita.basi
+    local perc     = fig_max > 0 and (fig_att / fig_max) or 0
+
+    local salute
+    if perc > 0.6     then salute = "OK"
+    elseif perc > 0.3 then salute = "CRITICAL"
+    else                    salute = "GRAVE" end
+
+    local army_name = (DEPLOYMENT.armies and DEPLOYMENT.armies[slot] and DEPLOYMENT.armies[slot].displayName) or ("Army " .. slot)
+    local val_str   = (unita.valore == "S" or unita.valore == 1)  and "Superior" or
+                      (unita.valore == "I" or unita.valore == -1) and "Inferior"  or "Normal"
+    local unit_name = rules and rules.name or tipo
+    local army_tag  = "Army" .. tostring(slot)
+
+    -- HEADER
+    UI.setAttribute(p .. "_icon",     "image", army_tag .. "_" .. tipo)
+    UI.setAttribute(p .. "_title",    "text",  unit_name:upper())
+    UI.setAttribute(p .. "_subtitle", "text",  tipo .. "  ·  " .. army_name .. "  ·  " .. val_str)
+    UI.setAttribute(p .. "_basi",     "text",  "Bases:  " .. basi_p  .. " / " .. basi_max)
+    UI.setAttribute(p .. "_figure",   "text",  "Figs:   " .. fig_att .. " / " .. fig_max)
+    UI.setAttribute(p .. "_salute",   "text",  "Status: " .. salute)
+
+    -- MOVIMENTO
+    if rules then
+        local m = rules.mov
+        UI.setAttribute(p .. "_mov_open",  "text", tostring(m.open))
+        UI.setAttribute(p .. "_mov_wood",  "text", tostring(m.wood))
+        UI.setAttribute(p .. "_mov_rough", "text", tostring(m.rough))
+        UI.setAttribute(p .. "_mov_ford",  "text", tostring(m.ford))
+        UI.setAttribute(p .. "_mov_pivot", "text", tostring(m.pivot))
+    else
+        for _, id in ipairs({"open","wood","rough","ford","pivot"}) do
+            UI.setAttribute(p .. "_mov_" .. id, "text", "—")
+        end
+    end
+
+    -- MELEE
+    local melee = LIONHEART_RULES and LIONHEART_RULES.melee[tipo]
+    if melee then
+        UI.setAttribute(p .. "_mel_ai",  "text", melee.AI  .. (tonumber(melee.AI)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_mel_ui",  "text", melee.UI  .. (tonumber(melee.UI)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_mel_sk",  "text", melee.SK  .. (tonumber(melee.SK)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_mel_ac",  "text", melee.AC  .. (tonumber(melee.AC)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_mel_uc",  "text", melee.UC  .. (tonumber(melee.UC)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_mel_skc", "text", melee.SKC .. (tonumber(melee.SKC) == 6 and "" or "+"))
+    else
+        for _, id in ipairs({"ai","ui","sk","ac","uc","skc"}) do
+            UI.setAttribute(p .. "_mel_" .. id, "text", "—")
+        end
+    end
+
+    -- SHOOTING
+    if arma and LIONHEART_RULES and LIONHEART_RULES.weapons[arma] then
+        local w   = LIONHEART_RULES.weapons[arma]
+        local mth = w.min_to_hit
+        UI.setAttribute(p .. "_shoot_label", "text", "SHOOTING — " .. w.name .. " (" .. w.range .. "cm)")
+        UI.setAttribute(p .. "_sho_ai",  "text", mth.AI  .. (tonumber(mth.AI)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_sho_ui",  "text", mth.UI  .. (tonumber(mth.UI)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_sho_sk",  "text", mth.SK  .. (tonumber(mth.SK)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_sho_ac",  "text", mth.AC  .. (tonumber(mth.AC)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_sho_uc",  "text", mth.UC  .. (tonumber(mth.UC)  == 6 and "" or "+"))
+        UI.setAttribute(p .. "_sho_skc", "text", mth.SKC .. (tonumber(mth.SKC) == 6 and "" or "+"))
+    else
+        UI.setAttribute(p .. "_shoot_label", "text", "SHOOTING")
+        for _, id in ipairs({"ai","ui","sk","ac","uc","skc"}) do
+            UI.setAttribute(p .. "_sho_" .. id, "text", "—")
+        end
+    end
+
+    -- SPECIAL RULES
+    if rules and rules.special and #rules.special > 0 then
+        local txt = ""
+        for _, s in ipairs(rules.special) do
+            txt = txt .. s .. "\n"
+        end
+        UI.setAttribute(p .. "_special", "text", txt:gsub("\n$", ""))
+    else
+        UI.setAttribute(p .. "_special", "text", "—")
+    end
+
+    UI.setAttribute(p, "active",     "true")
+    UI.setAttribute(p, "visibility", player.color)
+end
+
+-- ============================================================
+-- FUNZIONE: onUnitPopupClose
+-- ============================================================
+function onUnitPopupClose(player, value, id)
+    local slot = getArmyByColor(player)
+    if slot then
+        UI.setAttribute("unit_popup_" .. slot, "active", "false")
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_basiPresentiUnita(unita)
+-- ============================================================
+function lionheart_basiPresentiUnita(unita)
+    local count = 0
+    for _, base in ipairs(unita.basi) do
+        local obj = getObjectFromGUID(base.guid)
+        if obj then count = count + 1 end
+    end
+    return count
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_figureTotaliUnita(unita)
+-- ============================================================
+function lionheart_figureTotaliUnita(unita)
+    local fpb    = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 0
+    local figure = 0
+    for _, base in ipairs(unita.basi) do
+        local wounds = wounds_data and wounds_data[base.nickname] or 0
+        figure = figure + math.max(0, fpb - wounds)
+    end
+    return figure
+end
+
+-- ============================================================
+-- FUNZIONE: aggiornaSchedeUnita() — compatibilità
+-- ============================================================
+function aggiornaSchedeUnita()
 end
 
 end)
@@ -2749,13 +2998,13 @@ end
 -- ============================================================
 function deployment_confirmDeploy(player)
     if not deployment_areBothArmiesLoaded() then
-        fadeOut("Devi caricare entrambi gli eserciti prima di confermare.")
+        fadeOut("Devi caricare entrambi gli eserciti prima di confermare.", nil)
         return false
     end
 
     if not LIONHEART_DATA.deployment.positioningOnTable then
         if not deployment_validateDeploy() then
-            fadeOut("Correggi il posizionamento e premi di nuovo Confirm Deploy.")
+            fadeOut("Correggi il posizionamento e premi di nuovo Confirm Deploy.", nil)
             return false
         end
     end
@@ -3778,6 +4027,39 @@ function lionheart_data_reset()
     }
 end
 
+-- ============================================================
+-- LIONHEART RULES
+-- QRS data for popup helper
+-- ============================================================
+LIONHEART_RULES = {
+    units = {
+        AI  = { name="Armoured Infantry",   icon="ai",   mov={open=16,wood=8, rough=8, ford=8, pivot=5},  shooting_div=3,  special={"Can change facing 90° but cannot move"} },
+        UI  = { name="Unarmoured Infantry", icon="ui",   mov={open=20,wood=10,rough=10,ford=10,pivot=5},  shooting_div=3,  special={"Can change facing 90° but cannot move"} },
+        SK  = { name="Skirmish",            icon="sk",   mov={open=20,wood=20,rough=16,ford=10,pivot=10}, shooting_div=4,  special={"Free formation change","Charge evasion","Pass through friendlies","Does not count in losses"} },
+        AC  = { name="Armoured Cavalry",    icon="ac",   mov={open=30,wood=10,rough=10,ford=15,pivot=6},  shooting_div=nil,special={"+1 vs all first melee turn","3D6 per 2 figs first turn","Loses bonus in rough/wood"} },
+        UC  = { name="Unarmoured Cavalry",  icon="uc",   mov={open=35,wood=16,rough=16,ford=20,pivot=8},  shooting_div=nil,special={"+1 vs all first melee turn","3D6 per 2 figs first turn","Loses bonus in rough/wood"} },
+        SKC = { name="Skirmish Cavalry",    icon="skc",  mov={open=40,wood=20,rough=30,ford=30,pivot=12}, shooting_div=1,  special={"1D6 per figure","360° arc with Bow","Charge evasion","Does not count in losses"} },
+        CinC= { name="Commander in Chief",  icon="cinc", mov={open=35,wood=16,rough=16,ford=20,pivot=8},  shooting_div=nil,special={"Does not count in losses"} },
+    },
+    weapons = {
+        ARC  = { name="Bow",       range=30, min_to_hit={SK=5,UI=5,AI=6,SKC=5,UC=5,AC=6} },
+        ARCL = { name="Longbow",   range=35, min_to_hit={SK=5,UI=4,AI=5,SKC=5,UC=5,AC=5} },
+        BAL  = { name="Crossbow",  range=35, min_to_hit={SK=5,UI=4,AI=5,SKC=5,UC=5,AC=5} },
+        FROM = { name="Sling",     range=20, min_to_hit={SK=6,UI=5,AI=6,SKC=6,UC=5,AC=6} },
+        GIAV = { name="Javelin",   range=10, min_to_hit={SK=6,UI=5,AI=6,SKC=6,UC=5,AC=6} },
+        HAN  = { name="Handgun",   range=10, min_to_hit={SK=6,UI=5,AI=5,SKC=5,UC=4,AC=5} },
+    },
+    melee = {
+        AI  = {AI=6,UI=5,SK=3,AC=6,UC=5,SKC=4},
+        UI  = {AI=6,UI=5,SK=3,AC=6,UC=6,SKC=4},
+        SK  = {AI=6,UI=6,SK=5,AC=6,UC=6,SKC=6},
+        AC  = {AI=5,UI=4,SK=3,AC=6,UC=5,SKC=4},
+        UC  = {AI=5,UI=4,SK=3,AC=6,UC=5,SKC=4},
+        SKC = {AI=6,UI=5,SK=3,AC=6,UC=5,SKC=4},
+    },
+    morale = { min=4, superior=1, inferior=-1, second_test=-1, flank=-1 }
+}
+
 end)
 __bundle_register("engine.renderers", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
@@ -3956,29 +4238,36 @@ function onBtnScelta(player, value, id)
 end
 end)
 __bundle_register("engine.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
-local MAX_UNIT_CARDS = 10
+-- ============================================================
+-- engine/ui.ttslua
+-- ============================================================
 
--- ============================================================
--- FUNZIONE: getEngineUiXml()
--- ============================================================
 function getEngineUiXml()
 
     engine_buttonBarInit()
 
     local buttons = ""
     local positions = {
-        {x=-281, y=10.5}, {x=-167, y=10.5}, {x=-57, y=10.5},
-        {x=55,   y=10.5}, {x=166,  y=10.5}, {x=280, y=10.5},
-        {x=-281, y=-40.5},{x=-167, y=-40.5},{x=-57, y=-40.5},
-        {x=55,   y=-40.5},{x=166,  y=-40.5},{x=280, y=-40.5},
+        {x=-192, y=275}, 
+        {x=-192, y=222}, 
+        {x=-192, y=169},
+        {x=-192, y=116}, 
+        {x=-192, y=63}, 
+        {x=-192, y=10},
+        {x=-192, y=-43},
+        {x=-192, y=-96},
+        {x=-192, y=-149},
+        {x=-192, y=-202}
     }
-    local widths = {110,100,102,102,100,110,110,100,102,102,100,110}
+    local widths  = {80,80,80,80,80,80,80,80,80,80}
+    local heights = {45,45,45,45,45,45,45,45,45,45}
 
     for i = 1, ENGINE_BUTTONBAR.slotCount do
         local slot    = ENGINE_BUTTONBAR.slots[i]
         local id      = engine_buttonBarSlotId(i)
         local pos     = positions[i]
         local w       = widths[i]
+        local h       = heights[i]
         local label   = slot and slot.label    or ""
         local color   = slot and slot.color    or "rgba(0.15,0.15,0.15,1)"
         local tcol    = slot and slot.textColor or "White"
@@ -3988,65 +4277,36 @@ function getEngineUiXml()
         local icon  = ""
         local iconW = ""
         local iconH = ""
-        if slot and slot.icon       then icon  = 'icon="'       .. slot.icon       .. '"' end
-        if slot and slot.iconWidth  then iconW = 'iconWidth="'  .. slot.iconWidth  .. '"' end
-        if slot and slot.iconHeight then iconH = 'iconHeight="' .. slot.iconHeight .. '"' end
+        if slot and slot.icon then
+            icon  = 'icon="'       .. slot.icon                  .. '"'
+            iconW = 'iconWidth="'  .. (slot.iconWidth  or 32)    .. '"'
+            iconH = 'iconHeight="' .. (slot.iconHeight or 32)    .. '"'
+        end
 
         buttons = buttons .. string.format(
-            '<Button id="%s" %s %s %s text="%s" fontSize="13" width="%d" height="41" ' ..
+            '<Button id="%s" text="%s" fontSize="13" width="%d" height="%d" ' ..
             'position="%d %g 0" color="%s" textColor="%s" active="%s" ' ..
             'onClick="%s" image="Sprites/Layout/Button" ' ..
             'outline="#3A2A1AFF" outlineSize="1"/>\n',
-            id, icon, iconW, iconH, label, w, pos.x, pos.y, color, tcol, active, onclick
+            id, label, w, h, pos.x, pos.y, color, "Yellow", active, onclick
         )
     end
 
     local panels = [[
-        <Panel id="logo_panel" rectAlignment="UpperCenter" width="550" height="250" offsetXY="-700 0">
-            <Image image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/logo/warforge01.png" preserveAspect="1"/>
+        <Panel id="logo_panel" rectAlignment="UpperCenter" width="650" height="500" offsetXY="-700 80">
+            <Image image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/logo/logo01.png" preserveAspect="1"/>
         </Panel>
-        <Panel id="warning" rectAlignment="LowerCenter" width="600" height="30" color="rgba(0,0,0,0.0)" offsetXY="0 700">
-            <Text id="textWarning" text="" fontSize="26" fontStyle="Bold" color="rgba(212,175,55,0.9)" outline="#000000" outlineSize="2" alignment="MiddleCenter"/>
-        </Panel>
-        <Panel id="warforgeBar" position="0 -440 0">
-           <Image id="warforgeBarBg" image="https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/bbar01.png" height="500" preserveAspect="true"/>
+        <Panel id="panelVersion"
+            rectAlignment="UpperCenter"
+            width="420"
+            height="30"
+            color="rgba(0,0,0,0.35)"
+            offsetXY="-700 -320">
+            <Text id="versione" text="" fontSize="14" fontStyle="Bold" color="Yellow" alignment="MiddleCenter"/>
+        </Panel> 
+        <Panel id="warforgeBar" position="1105 0" rectAlignment="MiddleRight">
         ]] .. buttons .. [[
-        </Panel>
-
-        <!-- Popup dettaglio unità selezionata -->
-        <Panel id="unit_popup"
-               rectAlignment="MiddleCenter"
-               width="320" height="260"
-               color="rgba(15,15,15,0.95)"
-               outline="#C8A830FF"
-               outlineSize="2"
-               offsetXY="400 0"
-               active="false">
-            <VerticalLayout padding="14 14 14 14" spacing="6">
-                <HorizontalLayout childAlignment="MiddleCenter" spacing="8">
-                    <Text id="unit_popup_title"
-                          text=""
-                          fontSize="15"
-                          fontStyle="Bold"
-                          color="#C8A830FF"
-                          alignment="MiddleCenter"/>
-                    <Button text="X"
-                            fontSize="11"
-                            color="#CC2200FF"
-                            textColor="White"
-                            width="24" height="24"
-                            onClick="onUnitPopupClose"/>
-                </HorizontalLayout>
-                <Panel height="1" color="#C8A830AA"/>
-                <Text id="unit_popup_esercito" text="" fontSize="11" color="#BBBBBBFF"/>
-                <Text id="unit_popup_basi"     text="" fontSize="11" color="#BBBBBBFF"/>
-                <Text id="unit_popup_figure"   text="" fontSize="11" color="#BBBBBBFF"/>
-                <Text id="unit_popup_arma"     text="" fontSize="11" color="#BBBBBBFF"/>
-                <Text id="unit_popup_salute"   text="" fontSize="11" color="#BBBBBBFF"/>
-                <Text id="unit_popup_qualita"  text="" fontSize="11" color="#BBBBBBFF"/>
-                <Text id="unit_popup_wounds"   text="" fontSize="11" color="#FF6600FF"/>
-            </VerticalLayout>
-        </Panel>
+        </Panel>    
     ]]
 
     return panels
@@ -4064,106 +4324,6 @@ function buildUI()
     local bottom = "</XmlLayout>"
     UI.setXml(header .. rulesetXml .. enginePanels .. bottom)
 end
-
--- ============================================================
--- FUNZIONE: mostraPopupUnita(obj)
--- Mostra il popup con le info dell'unità selezionata
--- Chiamare da onObjectPickUp o da menu contestuale
--- ============================================================
-function mostraPopupUnita(obj)
-    if obj == nil then return end
-
-    local slot = nil
-    if obj.hasTag("Army1") then slot = 1 end
-    if obj.hasTag("Army2") then slot = 2 end
-    if slot == nil then return end
-
-    local nickname = obj.getName()
-    local baseInfo = deployment_parseNickname(nickname)
-    if not baseInfo then return end
-
-    -- Trova unità in DEPLOYMENT.scanned
-    local unita = nil
-    local esercito = DEPLOYMENT.scanned[slot]
-    if esercito then
-        for _, u in ipairs(esercito) do
-            if u.tipo == baseInfo.unitType and u.unita_num == baseInfo.unitNumber then
-                unita = u
-                break
-            end
-        end
-    end
-
-    if not unita then return end
-
-    local fpb     = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 1
-    local fig_att = lionheart_figureTotaliUnita(unita)
-    local fig_max = (unita.basi_max or #unita.basi) * fpb
-    local basi_p  = lionheart_basiPresentiUnita(unita)
-    local perc    = fig_max > 0 and (fig_att / fig_max) or 0
-    local wounds  = wounds_data and wounds_data[nickname] or 0
-
-    local salute
-    if perc > 0.6     then salute = "BUONA"
-    elseif perc > 0.3 then salute = "CRITICA"
-    else                    salute = "GRAVE" end
-
-    local val_str = (unita.valore == "S" or unita.valore == 1)  and "Superiore" or
-                    (unita.valore == "I" or unita.valore == -1) and "Inferiore"  or "Normale"
-
-    local army_name = (DEPLOYMENT.armies and DEPLOYMENT.armies[slot] and DEPLOYMENT.armies[slot].displayName)
-                      or ("Army " .. slot)
-
-    UI.setAttribute("unit_popup_title",    "text", unita.nome_display or (unita.tipo .. "_" .. unita.unita_num))
-    UI.setAttribute("unit_popup_esercito", "text", "Esercito: " .. army_name)
-    UI.setAttribute("unit_popup_basi",     "text", "Basi: "    .. basi_p .. "/" .. (unita.basi_max or #unita.basi))
-    UI.setAttribute("unit_popup_figure",   "text", "Figure: "  .. fig_att .. "/" .. fig_max)
-    UI.setAttribute("unit_popup_arma",     "text", "Arma: "    .. (unita.arma or "---"))
-    UI.setAttribute("unit_popup_salute",   "text", "Salute: "  .. salute)
-    UI.setAttribute("unit_popup_qualita",  "text", "Qualita: " .. val_str)
-    UI.setAttribute("unit_popup_wounds",   "text", wounds > 0 and ("Ferite base: " .. wounds .. "/" .. fpb) or "")
-    UI.setAttribute("unit_popup",          "active", "true")
-end
-
--- ============================================================
--- FUNZIONE: onUnitPopupClose
--- ============================================================
-function onUnitPopupClose(player, value, id)
-    UI.setAttribute("unit_popup", "active", "false")
-end
-
--- ============================================================
--- FUNZIONE: lionheart_basiPresentiUnita(unita)
--- ============================================================
-function lionheart_basiPresentiUnita(unita)
-    local count = 0
-    for _, base in ipairs(unita.basi) do
-        local obj = getObjectFromGUID(base.guid)
-        if obj then count = count + 1 end
-    end
-    return count
-end
-
--- ============================================================
--- FUNZIONE: lionheart_figureTotaliUnita(unita)
--- ============================================================
-function lionheart_figureTotaliUnita(unita)
-    local fpb    = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 0
-    local figure = 0
-    for _, base in ipairs(unita.basi) do
-        local wounds = wounds_data and wounds_data[base.nickname] or 0
-        figure = figure + math.max(0, fpb - wounds)
-    end
-    return figure
-end
-
--- ============================================================
--- FUNZIONE: aggiornaSchedeUnita() — mantenuta per compatibilità
--- ============================================================
-function aggiornaSchedeUnita()
-    -- non più usata con il nuovo sistema popup
-end
-
 end)
 __bundle_register("engine.buttonbar.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
 require("engine.buttonbar.ui")
@@ -4234,7 +4394,7 @@ __bundle_register("engine.buttonbar.state", function(require, _LOADED, __bundle_
 ENGINE_BUTTONBAR = ENGINE_BUTTONBAR or {
     initialized = false,
     slots = {},
-    slotCount = 12,
+    slotCount = 10,
     xmlPrefix = "WF_BAR_"
 }
 
@@ -4303,16 +4463,16 @@ function engine_buttonBarRender()
         local slot = ENGINE_BUTTONBAR.slots[i]
         local id = engine_buttonBarSlotId(i)
 
-        UI.setAttribute(id, "text", slot.label or "")
+       -- UI.setAttribute(id, "text", slot.label or "")
         UI.setAttribute(id, "tooltip", slot.tooltip or "")
         UI.setAttribute(id, "active", slot.visible and "true" or "false")
         UI.setAttribute(id, "interactable", slot.enabled and "true" or "false")
         UI.setAttribute(id, "color", slot.color)
         UI.setAttribute(id, "colors", slot.colors)
         UI.setAttribute(id, "textColor", slot.textColor)
-        UI.setAttribute(id, "icon", slot.icon)
-        UI.setAttribute(id, "iconWidth", slot.iconWidth)
-        UI.setAttribute(id, "iconHeight", slot.iconHeight)
+        --UI.setAttribute(id, "icon", slot.icon)
+        --UI.setAttribute(id, "iconWidth", slot.iconWidth)
+        --UI.setAttribute(id, "iconHeight", slot.iconHeight)
     end
 
     return true
@@ -4790,15 +4950,19 @@ __bundle_register("common.utils", function(require, _LOADED, __bundle_register, 
 -- FUNZIONE: error()
 -- ============================================================
     function error(warning) 
-        return fadeOut(warning)
+        return fadeOut(warning, nil)
     end
 -- ============================================================
 -- FUNZIONE: fadeOut()
 -- ============================================================
-    function fadeOut(warning)
+    function fadeOut(warning, player)
 
         local alpha = 1
         
+        if player then
+            UI.setAttribute("textWarning", "visibility", player.color)
+        end
+
         UI.setAttribute("textWarning", "active", "true")
         UI.setAttribute("textWarning", "text", warning)
 
@@ -4831,7 +4995,6 @@ __bundle_register("common.utils", function(require, _LOADED, __bundle_register, 
     function dice_roll()
         return math.random(1,6)
     end
-
 end)
 __bundle_register("common.constants", function(require, _LOADED, __bundle_register, __bundle_modules)
 ACTION = {
