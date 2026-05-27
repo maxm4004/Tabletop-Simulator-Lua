@@ -48,6 +48,14 @@
         "textColor": "#FFFFFF|#FF0000",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_columnDown"
+      },
+      "7": {
+        "label": "Range", 
+        "tooltip": "shows the range of the weapon",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|#FF0000",
+        "onClick": "engine_buttonBarClick",
+        "callBack": "lionheart_showRange"
       }
     }
   }
