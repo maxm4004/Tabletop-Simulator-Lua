@@ -53,11 +53,12 @@ army2 = "Army2"
 require("common.constants")
 require("common.utils")
 
-
+require("engine.measure")
 require("engine.dispatcher")
 require("engine.boot")
 require("engine.core")
 require("engine.buttonbar.loader") 
+require("engine.tools.dice") 
 require("engine.ui")
 require("engine.input")
 require("engine.conditions")
@@ -593,7 +594,8 @@ function getRulesetUiXml()
 end
 end)
 __bundle_register("rulesets.lionheart.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
-require("rulesets.lionheart.deployment.loader")
+require("rulesets.lionheart.deploy.loader")
+require("rulesets.lionheart.shoot.shooting")
 
 require("rulesets.lionheart.ui")
 require("rulesets.lionheart.conditions")
@@ -796,6 +798,8 @@ function lionheart_onSave()
         colorArmy1 = colorArmy1,
         colorArmy2 = colorArmy2,
         wounds_data   = wounds_data,
+        deployment_armies = DEPLOYMENT and DEPLOYMENT.armies or nil,
+
     }
 
     return JSON.encode(saveData)
@@ -848,6 +852,11 @@ function restoreState(save_state)
 
     if data.wounds_data then
         wounds_data = data.wounds_data
+    end
+
+    if data.deployment_armies then
+        DEPLOYMENT = DEPLOYMENT or {}
+        DEPLOYMENT.armies = data.deployment_armies
     end
 
     Wait.time(function()
@@ -1498,6 +1507,16 @@ DEPLOY_CM     = 8
         for r=0,rows do local z=-VERDE_LZ+r*sz; table.insert(linee,{points={{-VERDE_LX,y,z},{VERDE_LX,y,z}},color={r=0.2,g=0.8,b=0.8},thickness=0.1}) end
     end
 
+    if ENGINE_MEASURE and ENGINE_MEASURE.activeLine then
+       table.insert(linee, ENGINE_MEASURE.activeLine)
+    end
+
+    if LIONHEART_SHOOTING and LIONHEART_SHOOTING.activeLines then
+        for _, l in ipairs(LIONHEART_SHOOTING.activeLines) do
+            table.insert(linee, l)
+        end
+    end
+
     Global.setVectorLines(linee)
 end    
 -- ============================================================
@@ -2032,7 +2051,7 @@ crownUrl = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/re
 leftArrowUrl = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr1.png"
 rightArrowUrl = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/images/arr1.png"
 
-LIONHEART_BUTTONBAR_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/rulesets/lionheart/buttonbar.json"
+LIONHEART_BUTTONBAR_URL = "https://raw.githubusercontent.com/maxm4004/Tabletop-Simulator-Lua/refs/heads/main/Json/buttonbar.json"
 
 
 ARMY = {
@@ -2258,6 +2277,7 @@ end
 -- FUNZIONE: lionheart_getSelectedObjects()
 -- ============================================================
 function lionheart_getSelectedObjects(player)
+
     if player then
         local selected = Player[player.color].getSelectedObjects()
         if selected and #selected > 0 then return selected end
@@ -2275,8 +2295,10 @@ end
 -- FUNZIONE: lionheart_showRange()
 -- ============================================================
 function lionheart_showRange(player, value, id, buttonConfig)
-    local selected = lionheart_getSelectedObjects()
-    if selected == nil or #selected < 1 then
+
+    local selected = lionheart_getSelectedObjects(player)
+
+    if not selected or #selected < 1 then
         printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
         return false
     end
@@ -2286,17 +2308,36 @@ function lionheart_showRange(player, value, id, buttonConfig)
     local fwd = shooter.getTransformForward()
     local dir = Vector(fwd.x, 0, fwd.z):normalized()
     local angle = math.rad(LIONHEART_SHOOTING.angle)
-    local points = {}
+    local range = LIONHEART_SHOOTING.range
 
+    -- Calcola i punti dell'arco
+    local arcPoints = {}
     for i = 0, 30 do
         local t = i / 30
         local a = -angle + (2 * angle * t)
-        local d = Vector(dir.x * math.cos(a) - dir.z * math.sin(a), 0, dir.x * math.sin(a) + dir.z * math.cos(a))
-        local p = Vector(pos.x + d.x * LIONHEART_SHOOTING.range, pos.y + 0.1, pos.z + d.z * LIONHEART_SHOOTING.range)
-        table.insert(points, shooter.positionToLocal(p))
+        local d = Vector(
+            dir.x * math.cos(a) - dir.z * math.sin(a),
+            0,
+            dir.x * math.sin(a) + dir.z * math.cos(a)
+        )
+        local p = Vector(pos.x + d.x * range, pos.y + 0.1, pos.z + d.z * range)
+        table.insert(arcPoints, shooter.positionToLocal(p))
     end
 
-    shooter.setVectorLines({{points = points, color = {1, 0.8, 0.1}, thickness = 0.1}})
+    -- Punto origine in locale
+    local origin = shooter.positionToLocal(Vector(pos.x, pos.y + 0.1, pos.z))
+
+    -- Linea sinistra: origine → primo punto arco
+    local leftLine  = {origin, arcPoints[1]}
+    -- Linea destra: origine → ultimo punto arco
+    local rightLine = {origin, arcPoints[#arcPoints]}
+
+    shooter.setVectorLines({
+        {points = leftLine,  color = {1, 0.8, 0.1}, thickness = 0.1},
+        {points = arcPoints, color = {1, 0.8, 0.1}, thickness = 0.1},
+        {points = rightLine, color = {1, 0.8, 0.1}, thickness = 0.1},
+    })
+
     LIONHEART_SHOOTING.activeShooter = shooter
 
     Wait.time(function()
@@ -2306,14 +2347,120 @@ function lionheart_showRange(player, value, id, buttonConfig)
     return true
 end
 -- ============================================================
+-- FUNZIONE: lionheart_range_and_target()
+-- ============================================================
+function lionheart_range_and_target(player, value, id, buttonConfig)
+
+    local selected = lionheart_getSelectedObjects(player)
+    if not selected or #selected < 1 then
+        printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local shooter = selected[1]
+    local shooterSlot = nil
+    if shooter.hasTag("Army1") then shooterSlot = 1 end
+    if shooter.hasTag("Army2") then shooterSlot = 2 end
+    if shooterSlot == nil then return false end
+
+    local nickname    = shooter.getName()
+    local baseInfo    = deployment_parseNickname(nickname)
+    local shooterUnit = baseInfo and lionheart_findUnit(shooterSlot, baseInfo.unitType, baseInfo.unitNumber)
+    local weapon      = shooterUnit and shooterUnit.arma and LIONHEART_RULES.weapons[shooterUnit.arma]
+    local rangeCm     = weapon and weapon.range or LIONHEART_SHOOTING.range
+    local scale       = (ENGINE_MEASURE and ENGINE_MEASURE.SCALE) or 1.257
+    local rangeUnits  = weapon and weapon.rangeUnits or (rangeCm / scale)
+
+    -- Offset tiratore per cono visivo corretto (bordo-bordo)
+    local offsetTiratore      = ENGINE_MEASURE.BASE_OFFSET[shooterUnit and shooterUnit.tipo or ""] or ENGINE_MEASURE.DEFAULT_OFFSET
+    local offsetTiratoreUnits = offsetTiratore / scale
+    local rangeVisivo         = rangeUnits + offsetTiratoreUnits  -- cono visivo dal centro
+    local rangeEffettivo      = rangeUnits                        -- rilevamento bordo-bordo
+
+    local pos   = shooter.getPosition()
+    local fwd   = shooter.getTransformForward()
+    local dir   = Vector(fwd.x, 0, fwd.z):normalized()
+    local angle = math.rad(LIONHEART_SHOOTING.angle)
+
+    -- Arco con rangeVisivo (dal centro, visivamente corretto)
+    local arcPoints = {}
+    for i = 0, 30 do
+        local t = i / 30
+        local a = -angle + (2 * angle * t)
+        local d = Vector(
+            dir.x * math.cos(a) - dir.z * math.sin(a),
+            0,
+            dir.x * math.sin(a) + dir.z * math.cos(a)
+        )
+        table.insert(arcPoints, Vector(pos.x + d.x * rangeVisivo, pos.y + 0.1, pos.z + d.z * rangeVisivo))
+    end
+
+    local origin    = Vector(pos.x, pos.y + 0.1, pos.z)
+    local leftLine  = {origin, arcPoints[1]}
+    local rightLine = {origin, arcPoints[#arcPoints]}
+
+    -- Rilevamento con rangeEffettivo (bordo-bordo)
+    local target, dist = lionheart_findNearestEnemy(shooter, shooterSlot, rangeEffettivo)
+
+    local lines = {
+        {points = leftLine,  color = {1, 0.8, 0.1}, thickness = 0.1},
+        {points = arcPoints, color = {1, 0.8, 0.1}, thickness = 0.1},
+        {points = rightLine, color = {1, 0.8, 0.1}, thickness = 0.1},
+    }
+
+    if target then
+        local targetPos = target.getPosition()
+        table.insert(lines, {
+            points    = {origin, Vector(targetPos.x, targetPos.y + 0.1, targetPos.z)},
+            color     = {1, 0.2, 0.2},
+            thickness = 0.15
+        })
+
+        target.highlightOn({1, 0.2, 0.2}, 10)
+
+        LIONHEART_SHOOT_STATE.shooter     = shooter
+        LIONHEART_SHOOT_STATE.target      = target
+        LIONHEART_SHOOT_STATE.shooterUnit = shooterUnit
+        LIONHEART_SHOOT_STATE.shooterSlot = shooterSlot
+
+        local targetInfo = deployment_parseNickname(target.getName())
+        local targetSlot = shooterSlot == 1 and 2 or 1
+        local targetUnit = targetInfo and lionheart_findUnit(targetSlot, targetInfo.unitType, targetInfo.unitNumber)
+        LIONHEART_SHOOT_STATE.targetUnit = targetUnit
+        LIONHEART_SHOOT_STATE.targetSlot = targetSlot
+
+        local distCm = dist * scale
+        local msg = string.format("[TIRO] Bersaglio: %s (dist: %.1fcm / gittata: %dcm) — !shoot per confermare",
+            target.getName(), distCm, rangeCm)
+        printToColor(msg, player.color, {r=1,g=0.85,b=0.2})
+    else
+        printToColor("[TIRO] Nessun bersaglio entro gittata (" .. rangeCm .. "cm)", player.color, {r=0.7,g=0.7,b=0.7})
+    end
+
+    LIONHEART_SHOOTING.activeShooter = shooter
+    LIONHEART_SHOOTING.activeLines   = lines
+
+    callHandler("aggiornaLinee")
+
+    Wait.time(function()
+        LIONHEART_SHOOTING.activeLines = nil
+        if target ~= nil then target.highlightOff() end
+        callHandler("aggiornaLinee")
+    end, 10)
+
+    return true
+end
+-- ============================================================
 -- FUNZIONE: lionheart_fire()
 -- ============================================================
 function lionheart_fire(player, value, id, buttonConfig)
-    local selected = lionheart_getSelectedObjects()
+
+    local selected = lionheart_getSelectedObjects(player)
     if selected == nil or #selected < 1 then
         printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
         return false
     end
+
 
     local shooter = selected[1]
     if LIONHEART_SHOOTING.activeAnimation ~= nil then LIONHEART_SHOOTING.activeAnimation.active = false end
@@ -2377,24 +2524,24 @@ end
 -- ============================================================
 -- FUNZIONE: lionheart_lineLeft()
 -- ============================================================
-function lionheart_lineLeft(player, value, id, buttonConfig) return lionheart_applyFormation("lineLeft") end
+function lionheart_lineLeft(player, value, id, buttonConfig) return lionheart_applyFormation("lineLeft", player) end
 -- ============================================================
 -- FUNZIONE: lionheart_lineRight()
 -- ============================================================
-function lionheart_lineRight(player, value, id, buttonConfig) return lionheart_applyFormation("lineRight") end
+function lionheart_lineRight(player, value, id, buttonConfig) return lionheart_applyFormation("lineRight", player) end
 -- ============================================================
 -- FUNZIONE: lionheart_columnUp()
 -- ============================================================
-function lionheart_columnUp(player, value, id, buttonConfig) return lionheart_applyFormation("columnUp") end
+function lionheart_columnUp(player, value, id, buttonConfig) return lionheart_applyFormation("columnUp", player) end
 -- ============================================================
 -- FUNZIONE: lionheart_columnDown()
 -- ============================================================
-function lionheart_columnDown(player, value, id, buttonConfig) return lionheart_applyFormation("columnDown") end
+function lionheart_columnDown(player, value, id, buttonConfig) return lionheart_applyFormation("columnDown", player) end
 -- ============================================================
 -- FUNZIONE: lionheart_applyFormation()
 -- ============================================================
-function lionheart_applyFormation(mode)
-    local selected = lionheart_getSelectedObjects()
+function lionheart_applyFormation(mode, player)
+    local selected = lionheart_getSelectedObjects(player)
     if selected == nil or #selected < 2 then
         printToAll("[FORMAZIONE] Seleziona almeno 2 basi", {r=1,g=0.6,b=0})
         return false
@@ -2445,8 +2592,6 @@ function lionheart_infoUnita(player, value, id, buttonConfig)
     if playerSlot == nil then return false end
 
     local armyTag = "Army" .. tostring(playerSlot)
-
-    printToColor(armyTag, player.color)
 
     if not obj.hasTag(armyTag) then
         printToColor("[INFO] Not your unit", player.color, {r=1,g=0.3,b=0.3})
@@ -2502,7 +2647,6 @@ function getRulesetUiXml()
     for slot = 1, 2 do
         local p  = "unit_popup_" .. slot
         local ox = offsets[slot]
-
         popups = popups .. string.format([[
     <Panel id="%s"
            rectAlignment="MiddleCenter"
@@ -2521,41 +2665,48 @@ function getRulesetUiXml()
         <Image id="%s_icon"
                image="ai"
                width="120" height="130"
-               position="-140 155 0"
-               preserveAspect="true"/>
+               position="-145 155 0"
+               preserveAspect="true"
+               outline="#000000" outlineSize="2"
+               />
 
         <Text id="%s_title"
-              text="" fontSize="18" fontStyle="Bold"
+              text="" fontSize="16" fontStyle="Bold"
               color="#F0C040FF" alignment="UpperLeft"
-              position="45 205 0" width="220" height="30"
+              position="50 205 0" width="220" height="30"
               outline="#000000" outlineSize="1"/>
 
         <Text id="%s_subtitle"
               text="" fontSize="14"
               color="#FFFFFFFF" alignment="UpperLeft"
-              position="45 180 0" width="220" height="20"/>
+              position="25 180 0" width="220" height="20"/>
 
         <Text id="%s_basi"
               text="" fontSize="14"
               color="#FFFFFFFF" alignment="UpperLeft"
-              position="45 155 0" width="220" height="20"/>
+              position="25 155 0" width="220" height="20"/>
 
         <Text id="%s_figure"
               text="" fontSize="14"
               color="#FFFFFFFF" alignment="UpperLeft"
-              position="45 130 0" width="220" height="20"/>
+              position="25 130 0" width="220" height="20"/>
 
         <Text id="%s_salute"
               text="" fontSize="14" fontStyle="Bold"
               color="#F0C040FF" alignment="UpperLeft"
-              position="45 105 0" width="220" height="20"/>
+              position="175 130 0" width="220" height="20"  outline="#000000" outlineSize="1"/>
 
-        <Panel width="380" height="1" position="0 80 0" color="#F0C04066"/>
+        <Text id="%s_weapon"
+              text="" fontSize="14" fontStyle="Bold"
+              color="Orange" alignment="UpperLeft"
+              position="25 105 0" width="220" height="20" outline="#000000" outlineSize="1"/>      
 
+        <Panel width="380" height="1" position="0 80 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
         <Text text="MOVEMENT" fontSize="14" fontStyle="Bold"
               color="#F0C040FF" alignment="MiddleCenter"
-              position="0 65 0" width="380" height="18"
+              position="0 70 0" width="380" height="18"
               outline="#000000" outlineSize="1"/>
+        <Panel width="380" height="1" position="0 60 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
 
         <Text text="Open"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-140 45 0" width="70" height="16" outline="#000000" outlineSize="1"/>
         <Text text="Wood"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-70 45 0"  width="70" height="16" outline="#000000" outlineSize="1"/>
@@ -2569,12 +2720,12 @@ function getRulesetUiXml()
         <Text id="%s_mov_ford"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="70 27 0"  width="70" height="18"/>
         <Text id="%s_mov_pivot" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="140 27 0" width="70" height="18"/>
 
-        <Panel width="380" height="1" position="0 10 0" color="#F0C04066"/>
-
+        <Panel width="380" height="1" position="0 10 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
         <Text text="MELEE" fontSize="14" fontStyle="Bold"
               color="#F0C040FF" alignment="MiddleCenter"
-              position="0 -5 0" width="380" height="18"
+              position="0 0 0" width="380" height="18"
               outline="#000000" outlineSize="1"/>
+        <Panel width="380" height="1" position="0 -10 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
 
         <Text text="AI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-150 -23 0" width="55" height="16" outline="#000000" outlineSize="1"/>
         <Text text="UI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-95 -23 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
@@ -2590,14 +2741,14 @@ function getRulesetUiXml()
         <Text id="%s_mel_uc"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="75 -42 0"   width="55" height="18"/>
         <Text id="%s_mel_skc" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="133 -42 0"  width="55" height="18"/>
 
-        <Panel width="380" height="1" position="0 -60 0" color="#F0C04066"/>
-
+        <Panel width="380" height="1" position="0 -60 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
         <Text id="%s_shoot_label"
               text="SHOOTING" fontSize="14" fontStyle="Bold"
               color="#F0C040FF" alignment="MiddleCenter"
-              position="0 -75 0" width="380" height="18"
+              position="0 -70 0" width="380" height="18"
               outline="#000000" outlineSize="1"/>
-
+        <Panel width="380" height="1" position="0 -80 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
+      
         <Text text="AI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-150 -93 0" width="55" height="16" outline="#000000" outlineSize="1"/>
         <Text text="UI"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-95 -93 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
         <Text text="SK"  fontSize="11" color="#F0C040FF" alignment="MiddleCenter" position="-40 -93 0"  width="55" height="16" outline="#000000" outlineSize="1"/>
@@ -2612,16 +2763,16 @@ function getRulesetUiXml()
         <Text id="%s_sho_uc"  text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="75 -112 0"   width="55" height="18"/>
         <Text id="%s_sho_skc" text="" fontSize="11" fontStyle="Bold" color="#FFFFFFFF" alignment="MiddleCenter" position="133 -112 0"  width="55" height="18"/>
 
-        <Panel width="380" height="1" position="0 -130 0" color="#F0C04066"/>
-
+        <Panel width="380" height="1" position="0 -130 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
         <Text text="SPECIAL RULES" fontSize="14" fontStyle="Bold"
               color="#F0C040FF" alignment="MiddleCenter"
-              position="0 -145 0" width="380" height="18"
+              position="0 -140 0" width="380" height="18"
               outline="#000000" outlineSize="1"/>
+        <Panel width="380" height="1" position="0 -150 0" color="#F0C04066"  outline="#000000" outlineSize="1"/>
 
         <Text id="%s_special"
               text="" fontSize="11"
-              color="#DDDDDDFF" alignment="UpperCenter"
+              color="#FFFFFFFF" alignment="UpperCenter"
               position="-100 -185 0" width="370" height="60"/>
 
     </Panel>
@@ -2753,19 +2904,21 @@ function mostraPopupUnita(obj, player)
 
     local p      = "unit_popup_" .. slot
     local tipo   = unita.tipo
-    local arma   = unita.weapon
+    local arma   = unita.arma
     local rules  = LIONHEART_RULES and LIONHEART_RULES.units[tipo]
+
     local fpb    = (LIONHEART_DATA.unitTypes[tipo] or {}).fpb or 1
     local fig_att  = lionheart_figureTotaliUnita(unita)
     local fig_max  = (unita.basi_max or #unita.basi) * fpb
     local basi_p   = lionheart_basiPresentiUnita(unita)
     local basi_max = unita.basi_max or #unita.basi
     local perc     = fig_max > 0 and (fig_att / fig_max) or 0
-
+    
     local salute
-    if perc > 0.6     then salute = "OK"
-    elseif perc > 0.3 then salute = "CRITICAL"
-    else                    salute = "GRAVE" end
+    if perc == 1.0   then salute = "Healthy"
+    elseif perc > 0.5 then salute = "Weakened"
+    elseif perc > 0   then salute = "Critical"
+    else                   salute = "Destroyed" end
 
     local army_name = (DEPLOYMENT.armies and DEPLOYMENT.armies[slot] and DEPLOYMENT.armies[slot].displayName) or ("Army " .. slot)
     local val_str   = (unita.valore == "S" or unita.valore == 1)  and "Superior" or
@@ -2780,6 +2933,12 @@ function mostraPopupUnita(obj, player)
     UI.setAttribute(p .. "_basi",     "text",  "Bases:  " .. basi_p  .. " / " .. basi_max)
     UI.setAttribute(p .. "_figure",   "text",  "Figs:   " .. fig_att .. " / " .. fig_max)
     UI.setAttribute(p .. "_salute",   "text",  "Status: " .. salute)
+    if not arma then 
+        UI.setAttribute(p .. "_weapon", "active", "false")
+    else 
+        UI.setAttribute(p .. "_weapon", "active", "true")
+    end
+
 
     -- MOVIMENTO
     if rules then
@@ -2814,7 +2973,8 @@ function mostraPopupUnita(obj, player)
     if arma and LIONHEART_RULES and LIONHEART_RULES.weapons[arma] then
         local w   = LIONHEART_RULES.weapons[arma]
         local mth = w.min_to_hit
-        UI.setAttribute(p .. "_shoot_label", "text", "SHOOTING — " .. w.name .. " (" .. w.range .. "cm)")
+        UI.setAttribute(p .. "_shoot_label", "text", "SHOOTING")
+        UI.setAttribute(p .. "_weapon", "text", "Weapon: " .. w.name .. "    Range: " .. w.range)
         UI.setAttribute(p .. "_sho_ai",  "text", mth.AI  .. (tonumber(mth.AI)  == 6 and "" or "+"))
         UI.setAttribute(p .. "_sho_ui",  "text", mth.UI  .. (tonumber(mth.UI)  == 6 and "" or "+"))
         UI.setAttribute(p .. "_sho_sk",  "text", mth.SK  .. (tonumber(mth.SK)  == 6 and "" or "+"))
@@ -2885,16 +3045,236 @@ function aggiornaSchedeUnita()
 end
 
 end)
-__bundle_register("rulesets.lionheart.deployment.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
-require("rulesets.lionheart.data")
-require("rulesets.lionheart.deployment.state")
-require("rulesets.lionheart.deployment.config")
-require("rulesets.lionheart.deployment.spawner")
-require("rulesets.lionheart.deployment.army_loader")
-require("rulesets.lionheart.deployment.scanner")
-require("rulesets.lionheart.deployment.validator")
+__bundle_register("rulesets.lionheart.shoot.shooting", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- rulesets/lionheart/shooting.ttslua
+-- Gestione fase di tiro
+-- ============================================================
+
+LIONHEART_SHOOT_STATE = {
+    shooter     = nil,   -- oggetto tiratore
+    target      = nil,   -- oggetto bersaglio
+    shooterUnit = nil,   -- dati unità tiratore
+    targetUnit  = nil,   -- dati unità bersaglio
+    shooterSlot = nil,   -- slot army tiratore
+    targetSlot  = nil,   -- slot army bersaglio
+}
+
+-- ============================================================
+-- FUNZIONE: lionheart_shootConfirm(player)
+-- Chiamata da onChat "!shoot"
+-- ============================================================
+function lionheart_shootConfirm(player)
+
+    local state = LIONHEART_SHOOT_STATE
+    if not state.shooter or not state.target then
+        printToColor("[TIRO] Nessun tiro in attesa", player.color, {r=1,g=0.6,b=0})
+        return
+    end
+
+    local shooterUnit = state.shooterUnit
+    local targetUnit  = state.targetUnit
+    local weapon      = LIONHEART_RULES.weapons[shooterUnit.arma]
+    local soglia      = weapon.min_to_hit[targetUnit.tipo]
+
+    -- Calcola figure tiratore attive
+    local fig_att   = lionheart_figureTotaliUnita(shooterUnit)
+    local rules     = LIONHEART_RULES.units[shooterUnit.tipo]
+    local div       = rules and rules.shooting_div or 3
+    local numDadi   = math.floor(fig_att / div)
+
+    if numDadi <= 0 then
+        printToColor("[TIRO] Nessun dado da tirare (figure insufficienti)", player.color, {r=1,g=0.6,b=0})
+        lionheart_shootReset()
+        return
+    end
+
+    printToAll(string.format("[TIRO] %s tira %dD6 vs %s (soglia %d+)",
+        shooterUnit.tipo .. "_" .. shooterUnit.unita_num,
+        numDadi,
+        targetUnit.tipo  .. "_" .. targetUnit.unita_num,
+        soglia), {r=1,g=0.85,b=0.2})
+
+    -- Tiro dadi
+    engine_rollDice(numDadi, soglia, function(hits, results)
+        if hits > 0 then
+            lionheart_applyHits(state.targetUnit, state.targetSlot, hits, player)
+        else
+            printToAll("[TIRO] Nessun colpo a segno", {r=0.7,g=0.7,b=0.7})
+        end
+        lionheart_shootReset()
+    end)
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_shootCancel()
+-- ============================================================
+function lionheart_shootCancel(player)
+    if LIONHEART_SHOOT_STATE.target then
+        LIONHEART_SHOOT_STATE.target.highlightOff()
+    end
+    lionheart_shootReset()
+    printToColor("[TIRO] Annullato", player.color, {r=0.7,g=0.7,b=0.7})
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_shootReset()
+-- ============================================================
+function lionheart_shootReset()
+    LIONHEART_SHOOT_STATE = {
+        shooter=nil, target=nil,
+        shooterUnit=nil, targetUnit=nil,
+        shooterSlot=nil, targetSlot=nil
+    }
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_applyHits(unita, slot, hits, player)
+-- Applica N ferite all'unità distribuendole sulle basi
+-- ============================================================
+function lionheart_applyHits(unita, slot, hits, player)
+
+    local tipo      = unita.tipo
+    local unitTypeData = LIONHEART_DATA.unitTypes and LIONHEART_DATA.unitTypes[tipo] or {}
+    local fpb       = unitTypeData.fpb or 3
+    local rimasti   = hits
+    local basiRimosse = 0
+
+    wounds_data = wounds_data or {}
+
+    -- Distribuisce ferite base per base (dalla prima)
+    for _, base in ipairs(unita.basi) do
+        if rimasti <= 0 then break end
+
+        local nickname     = base.nickname
+        local ferite_curr  = wounds_data[nickname] or 0
+        local spazio       = fpb - ferite_curr
+
+        if spazio > 0 then
+            local da_aggiungere = math.min(rimasti, spazio)
+            wounds_data[nickname] = ferite_curr + da_aggiungere
+            rimasti = rimasti - da_aggiungere
+
+            -- Rimuovi base se ferite >= fpb
+            if wounds_data[nickname] >= fpb then
+                local obj = getObjectFromGUID(base.guid)
+                if obj then
+                    obj.highlightOn({1,0,0}, 2)
+                    Wait.time(function()
+                        if obj then obj.destruct() end
+                    end, 2)
+                    basiRimosse = basiRimosse + 1
+                end
+            else
+                -- Aggiorna tinta base ferita
+                local obj = getObjectFromGUID(base.guid)
+                if obj and aggiornaTintaBase then
+                    aggiornaTintaBase(obj, wounds_data[nickname], fpb)
+                end
+            end
+        end
+    end
+
+    -- Riscansiona unità aggiornate
+    Wait.time(function()
+        callHandler("deployment_scanTable")
+        -- Verifica soglia morale
+        lionheart_checkMorale(unita, slot, player)
+    end, 2.5)
+
+    local msg = string.format("[TIRO] %s subisce %d HIT — basi rimosse: %d",
+        tipo .. "_" .. unita.unita_num, hits, basiRimosse)
+    printToAll(msg, {r=1,g=0.4,b=0.4})
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_checkMorale(unita, slot, player)
+-- Verifica se l'unità deve testare il morale
+-- ============================================================
+function lionheart_checkMorale(unita, slot, player)
+
+    -- Rileggi unità aggiornata dopo scan
+    local unitaAgg = lionheart_findUnit(slot, unita.tipo, unita.unita_num)
+    if not unitaAgg then return end
+
+    local tipo     = unitaAgg.tipo
+    local fpb      = (LIONHEART_DATA.unitTypes[tipo] or {}).fpb or 1
+    local fig_att  = lionheart_figureTotaliUnita(unitaAgg)
+    local fig_max  = (unitaAgg.basi_max or #unitaAgg.basi) * fpb
+    local perc     = fig_max > 0 and (fig_att / fig_max) or 0
+
+    if perc == 0 then
+        printToAll("[MORALE] " .. tipo .. "_" .. unitaAgg.unita_num .. " — DESTROYED", {r=1,g=0.2,b=0.2})
+        return
+    end
+
+    if perc < 0.5 then
+        printToAll("[MORALE] " .. tipo .. "_" .. unitaAgg.unita_num .. " sotto 50% — TEST MORALE richiesto!", {r=1,g=0.6,b=0})
+    end
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_findNearestEnemy(shooter, shooterSlot, range)
+-- Trova il nemico più vicino entro la gittata (in TTS units)
+-- ============================================================
+function lionheart_findNearestEnemy(shooter, shooterSlot, rangeUnits)
+
+    local enemyTag  = shooterSlot == 1 and "Army2" or "Army1"
+    local pos       = shooter.getPosition()
+    local fwd       = shooter.getTransformForward()
+    local dir       = Vector(fwd.x, 0, fwd.z):normalized()
+    local halfAngle = math.rad(LIONHEART_SHOOTING.angle)
+    local nearest   = nil
+    local minDist   = 999999
+
+    for _, obj in ipairs(getAllObjects()) do
+        if obj ~= shooter and obj.hasTag and obj.hasTag(enemyTag) then
+            local objPos = obj.getPosition()
+            if objPos then
+                local toObj = Vector(objPos.x - pos.x, 0, objPos.z - pos.z)
+                local d     = toObj:magnitude()
+                if d > 0 and d <= rangeUnits then
+                    local toObjNorm = toObj:normalized()
+                    local dot       = dir.x * toObjNorm.x + dir.z * toObjNorm.z
+                    local angle     = math.acos(math.max(-1, math.min(1, dot)))
+                    if angle <= halfAngle and d < minDist then
+                        minDist = d
+                        nearest = obj
+                    end
+                end
+            end
+        end
+    end
+
+    return nearest, minDist
+end
+-- ============================================================
+-- FUNZIONE: lionheart_findUnit(slot, tipo, unita_num)
+-- Trova un'unità in DEPLOYMENT.scanned
+-- ============================================================
+function lionheart_findUnit(slot, tipo, unita_num)
+    local esercito = DEPLOYMENT.scanned and DEPLOYMENT.scanned[slot]
+    if not esercito then return nil end
+
+    for _, u in ipairs(esercito) do
+        if u.tipo == tipo and u.unita_num == unita_num then
+            return u
+        end
+    end
+    return nil
+end
+
 end)
-__bundle_register("rulesets.lionheart.deployment.validator", function(require, _LOADED, __bundle_register, __bundle_modules)
+__bundle_register("rulesets.lionheart.deploy.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+require("rulesets.lionheart.data")
+require("rulesets.lionheart.deploy.state")
+require("rulesets.lionheart.deploy.config")
+require("rulesets.lionheart.deploy.spawner")
+require("rulesets.lionheart.deploy.army_loader")
+require("rulesets.lionheart.deploy.scanner")
+require("rulesets.lionheart.deploy.validator")
+end)
+__bundle_register("rulesets.lionheart.deploy.validator", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- LIONHEART DEPLOYMENT / VALIDATOR
 -- Porting diretto di verificaDeploy
@@ -3058,7 +3438,7 @@ function deployment_debugDrawRect(x1, z1, x2, z2, y, color)
     })
 end
 end)
-__bundle_register("rulesets.lionheart.deployment.scanner", function(require, _LOADED, __bundle_register, __bundle_modules)
+__bundle_register("rulesets.lionheart.deploy.scanner", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- LIONHEART DEPLOYMENT / SCANNER
 -- Ricostruzione unità da oggetti TTS.
@@ -3135,7 +3515,7 @@ function deployment_readBaseInfo(obj, slot)
     local metadata = nil
 
     if obj.getVar ~= nil then
-        local raw = obj.getVar("lh_metadata_json")
+        local raw = obj.getGMNotes()
 
         if raw ~= nil and raw ~= "" then
             local ok, decoded = pcall(JSON.decode, raw)
@@ -3215,7 +3595,7 @@ function deployment_groupsToList(groups, slot)
 end
 
 end)
-__bundle_register("rulesets.lionheart.deployment.army_loader", function(require, _LOADED, __bundle_register, __bundle_modules)
+__bundle_register("rulesets.lionheart.deploy.army_loader", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- LIONHEART DEPLOYMENT / ARMY LOADER
 -- Callback ponte -> load army slot.
@@ -3324,10 +3704,9 @@ function deployment_applyArmyPlayer(slot, playerName, playerColor)
 end
 
 end)
-__bundle_register("rulesets.lionheart.deployment.spawner", function(require, _LOADED, __bundle_register, __bundle_modules)
+__bundle_register("rulesets.lionheart.deploy.spawner", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- LIONHEART DEPLOYMENT / SPAWNER
--- Porting pulito di generaUnitaFromJson.
 -- ============================================================
 
 function deployment_spawnArmy(slot, armyData)
@@ -3535,6 +3914,7 @@ function deployment_applyBaseTags(obj, slot, armyTag, unitData, baseData)
 end
 
 function deployment_applyBaseMetadata(obj, slot, armyTag, nickname, unitData, baseData)
+   
     local metadata = {
         ruleset = "LIONHEART",
         kind = "UNIT_BASE",
@@ -3549,7 +3929,8 @@ function deployment_applyBaseMetadata(obj, slot, armyTag, nickname, unitData, ba
         wounds = baseData.ferite or 0
     }
 
-    obj.setVar("lh_metadata_json", JSON.encode(metadata))
+    obj.setGMNotes(JSON.encode(metadata))
+    --obj.setVar("lh_metadata_json", JSON.encode(metadata))
 end
 
 function deployment_applyBaseVisibility(obj, slot)
@@ -3638,7 +4019,7 @@ function deployment_revealAllSpawned()
 end
 
 end)
-__bundle_register("rulesets.lionheart.deployment.config", function(require, _LOADED, __bundle_register, __bundle_modules)
+__bundle_register("rulesets.lionheart.deploy.config", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- LIONHEART DEPLOYMENT / CONFIG
 -- Caricamento remoto main/config/regolamento/template.
@@ -3868,7 +4249,7 @@ function deployment_buildTemplateIndex()
     end
 end
 end)
-__bundle_register("rulesets.lionheart.deployment.state", function(require, _LOADED, __bundle_register, __bundle_modules)
+__bundle_register("rulesets.lionheart.deploy.state", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- LIONHEART DEPLOYMENT / STATE
 -- Stato runtime del deploy.
@@ -4042,12 +4423,12 @@ LIONHEART_RULES = {
         CinC= { name="Commander in Chief",  icon="cinc", mov={open=35,wood=16,rough=16,ford=20,pivot=8},  shooting_div=nil,special={"Does not count in losses"} },
     },
     weapons = {
-        ARC  = { name="Bow",       range=30, min_to_hit={SK=5,UI=5,AI=6,SKC=5,UC=5,AC=6} },
-        ARCL = { name="Longbow",   range=35, min_to_hit={SK=5,UI=4,AI=5,SKC=5,UC=5,AC=5} },
-        BAL  = { name="Crossbow",  range=35, min_to_hit={SK=5,UI=4,AI=5,SKC=5,UC=5,AC=5} },
-        FROM = { name="Sling",     range=20, min_to_hit={SK=6,UI=5,AI=6,SKC=6,UC=5,AC=6} },
-        GIAV = { name="Javelin",   range=10, min_to_hit={SK=6,UI=5,AI=6,SKC=6,UC=5,AC=6} },
-        HAN  = { name="Handgun",   range=10, min_to_hit={SK=6,UI=5,AI=5,SKC=5,UC=4,AC=5} },
+        ARC  = { name="Bow",       range=30, rangeUnits=24, min_to_hit={SK=5,UI=5,AI=6,SKC=5,UC=5,AC=6} },
+        ARCL = { name="Longbow",   range=35, rangeUnits=28, min_to_hit={SK=5,UI=4,AI=5,SKC=5,UC=5,AC=5} },
+        BAL  = { name="Crossbow",  range=35, rangeUnits=29.3, min_to_hit={SK=5,UI=4,AI=5,SKC=5,UC=5,AC=5} },
+        FROM = { name="Sling",     range=20, rangeUnits=16, min_to_hit={SK=6,UI=5,AI=6,SKC=6,UC=5,AC=6} },
+        GIAV = { name="Javelin",   range=10, rangeUnits=8,  min_to_hit={SK=6,UI=5,AI=6,SKC=6,UC=5,AC=6} },
+        HAN  = { name="Handgun",   range=10, rangeUnits=8,  min_to_hit={SK=6,UI=5,AI=5,SKC=5,UC=4,AC=5} },
     },
     melee = {
         AI  = {AI=6,UI=5,SK=3,AC=6,UC=5,SKC=4},
@@ -4259,7 +4640,7 @@ function getEngineUiXml()
         {x=-192, y=-149},
         {x=-192, y=-202}
     }
-    local widths  = {80,80,80,80,80,80,80,80,80,80}
+    local widths  = {100,100,100,100,100,100,100,100,100,100}
     local heights = {45,45,45,45,45,45,45,45,45,45}
 
     for i = 1, ENGINE_BUTTONBAR.slotCount do
@@ -4269,26 +4650,17 @@ function getEngineUiXml()
         local w       = widths[i]
         local h       = heights[i]
         local label   = slot and slot.label    or ""
-        local color   = slot and slot.color    or "rgba(0.15,0.15,0.15,1)"
-        local tcol    = slot and slot.textColor or "White"
+        local colors   = slot and slot.colors    or "rgba(0.15,0.15,0.15,1)"
+        local tcol    = slot and slot.textColor or "Orange"
         local active  = (slot and slot.visible) and "true" or "false"
         local onclick = slot and slot.onClick  or "engine_buttonBarClick"
 
-        local icon  = ""
-        local iconW = ""
-        local iconH = ""
-        if slot and slot.icon then
-            icon  = 'icon="'       .. slot.icon                  .. '"'
-            iconW = 'iconWidth="'  .. (slot.iconWidth  or 32)    .. '"'
-            iconH = 'iconHeight="' .. (slot.iconHeight or 32)    .. '"'
-        end
-
         buttons = buttons .. string.format(
-            '<Button id="%s" text="%s" fontSize="13" width="%d" height="%d" ' ..
+            '<Button id="%s" text="%s" font="warforge_font" fontSize="18" fontStyle="Bold" width="%d" height="%d" ' ..
             'position="%d %g 0" color="%s" textColor="%s" active="%s" ' ..
             'onClick="%s" image="Sprites/Layout/Button" ' ..
             'outline="#3A2A1AFF" outlineSize="1"/>\n',
-            id, label, w, h, pos.x, pos.y, color, "Yellow", active, onclick
+            id, label, w, h, pos.x, pos.y, colors, tcol, active, onclick
         )
     end
 
@@ -4304,7 +4676,7 @@ function getEngineUiXml()
             offsetXY="-700 -320">
             <Text id="versione" text="" fontSize="14" fontStyle="Bold" color="Yellow" alignment="MiddleCenter"/>
         </Panel> 
-        <Panel id="warforgeBar" position="1105 0" rectAlignment="MiddleRight">
+        <Panel id="warforgeBar" position="1098 0" rectAlignment="MiddleRight">
         ]] .. buttons .. [[
         </Panel>    
     ]]
@@ -4324,6 +4696,81 @@ function buildUI()
     local bottom = "</XmlLayout>"
     UI.setXml(header .. rulesetXml .. enginePanels .. bottom)
 end
+end)
+__bundle_register("engine.tools.dice", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- engine/dice.ttslua
+-- Gestione dadi virtuale/fisico
+-- ============================================================
+
+-- ============================================================
+-- FUNZIONE: engine_rollDice(numDadi, soglia, callback)
+-- Tira N dadi D6 e restituisce quanti >= soglia
+-- callback(hits, results) dove results è la lista dei valori
+-- ============================================================
+function engine_rollDice(numDadi, soglia, callback)
+
+    if numDadi <= 0 then
+        if callback then callback(0, {}) end
+        return
+    end
+
+    local results = {}
+    local hits    = 0
+
+    for i = 1, numDadi do
+        local val = math.random(1, 6)
+        table.insert(results, val)
+        if val >= soglia then
+            hits = hits + 1
+        end
+    end
+
+    -- Simula animazione con spinDie
+    local resultStr = table.concat(results, " | ")
+    printToAll("[DICE] " .. numDadi .. "D6 (soglia " .. soglia .. "+): " .. resultStr .. " → HIT: " .. hits, {r=1,g=0.85,b=0.2})
+
+    if callback then callback(hits, results) end
+end
+
+-- ============================================================
+-- FUNZIONE: engine_rollDiceAnimated(numDadi, soglia, imageId, callback)
+-- Come engine_rollDice ma con animazione spinDie su un elemento UI
+-- ============================================================
+function engine_rollDiceAnimated(numDadi, soglia, imageId, callback)
+
+    if numDadi <= 0 then
+        if callback then callback(0, {}) end
+        return
+    end
+
+    local results  = {}
+    local hits     = 0
+    local pending  = numDadi
+    local complete = false
+
+    local function checkDone()
+        if complete then return end
+        pending = pending - 1
+        if pending <= 0 then
+            complete = true
+            local resultStr = table.concat(results, " | ")
+            printToAll("[DICE] " .. numDadi .. "D6 (soglia " .. soglia .. "+): " .. resultStr .. " → HIT: " .. hits, {r=1,g=0.85,b=0.2})
+            if callback then callback(hits, results) end
+        end
+    end
+
+    for i = 1, numDadi do
+        local idx = i
+        spinDie(imageId or "diceArmy1", i, function(val)
+            results[idx] = val
+            if val >= soglia then hits = hits + 1 end
+            checkDone()
+        end)
+        Wait.time(function() end, i * 0.1) -- piccolo offset per non sovrapporre
+    end
+end
+
 end)
 __bundle_register("engine.buttonbar.loader", function(require, _LOADED, __bundle_register, __bundle_modules)
 require("engine.buttonbar.ui")
@@ -4368,12 +4815,8 @@ function engine_buttonBarLoadJson(jsonText)
                 tooltip = cfg.tooltip or "",
                 visible = cfg.visible ~= false,
                 enabled = cfg.enabled ~= false,
-                color = cfg.color or "White",
                 colors = cfg.colors,
-                textColor = cfg.textColor or "Black",
-                icon = cfg.icon,
-                iconWidth = cfg.iconWidth,
-                iconHeight = cfg.iconHeight
+                textColor = cfg.textColor or "Black"
             }
         else
             ENGINE_BUTTONBAR.slots[i] = engine_buttonBarEmptySlot()
@@ -4394,7 +4837,7 @@ __bundle_register("engine.buttonbar.state", function(require, _LOADED, __bundle_
 ENGINE_BUTTONBAR = ENGINE_BUTTONBAR or {
     initialized = false,
     slots = {},
-    slotCount = 10,
+    slotCount = 8,
     xmlPrefix = "WF_BAR_"
 }
 
@@ -4463,40 +4906,17 @@ function engine_buttonBarRender()
         local slot = ENGINE_BUTTONBAR.slots[i]
         local id = engine_buttonBarSlotId(i)
 
-       -- UI.setAttribute(id, "text", slot.label or "")
+        UI.setAttribute(id, "text", slot.label or "")
         UI.setAttribute(id, "tooltip", slot.tooltip or "")
         UI.setAttribute(id, "active", slot.visible and "true" or "false")
         UI.setAttribute(id, "interactable", slot.enabled and "true" or "false")
-        UI.setAttribute(id, "color", slot.color)
         UI.setAttribute(id, "colors", slot.colors)
         UI.setAttribute(id, "textColor", slot.textColor)
-        --UI.setAttribute(id, "icon", slot.icon)
-        --UI.setAttribute(id, "iconWidth", slot.iconWidth)
-        --UI.setAttribute(id, "iconHeight", slot.iconHeight)
+
     end
 
     return true
 end
-
-function engine_buttonBarDebugPrint()
-
-    engine_buttonBarInit()
-
-    printToAll("[BUTTONBAR] configurazione corrente:", {r=0.6,g=0.8,b=1})
-
-    for i = 1, ENGINE_BUTTONBAR.slotCount do
-
-        local id = engine_buttonBarSlotId(i)
-        local slot = ENGINE_BUTTONBAR.slots[i]
-
-        if slot ~= nil then
-            print(slot.icon)
-            print(slot.iconWidth)
-            print(slot.iconHeight)
-        end
-    end
-end
-
 end)
 __bundle_register("engine.core", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
@@ -4935,6 +5355,86 @@ function registerRenderer(name, fn)
 end
 
 end)
+__bundle_register("engine.measure", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- engine/measure.ttslua
+-- Misurazione distanza tra oggetti selezionati
+-- ============================================================
+
+ENGINE_MEASURE = {
+    BASE_OFFSET = {
+        SK  = 1.3,
+        SKC = 1.0,
+    },
+    DEFAULT_OFFSET = 1.3,
+    LINE_DURATION  = 8,
+    LINE_COLOR     = {1, 1, 1},
+    LINE_THICKNESS = 0.08,
+    SCALE          = 1.257,
+    UNIT_LABEL     = "cm",
+    activeLine     = nil,
+}
+
+-- ============================================================
+-- FUNZIONE: engine_measure(player)
+-- ============================================================
+function engine_measure(player, value, id, buttonConfig)
+
+    local selected = lionheart_getSelectedObjects(player)
+
+    if not selected or #selected < 2 then
+        printToColor("[MISURA] Seleziona 2 basi", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local objA = selected[1]
+    local objB = selected[2]
+
+    local posA = objA.getPosition()
+    local posB = objB.getPosition()
+
+    local infoA = deployment_parseNickname(objA.getName())
+    local infoB = deployment_parseNickname(objB.getName())
+
+    local tipoA = infoA and infoA.unitType or ""
+    local tipoB = infoB and infoB.unitType or ""
+
+    local offsetA = ENGINE_MEASURE.BASE_OFFSET[tipoA] or ENGINE_MEASURE.DEFAULT_OFFSET
+    local offsetB = ENGINE_MEASURE.BASE_OFFSET[tipoB] or ENGINE_MEASURE.DEFAULT_OFFSET
+
+    local dirAB = (Vector(posB.x, posB.y, posB.z) - Vector(posA.x, posA.y, posA.z)):normalized()
+
+    local startPoint = Vector(posA.x + dirAB.x * offsetA, posA.y + 0.1, posA.z + dirAB.z * offsetA)
+    local endPoint   = Vector(posB.x - dirAB.x * offsetB, posB.y + 0.1, posB.z - dirAB.z * offsetB)
+
+    local dist = (endPoint - startPoint):magnitude() * ENGINE_MEASURE.SCALE
+
+    local msg = string.format("[MISURA] %s → %s : %.1f %s", objA.getName(), objB.getName(), dist, ENGINE_MEASURE.UNIT_LABEL)
+    printToColor(msg, player.color, {r=0.2,g=0.9,b=0.2})
+
+    local distTTS = (endPoint - startPoint):magnitude()
+    local dist    = distTTS * ENGINE_MEASURE.SCALE
+
+    local msg = string.format("[MISURA] %s → %s : %.1f %s (%.1f TTS)", objA.getName(), objB.getName(), dist, ENGINE_MEASURE.UNIT_LABEL, distTTS)
+    printToColor(msg, player.color, "Orange")
+
+    ENGINE_MEASURE.activeLine = {
+        points    = {startPoint, endPoint},
+        color     = ENGINE_MEASURE.LINE_COLOR,
+        thickness = ENGINE_MEASURE.LINE_THICKNESS,
+    }
+
+    callHandler("aggiornaLinee")
+
+    Wait.time(function()
+        ENGINE_MEASURE.activeLine = nil
+        callHandler("aggiornaLinee")
+    end, ENGINE_MEASURE.LINE_DURATION)
+
+    return true
+end
+
+end)
 __bundle_register("common.utils", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
 -- FUNZIONE: engine_handleChat()
@@ -4943,6 +5443,8 @@ __bundle_register("common.utils", function(require, _LOADED, __bundle_register, 
 
         if message == "!restart" then restart() return false end
         if message == "!clear" then clear() return false end
+        if message == "!shoot"  then lionheart_shootConfirm(player) return false end
+        if message == "!cancel" then lionheart_shootCancel(player)  return false end
 
         return false
     end
