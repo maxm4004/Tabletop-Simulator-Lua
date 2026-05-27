@@ -56,6 +56,14 @@
         "textColor": "#FFFFFF|#FF0000",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_range_and_target"
+      },
+      "8": {
+        "label": "Measure", 
+        "tooltip": "Measuring everything",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#FFFFFF|#FF0000",
+        "onClick": "engine_buttonBarClick",
+        "callBack": "engine_measure"
       }
     }
   }
