@@ -26,7 +26,7 @@
                 },
                 {
                     "nickname": "FRA_UI2",
-                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.67,
+                    "scaleX": 1.00, "scaleY": 0.67, "scaleZ": 1.00,
                     "customMesh": {
                         "colliderURL": "",
                         "diffuseURL": "erba_verde",
