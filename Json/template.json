@@ -1,160 +1,168 @@
 {
-	"versione": "1.0",
-	"Army": [
-		{
-			"name": "Army1",
-			"Tag": "FRA",
-			"modelli": [
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_CinC"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_UI2"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_UI1"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_AC2"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_AC1"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_ACGen"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "FRA_SK"
-				}
-			]
-		},
-		{
-			"name": "Army2",
-			"Tag": "ENG",
-			"modelli": [
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "ENG_CinC"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "ENG_UI2"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "ENG_UI1"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "ENG_AC1"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "ENG_AI1"
-				},
-				{
-					"customMesh": {
-						"colliderURL": "",
-						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
-						"material": 3,
-						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
-						"type": 0
-					},
-					"name": "Custom_Model",
-					"nickname": "ENG_ACGen"
-				}
-			]
-		}
-	]
+    "versione": "2.0",
+    "terreni": {
+        "terra_fango":  "https://steamusercontent-a.akamaihd.net/ugc/1014942732523998487/F1855119665D8199F8E2AD87F6C8DB9ADEC7E6F9/",
+        "erba_mista":   "https://steamusercontent-a.akamaihd.net/ugc/1014942732523994816/56D1D3CBC31E99107B1BAD94F46FA7B335540040/",
+        "autunno":      "https://steamusercontent-a.akamaihd.net/ugc/1014942732523990770/9EBBA093EC1C1CA2CEBD5286AB2BEAF40E79FB4E/",
+        "terra_secca":  "https://steamusercontent-a.akamaihd.net/ugc/1014942732523987577/7B0CDDFBEF5CF9960B959A037B0140030E2B05A2/",
+        "erba_verde":   "https://steamusercontent-a.akamaihd.net/ugc/1014942544699601731/8CA9A0469A8383413D7ED3B2732CC52D29F840C2/",
+        "sabbia":       "https://steamusercontent-a.akamaihd.net/ugc/1014942732524001712/C11D0581583CC167D7A51ACA1763CBA4EF43E44C/"
+    },
+    "Army": [
+        {
+            "name": "Army1",
+            "Tag": "FRA",
+            "modelli": [
+                {
+                    "nickname": "FRA_CinC",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "FRA_UI2",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.67,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "FRA_UI1",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.67,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "FRA_AC2",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "FRA_AC1",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "FRA_ACGen",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "FRA_SK",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.67,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Army2",
+            "Tag": "ENG",
+            "modelli": [
+                {
+                    "nickname": "ENG_CinC",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "ENG_UI2",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.67,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "ENG_UI1",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.67,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "ENG_AC1",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "ENG_AI1",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 0.50,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                },
+                {
+                    "nickname": "ENG_ACGen",
+                    "scaleX": 1.00, "scaleY": 1.00, "scaleZ": 1.00,
+                    "customMesh": {
+                        "colliderURL": "",
+                        "diffuseURL": "erba_verde",
+                        "material": 3,
+                        "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
+                        "type": 0
+                    }
+                }
+            ]
+        }
+    ]
 }
