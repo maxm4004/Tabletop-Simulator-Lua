@@ -50,7 +50,7 @@
         "callBack": "lionheart_columnDown"
       },
       "7": {
-        "label": "Shoot", 
+        "label": "Fire", 
         "tooltip": "Unit open fire",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
         "textColor": "#000000",
@@ -58,6 +58,14 @@
         "callBack": "lionheart_range_and_target"
       },
       "8": {
+        "label": "Melee", 
+        "tooltip": "Resolve melee",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#000000",
+        "onClick": "engine_buttonBarClick",
+        "callBack": "lionheart_melee"
+      },
+      "9": {
         "label": "Measure", 
         "tooltip": "Measuring everything",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
