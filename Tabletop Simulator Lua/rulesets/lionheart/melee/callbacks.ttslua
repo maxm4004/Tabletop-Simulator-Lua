@@ -1,0 +1,20 @@
+-- ============================================================
+-- MELEE — Callbacks bottoni fase
+-- ============================================================
+function attack_btn_army1(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY1)
+    return true
+end
+
+function attack_btn_army2(player, value, id)
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    callHandler("advanceTurnAfterClick", BUTTONS.BTN_ARMY2)
+    return true
+end
+
+function attack_btn_single(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    return true
+end

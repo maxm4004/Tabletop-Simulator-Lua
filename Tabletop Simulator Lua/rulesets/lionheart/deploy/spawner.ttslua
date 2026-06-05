@@ -1,0 +1,322 @@
+-- ============================================================
+-- LIONHEART DEPLOYMENT / SPAWNER
+-- ============================================================
+
+function deployment_spawnArmy(slot, armyData)
+    if armyData == nil then
+        printToAll("[DEPLOY] armyData nullo", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local armyTag = deployment_getArmyTag(slot)
+    local counters = {}
+
+    deployment_applyArmyMeta(slot, armyData)
+
+    for _, unitData in ipairs(armyData.unita or {}) do
+        deployment_spawnUnit(slot, armyTag, unitData, counters)
+    end
+
+    return true
+end
+
+function deployment_applyArmyMeta(slot, armyData)
+    DEPLOYMENT.armies[slot] = DEPLOYMENT.armies[slot] or {}
+    DEPLOYMENT.armies[slot].tag = armyData.tag
+    DEPLOYMENT.armies[slot].name = armyData.nome
+    DEPLOYMENT.armies[slot].displayName = armyData.nome_display
+
+    -- Compatibilità soft con vecchio ARMY, se presente.
+    if ARMY ~= nil and ARMY[slot] ~= nil then
+        ARMY[slot].tag = armyData.tag
+        ARMY[slot].nome = armyData.nome
+        ARMY[slot].nome_display = armyData.nome_display
+    end
+end
+
+function deployment_spawnUnit(slot, armyTag, unitData, counters)
+    if unitData == nil then return end
+
+    local unitType = unitData.tipo
+    if unitType == nil then
+        printToAll("[DEPLOY] unità senza tipo", {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    counters[unitType] = (counters[unitType] or 0) + 1
+    local unitNumber = counters[unitType]
+
+    for _, baseData in ipairs(unitData.basi or {}) do
+        deployment_spawnBase(slot, armyTag, unitData, baseData, unitNumber)
+    end
+end
+
+function deployment_spawnBase(slot, armyTag, unitData, baseData, unitNumber)
+    if baseData == nil then return end
+
+    local templateKey = deployment_getTemplateKey(unitData, baseData)
+    local templateData = deployment_getTemplate(templateKey)
+
+    if templateData == nil then
+        printToAll("[DEPLOY] template non trovato: " .. tostring(templateKey), {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    local nickname = deployment_buildBaseNickname(unitData, baseData, unitNumber)
+    local pos = deployment_buildBasePosition(slot, baseData)
+    local rot = deployment_buildBaseRotation(slot)
+
+    local spawnParams = deployment_buildSpawnParams(nickname, unitData, templateData, pos, rot)
+
+    spawnObjectJSON({
+        json = JSON.encode(spawnParams),
+        callback_function = function(obj)
+            deployment_onBaseSpawned(obj, slot, armyTag, nickname, unitData, baseData)
+        end
+    })
+end
+
+function deployment_getTemplateKey(unitData, baseData)
+    return baseData.model or unitData.model or baseData.template or unitData.template or unitData.tipo
+end
+
+function deployment_getTemplate(templateKey)
+    if templateKey == nil then return nil end
+
+    local key = tostring(templateKey)
+
+    if DEPLOYMENT.templateIndex and DEPLOYMENT.templateIndex[key] then
+        return DEPLOYMENT.templateIndex[key]
+    end
+
+    if DEPLOYMENT.templates and DEPLOYMENT.templates[key] then
+        return DEPLOYMENT.templates[key]
+    end
+
+    -- Fallback stile vecchio getByNameFromJson su lista.
+    if type(DEPLOYMENT.templates) == "table" then
+        for _, t in ipairs(DEPLOYMENT.templates) do
+            if type(t) == "table" then
+                local name = t.name or t.nome or t.id or t.key or t.tipo or t.model
+                if tostring(name) == key then
+                    return t
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+function deployment_buildBaseNickname(unitData, baseData, unitNumber)
+    local nickname = tostring(unitData.tipo) .. "_" .. tostring(unitNumber) .. "." .. tostring(baseData.seq)
+
+    if unitData.modificatore ~= nil then
+        nickname = nickname .. "_" .. tostring(unitData.modificatore)
+    end
+
+    if baseData.arma ~= nil then
+        nickname = nickname .. "_" .. tostring(baseData.arma)
+    end
+
+    return nickname
+end
+
+function deployment_buildBasePosition(slot, baseData)
+    local deploy = LIONHEART_DATA.deployment or {}
+    local offsetZ = deploy.offsetZ or 45.00
+    local y = deploy.spawnY or 1.70
+
+    local sourcePos = baseData.posizione or {x=0, z=0}
+    local zOffset = tonumber(slot) == 1 and -offsetZ or offsetZ
+
+    return {
+        x = sourcePos.x or 0,
+        y = y,
+        z = (sourcePos.z or 0) + zOffset
+    }
+end
+
+function deployment_buildBaseRotation(slot)
+    return {
+        x = 0,
+        y = tonumber(slot) == 1 and 0 or 180,
+        z = 0
+    }
+end
+
+function deployment_buildSpawnParams(nickname, unitData, templateData, pos, rot)
+    local mesh = templateData.customMesh or templateData.CustomMesh
+
+    if mesh ~= nil then
+        mesh.MaterialIndex = 3
+
+        local diffuse = mesh.diffuseURL
+        if diffuse ~= nil and type(diffuse) == "string" then
+            local terrains = DEPLOYMENT.templates and DEPLOYMENT.templates.terrains
+            if terrains and terrains[diffuse] then
+                mesh.diffuseURL = terrains[diffuse]
+            elseif DEPLOYMENT.terrain and terrains and terrains[DEPLOYMENT.terrain] then
+                mesh.diffuseURL = terrains[DEPLOYMENT.terrain]
+            end
+        end
+    end
+
+    return {
+        name = "Custom_Model",
+        nickname = nickname,
+        description = unitData.nome_display or "",
+        Transform = {
+            posX = pos.x,
+            posY = pos.y,
+            posZ = pos.z,
+            rotX = rot.x,
+            rotY = rot.y,
+            rotZ = rot.z,
+            scaleX = templateData.scaleX or 1,
+            scaleY = templateData.scaleY or 1,
+            scaleZ = templateData.scaleZ or 1
+        },
+        CustomMesh = mesh
+    }
+end
+
+function deployment_onBaseSpawned(obj, slot, armyTag, nickname, unitData, baseData)
+    
+    if obj == nil then
+        printToAll("[DEPLOY] spawn fallito: " .. tostring(nickname), {r=1,g=0.3,b=0.3})
+        return
+    end
+
+    Wait.frames(function()
+        if obj == nil then return end
+
+        obj.setName(nickname)
+        obj.setDescription(unitData.nome_display or "")
+        obj.setLock(true)
+        obj.auto_raise = true
+
+        local finalArmyTag = armyTag or deployment_getArmyTag(slot)
+
+        obj.addTag(finalArmyTag)
+
+        deployment_applyBaseMetadata(obj, slot, finalArmyTag, nickname, unitData, baseData)
+        deployment_applyBaseVisibility(obj, slot)
+        deployment_applyBaseWounds(obj, nickname, unitData, baseData)
+
+        Wait.time(function()
+            if obj ~= nil then
+                obj.setLock(false)
+            end
+        end, 1.0)
+    end, 2)
+end
+
+function deployment_applyBaseTags(obj, slot, armyTag, unitData, baseData)
+    obj.addTag(armyTag)
+end
+
+function deployment_applyBaseMetadata(obj, slot, armyTag, nickname, unitData, baseData)
+   
+    local metadata = {
+        ruleset = "LIONHEART",
+        kind = "UNIT_BASE",
+        armySlot = tonumber(slot),
+        armyTag = armyTag,
+        nickname = nickname,
+        unitType = unitData.tipo,
+        unitName = unitData.nome_display,
+        baseSeq = baseData.seq,
+        modifier = unitData.modificatore,
+        weapon = baseData.arma,
+        wounds = baseData.ferite or 0
+    }
+
+    obj.setGMNotes(JSON.encode(metadata))
+    --obj.setVar("lh_metadata_json", JSON.encode(metadata))
+end
+
+function deployment_applyBaseVisibility(obj, slot)
+    if DEBUG then return end
+
+    local enemySlot = tonumber(slot) == 1 and 2 or 1
+    local enemyColor = nil
+
+    if DEPLOYMENT.armies and DEPLOYMENT.armies[enemySlot] then
+        enemyColor = DEPLOYMENT.armies[enemySlot].color
+    end
+
+    if (enemyColor == nil or enemyColor == "---") and ARMY ~= nil and ARMY[enemySlot] ~= nil then
+        enemyColor = ARMY[enemySlot].color
+    end
+
+    if enemyColor ~= nil and enemyColor ~= "---" then
+        obj.setInvisibleTo({enemyColor})
+    end
+end
+
+function deployment_applyBaseWounds(obj, nickname, unitData, baseData)
+    local wounds = baseData.ferite or 0
+
+    wounds_data = wounds_data or {}
+    wounds_data[nickname] = wounds
+
+    if wounds <= 0 then
+        if aggiornaTagInjured ~= nil then
+            aggiornaTagInjured(obj, 0)
+        end
+        return
+    end
+
+    local unitTypeData = LIONHEART_DATA.unitTypes and LIONHEART_DATA.unitTypes[unitData.tipo] or nil
+    local fpb = unitTypeData and unitTypeData.fpb or 3
+
+    if aggiornaTintaBase ~= nil then
+        aggiornaTintaBase(obj, wounds, fpb)
+    end
+
+    if aggiornaTagInjured ~= nil then
+        aggiornaTagInjured(obj, wounds)
+    end
+end
+
+function deployment_clearSpawnedModels()
+
+    printToAll("[DEPLOY] Rimozione modelli spawnati...", {r=0.8,g=0.8,b=0.2})
+
+    local removed = 0
+
+    for _, obj in ipairs(getAllObjects()) do
+
+        -- Metodo robusto: usa tag
+        if deployment_isSpawnedUnit(obj) then
+            obj.destruct()
+            removed = removed + 1
+        end
+    end
+
+    printToAll("[DEPLOY] Rimossi "..removed.." oggetti", {r=0.4,g=0.9,b=0.4})
+end
+
+function deployment_isSpawnedUnit(obj)
+    if obj == nil then return false end
+
+    if obj.hasTag then
+        if obj.hasTag("Army1") or obj.hasTag("Army2") then
+            return true
+        end
+    end
+
+    return false
+end
+
+function deployment_revealAllSpawned()
+
+    print("deployment_revealAllSpawned")
+
+    for _, obj in ipairs(getAllObjects()) do
+        if deployment_getObjectArmySlot(obj) ~= nil then
+            obj.setInvisibleTo({})
+        end
+    end
+end

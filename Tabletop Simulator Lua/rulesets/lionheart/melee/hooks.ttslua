@@ -1,0 +1,16 @@
+-- ============================================================
+-- MELEE — Phase Hooks
+-- ============================================================
+function before_attack(phaseName, phase)
+    if TURN.phase ~= phaseName then resetTurnForPhase() end
+    TURN.phase = phaseName
+    Wait.frames(function()
+        if lionheart_findContacts then
+            lionheart_findContacts()
+        end
+    end, 10)
+end
+
+function after_attack(phaseName, phase)
+    LIONHEART_MELEE_ENGAGED = {}
+end

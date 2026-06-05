@@ -1,0 +1,47 @@
+-- ============================================================
+-- WARFORGE ENGINE / BUTTONBAR CONFIG
+-- L'engine riceve SOLO testo JSON gia' scaricato.
+-- NON conosce URL, GitHub o ruleset.
+-- ============================================================
+
+function engine_buttonBarLoadJson(jsonText)
+
+    engine_buttonBarInit()
+
+    if jsonText == nil or jsonText == "" then
+        printToAll("[BUTTONBAR] JSON vuoto", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local ok, data = pcall(JSON.decode, jsonText)
+
+    if not ok or type(data) ~= "table" then
+        printToAll("[BUTTONBAR] JSON non valido", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local slots = data.buttonbar and data.buttonbar.slots or data.slots or {}
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+        
+        local cfg = slots[tostring(i)] or slots[i]
+
+        if cfg ~= nil then
+            ENGINE_BUTTONBAR.slots[i] = {
+                label = cfg.label or "",
+                class = cfg.class,
+                callBack = cfg.callBack,
+                tooltip = cfg.tooltip or "",
+                visible = cfg.visible ~= false,
+                enabled = cfg.enabled ~= false,
+                colors = cfg.colors,
+                textColor = cfg.textColor or "Black"
+            }
+        else
+            ENGINE_BUTTONBAR.slots[i] = engine_buttonBarEmptySlot()
+        end
+    end
+
+    engine_buttonBarRender()
+    return true
+end

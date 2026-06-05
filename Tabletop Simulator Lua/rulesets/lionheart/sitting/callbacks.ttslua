@@ -1,0 +1,38 @@
+-- ============================================================
+-- SITTING — Callbacks
+-- ============================================================
+function sitting_btn_all(player, value, id)
+
+    local colorPlayer = player.color
+
+    if id == BUTTONS.BTN_ARMY1 then
+        if colorArmy1 == COLOR.NOARMY then
+            if colorArmy2 == colorPlayer then colorArmy2 = COLOR.NOARMY end
+            player.changeColor(COLOR.ARMY1)
+            colorArmy1 = COLOR.ARMY1
+            colorPlayer = COLOR.ARMY1
+        else
+            if colorPlayer == colorArmy1 then
+                fadeOut(army1 .. " already using this color", player)
+            else
+                fadeOut("color " .. army1 .. " already used", player)
+            end
+        end
+    end
+
+    if id == BUTTONS.BTN_ARMY2 then
+        if colorArmy2 == COLOR.NOARMY then
+            if colorArmy1 == colorPlayer then colorArmy1 = COLOR.NOARMY end
+            player.changeColor(COLOR.ARMY2)
+            colorArmy2 = COLOR.ARMY2
+            colorPlayer = COLOR.ARMY2
+        else
+            if colorPlayer == colorArmy2 then
+                fadeOut(army2 .. " already using this color", player)
+            else
+                fadeOut("color " .. army2 .. " already used", player)
+            end
+        end
+    end
+    return true
+end

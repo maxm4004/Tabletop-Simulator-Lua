@@ -1,0 +1,165 @@
+-- ============================================================
+-- FUNZIONE: field_rollDice()
+-- Step 1: tiro dado per determinare numero elementi
+-- ============================================================
+function field_rollDice(player, value, id)
+    
+
+    spinDie("diceField", 1, function(result)
+
+        FIELD_STATE.diceResult = result 
+
+        if result <= 2 then
+            -- 2 elementi: 1 per player
+            FIELD_STATE.numElements   = 2
+            FIELD_STATE.army1Elements = 1
+            FIELD_STATE.army2Elements = 1
+            FIELD_STATE.tieBreaker    = false
+            printToAll("[FIELD] Dado: " .. result .. " → 2 elementi (1 per player)", {r=0.8,g=0.7,b=0.2})
+            field_spawnElements()
+         elseif result <= 4 then
+            -- 3 elementi: tiro aggiuntivo per il terzo
+            FIELD_STATE.numElements   = 3
+            FIELD_STATE.army1Elements = 1
+            FIELD_STATE.army2Elements = 1
+            FIELD_STATE.tieBreaker    = true
+            printToAll("[FIELD] Dado: " .. result .. " → 3 elementi, tiro per il terzo!", {r=0.8,g=0.7,b=0.2})
+            Wait.time(function()
+                  ENGINE.phases["FIELD"].transitions[1].to = "FIELD_ROLL"
+                engine_handleAction({ type = ACTION.CONFIRM })
+            end, 1.5)
+        else
+            -- 4 elementi: 2 per player
+            FIELD_STATE.numElements   = 4
+            FIELD_STATE.army1Elements = 2
+            FIELD_STATE.army2Elements = 2
+            FIELD_STATE.tieBreaker    = false
+            printToAll("[FIELD] Dado: " .. result .. " → 4 elementi (2 per player)", {r=0.8,g=0.7,b=0.2})
+            ENGINE.phases["FIELD"].transitions[1].to = "FIELD_DONE"
+            field_spawnElements()   
+        end
+    end)
+
+    return false
+end
+
+-- ============================================================
+-- FUNZIONE: field_tieBreakerArmy1()
+-- Step 2: tiro aggiuntivo Army1 per il terzo elemento
+-- ============================================================
+function field_tieBreakerArmy1(player, value, id)
+
+    if FIELD_STATE.tbResult1 ~= nil then
+        printToColor("[FIELD] Hai già tirato", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    spinDie("diceArmy1", 1, function(result)
+        FIELD_STATE.tbResult1 = result
+        printToAll("[FIELD] Army1 tira: " .. result, {r=0.8,g=0.7,b=0.2})
+        field_checkTieBreaker()
+    end)
+
+    return true
+end
+
+-- ============================================================
+-- FUNZIONE: field_tieBreakerArmy2()
+-- Step 2: tiro aggiuntivo Army2 per il terzo elemento
+-- ============================================================
+function field_tieBreakerArmy2(player, value, id)
+
+    if FIELD_STATE.tbResult2 ~= nil then
+        printToColor("[FIELD] Hai già tirato", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    spinDie("diceArmy2", 1, function(result)
+        FIELD_STATE.tbResult2 = result
+        printToAll("[FIELD] Army2 tira: " .. result, {r=0.8,g=0.7,b=0.2})
+        field_checkTieBreaker()
+    end)
+
+    return true
+end
+
+-- ============================================================
+-- FUNZIONE: field_checkTieBreaker()
+-- Verifica se entrambi hanno tirato e assegna il terzo elemento
+-- ============================================================
+function field_checkTieBreaker()
+
+    if FIELD_STATE.tbResult1 == nil or FIELD_STATE.tbResult2 == nil then return end
+
+    if FIELD_STATE.tbResult1 == FIELD_STATE.tbResult2 then
+        -- Pareggio: ritiro
+        printToAll("[FIELD] Pareggio! Ritiro...", {r=1,g=0.6,b=0})
+        FIELD_STATE.tbResult1 = nil
+        FIELD_STATE.tbResult2 = nil
+        return
+    end
+
+    if FIELD_STATE.tbResult1 > FIELD_STATE.tbResult2 then
+        FIELD_STATE.army1Elements = FIELD_STATE.army1Elements + 1
+        printToAll("[FIELD] Army1 vince il terzo elemento!", {r=0.8,g=0.7,b=0.2})
+    else
+        FIELD_STATE.army2Elements = FIELD_STATE.army2Elements + 1
+        printToAll("[FIELD] Army2 vince il terzo elemento!", {r=0.8,g=0.7,b=0.2})
+    end
+
+    field_spawnElements()
+end
+
+-- ============================================================
+-- FUNZIONE: field_spawnElements()
+-- Step 3: spawna gli elementi per ogni player
+-- ============================================================
+function field_spawnElements()
+
+    printToAll("[FIELD] Spawn elementi terreno...", {r=0.8,g=0.7,b=0.2})
+
+    -- Army1: spawna nella zona z negativa
+    for i = 1, FIELD_STATE.army1Elements do
+        local tipo = field_randomTipo()
+        field_spawnTerrain(tipo, 1, i)
+        printToAll("[FIELD] Army1 → " .. tipo, {r=0.8,g=0.7,b=0.2})
+    end
+
+    -- Army2: spawna nella zona z positiva
+    for i = 1, FIELD_STATE.army2Elements do
+        local tipo = field_randomTipo()
+        field_spawnTerrain(tipo, 2, i)
+        printToAll("[FIELD] Army2 → " .. tipo, {r=0.8,g=0.7,b=0.2})
+    end
+
+    -- Passa a conferma posizionamento
+    Wait.time(function()
+        field_goToPositioning()
+    end, 2)
+end
+
+-- ============================================================
+-- FUNZIONE: field_spawnTerrain(tipo, slot, index)
+-- Spawna un elemento terreno per il player specificato
+-- ============================================================
+function field_spawnTerrain(tipo, slot, index)
+
+    -- Posizione spawn: area di spawn dell'esercito
+    local zBase  = slot == 1 and -50 or 50
+    local xSpawn = -10 + (index - 1) * 12
+    local pos    = {x = xSpawn, y = 1.70, z = zBase}
+
+    -- TODO: sostituire con spawnObjectJSON usando i template mesh reali
+    -- Per ora stampa il tipo e posizione
+    printToAll(string.format("[FIELD] Spawn %s slot=%d pos=%.1f,%.1f", tipo, slot, pos.x, pos.z), {r=0.6,g=0.6,b=0.6})
+end
+
+-- ============================================================
+-- FUNZIONE: field_goToPositioning()
+-- Imposta l'UI per la fase di posizionamento (Step 4+5)
+-- ============================================================
+function field_goToPositioning()
+        TURN.completed = { Army1 = false, Army2 = false }
+        printToAll("[FIELD] Posizionate i vostri elementi e confermate", {r=0.8,g=0.7,b=0.2})
+        goToPhase("FIELD_DONE")
+end

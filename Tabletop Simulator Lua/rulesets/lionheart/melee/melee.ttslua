@@ -1,0 +1,289 @@
+-- ============================================================
+-- rulesets/lionheart/melee/melee.ttslua
+-- Gestione fase di mischia
+-- ============================================================
+
+LIONHEART_MELEE_STATE = {
+    attacker     = nil,   -- oggetto base attaccante
+    attackerUnit = nil,   -- dati unità attaccante
+    attackerSlot = nil,   -- slot army attaccante
+    defenderUnit = nil,   -- dati unità difensore
+    defenderSlot = nil,   -- slot army difensore
+    defenderBases = {},   -- basi nemiche in contatto
+    isFlanked    = false, -- difensore colpito sul fianco
+    isFirstTurn  = false, -- primo turno di mischia AC/UC
+}
+
+LIONHEART_MELEE_ENGAGED = LIONHEART_MELEE_ENGAGED or {}  -- traccia turni di mischia per unità
+
+-- ============================================================
+-- FUNZIONE: lionheart_melee(player)
+-- Entry point dal pulsante buttonbar
+-- ============================================================
+function lionheart_melee(player, value, id, buttonConfig)
+
+    local selected = lionheart_getSelectedObjects(player)
+    if not selected or #selected < 1 then
+        printToColor("[MISCHIA] Seleziona una o più basi", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    UI.setAttribute("btnAction", "Text", "Attack")
+    UI.setAttribute("btnAction", "onClick", "lionheart_meleeConfirm")
+    UI.setAttribute("btnCancel", "onClick", "lionheart_meleeCancel")
+
+    local attackerSlot = nil
+    if selected[1].hasTag("Army1") then attackerSlot = 1 end
+    if selected[1].hasTag("Army2") then attackerSlot = 2 end
+    if attackerSlot == nil then return false end
+
+    local playerSlot = getArmyByColor(player)
+    if playerSlot ~= attackerSlot then
+        printToColor("[MISCHIA] Non è la tua unità", player.color, {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    -- Trova unità attaccante
+    local baseInfo    = deployment_parseNickname(selected[1].getName())
+    local attackerUnit = baseInfo and lionheart_findUnit(attackerSlot, baseInfo.unitType, baseInfo.unitNumber)
+    if not attackerUnit then
+        printToColor("[MISCHIA] Unità non trovata", player.color, {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    -- Raccoglie basi selezionate dell'attaccante
+    local basiAttaccanti = {}
+    for _, obj in ipairs(selected) do
+        if obj.hasTag and obj.hasTag(attackerSlot == 1 and "Army1" or "Army2") then
+            table.insert(basiAttaccanti, obj)
+        end
+    end
+
+    -- Trova basi nemiche in contatto
+    local defenderSlot = attackerSlot == 1 and 2 or 1
+    local enemyTag     = defenderSlot == 1 and "Army1" or "Army2"
+    local defenderBases = {}
+    local defenderUnit  = nil
+
+    for _, atkBase in ipairs(basiAttaccanti) do
+        local posA    = atkBase.getPosition()
+        local boundsA = atkBase.getBounds()
+
+        for _, obj in ipairs(getAllObjects()) do
+            if obj.hasTag and obj.hasTag(enemyTag) then
+                local posB    = obj.getPosition()
+                local boundsB = obj.getBounds()
+                local dist    = (Vector(posB.x, 0, posB.z) - Vector(posA.x, 0, posA.z)):magnitude()
+                local minDist = (boundsA.size.x + boundsB.size.x) / 2
+
+                if dist <= minDist + 0.1 then
+                    -- Evita duplicati
+                    local found = false
+                    for _, db in ipairs(defenderBases) do
+                        if db == obj then found = true end
+                    end
+                    if not found then
+                        table.insert(defenderBases, obj)
+                        -- Trova unità difensore
+                        if not defenderUnit then
+                            local defInfo = deployment_parseNickname(obj.getName())
+                            if defInfo then
+                                defenderUnit = lionheart_findUnit(defenderSlot, defInfo.unitType, defInfo.unitNumber)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if #defenderBases == 0 then
+        printToColor("[MISCHIA] Nessuna unità nemica in contatto", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    -- Verifica fianco
+    local isFlanked = lionheart_checkFlank(basiAttaccanti[1], defenderBases[1])
+
+    -- Verifica primo turno AC/UC
+    local unitKey    = attackerSlot .. "_" .. attackerUnit.tipo .. "_" .. attackerUnit.unita_num
+    local isFirstTurn = not LIONHEART_MELEE_ENGAGED[unitKey]
+
+    -- Salva state
+    LIONHEART_MELEE_STATE.attacker      = selected[1]
+    LIONHEART_MELEE_STATE.attackerUnit  = attackerUnit
+    LIONHEART_MELEE_STATE.attackerSlot  = attackerSlot
+    LIONHEART_MELEE_STATE.defenderUnit  = defenderUnit
+    LIONHEART_MELEE_STATE.defenderSlot  = defenderSlot
+    LIONHEART_MELEE_STATE.defenderBases = defenderBases
+    LIONHEART_MELEE_STATE.isFlanked     = isFlanked
+    LIONHEART_MELEE_STATE.isFirstTurn   = isFirstTurn
+
+    -- Evidenzia basi in contatto
+    for _, db in ipairs(defenderBases) do
+        db.highlightOn({1, 0.3, 0}, 10)
+    end
+
+    local flankMsg = isFlanked and " [FIANCO]" or ""
+    local firstMsg = isFirstTurn and " [PRIMO TURNO]" or ""
+    local msg = string.format("[MISCHIA] %s vs %s%s%s — Attack / Cancel",
+        attackerUnit.tipo .. "_" .. attackerUnit.unita_num,
+        defenderUnit and (defenderUnit.tipo .. "_" .. defenderUnit.unita_num) or "???",
+        flankMsg, firstMsg)
+    printToColor(msg, player.color, {r=1,g=0.5,b=0})
+
+    UI.setAttribute("confirm_panel", "active", "true")
+    UI.setAttribute("confirm_panel", "visibility", player.color)
+
+    return true
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_meleeConfirm(player)
+-- Risolve la mischia
+-- ============================================================
+function lionheart_meleeConfirm(player, value, id)
+
+    local state = LIONHEART_MELEE_STATE
+    if not state.attackerUnit or not state.defenderUnit then
+        printToColor("[MISCHIA] Nessuna mischia in attesa", player.color, {r=1,g=0.6,b=0})
+        return
+    end
+
+    UI.setAttribute("confirm_panel", "active", "false")
+
+    local atkUnit  = state.attackerUnit
+    local defUnit  = state.defenderUnit
+    local atkSlot  = state.attackerSlot
+    local defSlot  = state.defenderSlot
+
+    -- ── DADI ATTACCANTE ──
+    local atkFig   = lionheart_figureTotaliUnita(atkUnit)
+    local atkDadi  = lionheart_calcolaDadiMischia(atkUnit, atkFig, state.isFirstTurn)
+    local atkSoglia = lionheart_sogliaMischia(atkUnit.tipo, defUnit.tipo, atkUnit.valore, state.isFlanked)
+
+    -- ── DADI DIFENSORE ──
+    local defFig   = lionheart_figureTotaliUnita(defUnit)
+    local defFirstTurn = false  -- il difensore non carica
+    local defDadi  = lionheart_calcolaDadiMischia(defUnit, defFig, defFirstTurn)
+    local defSoglia = lionheart_sogliaMischia(defUnit.tipo, atkUnit.tipo, defUnit.valore, false)
+
+    printToAll(string.format("[MISCHIA] %s: %dD6 (soglia %d+) vs %s: %dD6 (soglia %d+)",
+        atkUnit.tipo .. "_" .. atkUnit.unita_num, atkDadi, atkSoglia,
+        defUnit.tipo .. "_" .. defUnit.unita_num, defDadi, defSoglia),
+        {r=1, g=0.5, b=0})
+
+    -- Tiro simultaneo
+    local atkHits = 0
+    local defHits = 0
+
+    engine_rollDice(atkDadi, atkSoglia, function(hits)
+        atkHits = hits
+        engine_rollDice(defDadi, defSoglia, function(hits2)
+            defHits = hits2
+
+            printToAll(string.format("[MISCHIA] %s → %d HIT | %s → %d HIT",
+                atkUnit.tipo .. "_" .. atkUnit.unita_num, atkHits,
+                defUnit.tipo .. "_" .. defUnit.unita_num, defHits),
+                {r=1, g=0.5, b=0})
+
+            -- Applica ferite
+            if atkHits > 0 then
+                lionheart_applyHits(defUnit, defSlot, atkHits, player, state.defenderBases[1])
+            end
+            if defHits > 0 then
+                lionheart_applyHits(atkUnit, atkSlot, defHits, player, state.attacker)
+            end
+
+            -- Registra turno mischia
+            local unitKey = atkSlot .. "_" .. atkUnit.tipo .. "_" .. atkUnit.unita_num
+            LIONHEART_MELEE_ENGAGED[unitKey] = true
+
+            lionheart_meleeReset()
+        end)
+    end)
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_calcolaDadiMischia(unita, figure, isFirstTurn)
+-- ============================================================
+function lionheart_calcolaDadiMischia(unita, figure, isFirstTurn)
+    local tipo = unita.tipo
+
+    -- AC/UC primo turno: 3D6 ogni 2 figure
+    if isFirstTurn and (tipo == "AC" or tipo == "UC") then
+        return math.floor(figure / 2) * 3
+    end
+
+    -- Tutti: 1D6 per figura
+    return figure
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_sogliaMischia(tipoAtk, tipoDef, valore, isFlanked)
+-- ============================================================
+function lionheart_sogliaMischia(tipoAtk, tipoDef, valore, isFlanked)
+    local melee = LIONHEART_RULES and LIONHEART_RULES.melee[tipoAtk]
+    if not melee then return 6 end
+
+    local soglia = melee[tipoDef] or 6
+
+    -- Modificatore qualità
+    if valore == "S" or valore == 1 then
+        soglia = soglia - 1
+    elseif valore == "I" or valore == -1 then
+        soglia = soglia + 1
+    end
+
+    -- Fianco: dimezza dadi (gestito fuori) — nessun mod soglia
+    -- Clamp 2-6
+    return math.max(2, math.min(6, soglia))
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_checkFlank(atkBase, defBase)
+-- Controlla se l'attaccante colpisce sul fianco
+-- ============================================================
+function lionheart_checkFlank(atkBase, defBase)
+    if not atkBase or not defBase then return false end
+
+    local posAtk = atkBase.getPosition()
+    local posDef = defBase.getPosition()
+    local fwdDef = defBase.getTransformForward()
+    local fwdXZ  = Vector(fwdDef.x, 0, fwdDef.z):normalized()
+
+    local toAtk  = Vector(posAtk.x - posDef.x, 0, posAtk.z - posDef.z):normalized()
+    local dot    = fwdXZ:dot(toAtk)
+    local angle  = math.deg(math.acos(math.max(-1, math.min(1, dot))))
+
+    -- Fianco se angolo > 45° rispetto al fronte
+    return angle > 45
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_meleeCancel(player)
+-- ============================================================
+function lionheart_meleeCancel(player, value, id)
+    for _, db in ipairs(LIONHEART_MELEE_STATE.defenderBases or {}) do
+        if db then db.highlightOff() end
+    end
+    UI.setAttribute("confirm_panel", "active", "false")
+    lionheart_meleeReset()
+    printToColor("[MISCHIA] Annullata", player.color, {r=0.7,g=0.7,b=0.7})
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_meleeReset()
+-- ============================================================
+function lionheart_meleeReset()
+    LIONHEART_MELEE_STATE = {
+        attacker      = nil,
+        attackerUnit  = nil,
+        attackerSlot  = nil,
+        defenderUnit  = nil,
+        defenderSlot  = nil,
+        defenderBases = {},
+        isFlanked     = false,
+        isFirstTurn   = false,
+    }
+end

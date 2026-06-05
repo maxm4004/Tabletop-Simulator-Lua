@@ -1,0 +1,7 @@
+require("rulesets.lionheart.data")
+require("rulesets.lionheart.deploy.state")
+require("rulesets.lionheart.deploy.config")
+require("rulesets.lionheart.deploy.spawner")
+require("rulesets.lionheart.deploy.army_loader")
+require("rulesets.lionheart.deploy.scanner")
+require("rulesets.lionheart.deploy.validator")

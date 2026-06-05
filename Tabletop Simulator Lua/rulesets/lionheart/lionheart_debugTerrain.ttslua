@@ -1,0 +1,49 @@
+-- ============================================================
+-- FUNZIONE: lionheart_isOnTerrain(obj, terrainTag)
+-- Controlla se una base è sopra un oggetto con il tag specificato
+-- ============================================================
+function lionheart_isOnTerrain(obj, terrainTag)
+    if not obj then return false end
+
+    local pos    = obj.getPosition()
+    local bounds = obj.getBounds()
+
+    -- Controlla tutti gli oggetti con il tag terreno
+    for _, terrain in ipairs(getAllObjects()) do
+        if terrain.hasTag and terrain.hasTag(terrainTag) then
+            local tPos    = terrain.getPosition()
+            local tBounds = terrain.getBounds()
+
+            -- Verifica sovrapposizione XZ
+            local overlapX = math.abs(pos.x - tPos.x) < (bounds.size.x / 2 + tBounds.size.x / 2)
+            local overlapZ = math.abs(pos.z - tPos.z) < (bounds.size.z / 2 + tBounds.size.z / 2)
+
+            if overlapX and overlapZ then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- ============================================================
+-- FUNZIONE: lionheart_debugTerrain(player)
+-- Debug: controlla se la base selezionata è su terreno Wood01
+-- ============================================================
+function lionheart_debugTerrain(player, terrainTag)
+    terrainTag = terrainTag or "Wood01"
+    local selected = lionheart_getSelectedObjects(player)
+    if not selected or #selected < 1 then
+        printToColor("[TERRAIN] Seleziona una base", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    for _, obj in ipairs(selected) do
+        local onTerrain = lionheart_isOnTerrain(obj, terrainTag)
+        local msg = string.format("[TERRAIN] %s → %s: %s",
+            obj.getName(), terrainTag, onTerrain and "SI" or "NO")
+        printToColor(msg, player.color, {r=0.2, g=0.9, b=0.2})
+    end
+
+    return true
+end

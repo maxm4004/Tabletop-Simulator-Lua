@@ -1,0 +1,91 @@
+-- ============================================================
+-- RENDERER BUILT-IN
+-- Questi renderer sono disponibili per qualsiasi ruleset.
+-- I ruleset possono aggiungere renderer custom tramite:
+--   registerRenderer("nomeLayout", function(phase) ... end)
+-- ============================================================
+RENDERERS = {}
+
+-- ============================================================
+-- RENDERER: 1BtnClick
+-- Mostra solo BTN_SINGLE (panelBtnDown).
+-- ============================================================
+RENDERERS["1BtnClick"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "false")
+    UI.setAttribute("panelBtnDown", "active", "true")
+    UI.setAttribute("panelBtnDown", "offsetXY", "0 -192")
+    UI.setAttribute("BTN_SINGLE",   "active", "true")
+    UI.setAttribute("panelDices",   "active", "false")
+
+end
+-- ============================================================
+-- RENDERER: 2BtnClick
+-- Mostra BTN_ARMY1 e BTN_ARMY2 (panelBtnUp).
+-- ============================================================
+RENDERERS["2BtnClick"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelDices",   "active", "false")
+
+end
+-- ============================================================
+-- RENDERER: 2BtnClickAndRoll
+-- Mostra BTN_ARMY1, BTN_ARMY2 e il panel dadi.
+-- ============================================================
+RENDERERS["2BtnClickAndRoll"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelDices",   "active", "true")
+    UI.setAttribute("panelDices",   "offsetXY", "0 -244")
+
+end
+-- ============================================================
+-- RENDERER: 3BtnClick
+-- Mostra BTN_ARMY1 e BTN_ARMY2 finché entrambi non hanno
+-- confermato, poi switcha a BTN_SINGLE.
+--
+-- AGGIORNATO: legge ENGINE.state.Army1Done / Army2Done
+-- (slot normalizzati) invece di TURN.completed (stato ruleset).
+-- Questo rende il renderer indipendente dal ruleset attivo.
+--
+-- Compatibilità: i ruleset che popolano TURN.completed nei
+-- propri callbacks non devono cambiare nulla — engine_execute
+-- ora aggiorna ENGINE.state in parallelo, trasparentemente.
+-- ============================================================
+RENDERERS["3BtnClick"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelDices",   "active", "false")
+
+    -- AGGIORNATO: ENGINE.state invece di TURN.completed
+    local bothDone = ENGINE.state
+                  and ENGINE.state.Army1Done
+                  and ENGINE.state.Army2Done
+
+    if bothDone then
+        UI.setAttribute("panelBtnUp",   "active", "false")
+        UI.setAttribute("panelBtnDown", "active", "true")
+        UI.setAttribute("panelBtnDown", "offsetXY", "0 -192")
+        UI.setAttribute("BTN_SINGLE",   "active", "true")
+    end
+
+end
+-- ============================================================
+-- RENDERER: 2BtnFireOrCancel
+-- ============================================================
+RENDERERS["2BtnFireOrCancel"] = function(phase)
+
+    UI.setAttribute("panelBtnUp",   "active", "true")
+    UI.setAttribute("panelBtnUp",   "offsetXY", "0 -192")
+    UI.setAttribute("panelBtnDown", "active", "false")
+    UI.setAttribute("panelDices",   "active", "true")
+    UI.setAttribute("panelDices",   "offsetXY", "0 -244")
+
+end

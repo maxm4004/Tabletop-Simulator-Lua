@@ -1,0 +1,433 @@
+-- ============================================================
+-- SHOOT — Sistema tiro: cono, LOS, target detection
+-- ============================================================
+
+LIONHEART_SHOOTING = LIONHEART_SHOOTING or {
+    activeShooter = nil,
+    activeTarget  = nil,
+    activeAnimation = nil,
+    range = 60,
+    angle = 45
+}
+
+LIONHEART_FIRED = LIONHEART_FIRED or {}
+
+-- ============================================================
+-- FUNZIONE: lionheart_showRange()
+-- ============================================================
+function lionheart_range_and_target(player, value, id, buttonConfig)
+
+    local selected = lionheart_getSelectedObjects(player)
+    if not selected or #selected < 1 then
+        printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    UI.setAttribute("btnAction", "Text", "Fire")
+    UI.setAttribute("btnAction", "onClick", "lionheart_shootConfirm")
+    UI.setAttribute("btnCancel", "onClick", "lionheart_shootResetLines")
+
+    local shooter = selected[1]
+    local shooterSlot = nil
+    if shooter.hasTag("Army1") then shooterSlot = 1 end
+    if shooter.hasTag("Army2") then shooterSlot = 2 end
+    if shooterSlot == nil then return false end
+
+    local playerSlot = getArmyByColor(player)
+    if playerSlot ~= shooterSlot then
+        printToColor("[TIRO] Non è la tua unità", player.color, {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    local nickname    = shooter.getName()
+    local baseInfo    = deployment_parseNickname(nickname)
+    local shooterUnit = baseInfo and lionheart_findUnit(shooterSlot, baseInfo.unitType, baseInfo.unitNumber)
+    local weapon      = shooterUnit and shooterUnit.arma and LIONHEART_RULES.weapons[shooterUnit.arma]
+
+    if not weapon then
+        printToColor("[TIRO] Questa unità non ha armi da tiro", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local unitKey = shooterSlot .. "_" .. baseInfo.unitType .. "_" .. baseInfo.unitNumber
+    if LIONHEART_FIRED[unitKey] then
+        printToColor("[TIRO] Questa unità ha già sparato in questo turno", player.color, {r=1,g=0.6,b=0})
+        return false
+    end
+
+    local rangeCm     = weapon.range
+    local scale       = (ENGINE_MEASURE and ENGINE_MEASURE.SCALE) or 1.257
+    local rangeUnits  = rangeCm / scale  -- FIX M6: calcolato da SCALE
+    local angoloGradi = LIONHEART_SHOOTING.angle
+    local pos         = shooter.getPosition()
+
+    -- Usa le basi selezionate per determinare l'ampiezza del cono
+    local basiObjs = {}
+    for _, obj in ipairs(selected) do
+        if obj.hasTag and obj.hasTag(shooterSlot == 1 and "Army1" or "Army2") then
+            table.insert(basiObjs, obj)
+        end
+    end
+
+    if #basiObjs == 0 then
+        printToColor("[TIRO] Nessuna base valida selezionata", player.color, {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    -- Direzione iniziale dalla prima base per il sort
+    local fwdRef0 = basiObjs[1].getTransformForward()
+    local fwdXZ0  = Vector(fwdRef0.x, 0, fwdRef0.z):normalized()
+    local right0  = Vector(-fwdXZ0.z, 0, fwdXZ0.x)
+
+    -- Ordina basi per posizione lungo asse right
+    table.sort(basiObjs, function(a, b)
+        local pa = a.getPosition()
+        local pb = b.getPosition()
+        local da = pa.x * right0.x + pa.z * right0.z
+        local db = pb.x * right0.x + pb.z * right0.z
+        return da < db
+    end)
+
+    local primaBase  = basiObjs[1]
+    local ultimaBase = basiObjs[#basiObjs]
+    local pos1       = primaBase.getPosition()
+    local pos2       = ultimaBase.getPosition()
+
+    -- Ricalcola direzioni dalla posizione reale delle basi
+    local dirUnita = Vector(pos2.x - pos1.x, 0, pos2.z - pos1.z):normalized()
+    local right    = dirUnita
+    local fwdXZ = Vector(dirUnita.z, 0, -dirUnita.x)
+
+    -- Dimensioni fisse base (4x3)
+    local halfWidth = 1.65
+    local halfDepth = 1.15
+    local startLeft = Vector(
+        pos1.x - right.x * halfWidth + fwdXZ.x * halfDepth,
+        pos.y + 0.1,
+        pos1.z - right.z * halfWidth + fwdXZ.z * halfDepth
+    )
+    local startRight = Vector(
+        pos2.x + right.x * halfWidth + fwdXZ.x * halfDepth,
+        pos.y + 0.1,
+        pos2.z + right.z * halfWidth + fwdXZ.z * halfDepth
+    )
+
+    local frontCenter = Vector(
+        (startLeft.x + startRight.x) / 2,
+        pos.y + 0.1,
+        (startLeft.z + startRight.z) / 2
+    )
+
+    local angolo   = math.rad(angoloGradi)
+    local segmenti = 30
+
+    local function ruota(v, ang)
+        return Vector(
+            v.x * math.cos(ang) - v.z * math.sin(ang),
+            0,
+            v.x * math.sin(ang) + v.z * math.cos(ang)
+        )
+    end
+
+    local puntiArco  = {}
+    local firstPoint = nil
+    local lastPoint  = nil
+
+    for i = 0, segmenti do
+        local t   = i / segmenti
+        local ang = -angolo + (2 * angolo * t)
+        local dir = ruota(fwdXZ, ang)
+        local p   = Vector(
+            frontCenter.x + dir.x * rangeUnits,
+            frontCenter.y,
+            frontCenter.z + dir.z * rangeUnits
+        )
+        if i == 0        then firstPoint = p end
+        if i == segmenti then lastPoint  = p end
+        table.insert(puntiArco, shooter.positionToLocal(p))
+    end
+
+    local campioni      = 50
+    local puntiSinistro = {}
+    local puntiDestro   = {}
+
+    for i = 0, campioni do
+        local t  = i / campioni
+        local pS = Vector(
+            startLeft.x  + (firstPoint.x - startLeft.x)  * t,
+            startLeft.y  + (firstPoint.y - startLeft.y)  * t,
+            startLeft.z  + (firstPoint.z - startLeft.z)  * t
+        )
+        local pD = Vector(
+            startRight.x + (lastPoint.x - startRight.x) * t,
+            startRight.y + (lastPoint.y - startRight.y) * t,
+            startRight.z + (lastPoint.z - startRight.z) * t
+        )
+        table.insert(puntiSinistro, shooter.positionToLocal(pS))
+        table.insert(puntiDestro,   shooter.positionToLocal(pD))
+    end
+
+    local nemici = lionheart_getNemici(shooter, shooterSlot)
+    local target = lionheart_trovaBersaglio(shooter, nemici, rangeUnits, angoloGradi, puntiArco, puntiSinistro, puntiDestro)
+
+    local conoLines = {
+        {points = puntiSinistro, color = {1, 0.8, 0.1}, thickness = 0.1},
+        {points = puntiDestro,   color = {1, 0.8, 0.1}, thickness = 0.1},
+        {points = puntiArco,     color = {1, 0.8, 0.1}, thickness = 0.1},
+    }
+
+    if target then
+        local targetPos  = target.getPosition()
+        local startPoint = Vector(frontCenter.x, pos.y + 0.3, frontCenter.z)
+        local endPoint   = Vector(targetPos.x, targetPos.y + 0.3, targetPos.z)
+        local altezza    = (endPoint - startPoint):magnitude() * 0.15
+        local parabolaPoints = {}
+
+        for i = 0, 20 do
+            local t  = i / 20
+            local px = startPoint.x + (endPoint.x - startPoint.x) * t
+            local pz = startPoint.z + (endPoint.z - startPoint.z) * t
+            local py = startPoint.y + (endPoint.y - startPoint.y) * t + altezza * (1 - (2*t - 1)^2)
+            table.insert(parabolaPoints, Vector(px, py, pz))
+        end
+
+        local parabolaLine = {
+            points    = parabolaPoints,
+            color     = {0, 0, 0},
+            thickness = 0.09
+        }
+
+        target.highlightOn({0, 0, 0})
+
+        LIONHEART_SHOOT_STATE.shooter     = shooter
+        LIONHEART_SHOOT_STATE.target      = target
+        LIONHEART_SHOOT_STATE.shooterUnit = shooterUnit
+        LIONHEART_SHOOT_STATE.shooterSlot = shooterSlot
+
+        local targetInfo = deployment_parseNickname(target.getName())
+        local targetSlot = shooterSlot == 1 and 2 or 1
+        local targetUnit = targetInfo and lionheart_findUnit(targetSlot, targetInfo.unitType, targetInfo.unitNumber)
+        LIONHEART_SHOOT_STATE.targetUnit = targetUnit
+        LIONHEART_SHOOT_STATE.targetSlot = targetSlot
+
+        local dist           = (target.getPosition() - pos):magnitude()
+        local offsetShooter  = ENGINE_MEASURE.BASE_OFFSET[shooterUnit and shooterUnit.tipo or ""] or ENGINE_MEASURE.DEFAULT_OFFSET
+        local offsetTarget   = ENGINE_MEASURE.BASE_OFFSET[targetUnit and targetUnit.tipo or ""]  or ENGINE_MEASURE.DEFAULT_OFFSET
+        local distBordoBordo = dist - offsetShooter - offsetTarget
+        local distCm         = distBordoBordo * scale
+
+        local msg = string.format("[TIRO] Bersaglio: %s dist: %.1fcm / gittata: %dcm", target.getName(), distCm, rangeCm)
+        printToColor(msg, player.color, {r=1,g=0.85,b=0.2})
+
+        UI.setAttribute("confirm_panel", "active", "true")
+        UI.setAttribute("confirm_panel", "visibility", player.color)
+        LIONHEART_SHOOTING.activeLines = {parabolaLine}
+    else
+        printToColor("[TIRO] Nessun bersaglio entro gittata (" .. rangeCm .. "cm)", player.color, {r=0.7,g=0.7,b=0.7})
+        Wait.time(function()
+            LIONHEART_SHOOTING.activeLines = nil
+            if LIONHEART_SHOOTING.activeShooter then
+                LIONHEART_SHOOTING.activeShooter.setVectorLines({})
+            end
+            callHandler("aggiornaLinee")
+        end, 5)
+    end
+
+    shooter.setVectorLines(conoLines)
+    LIONHEART_SHOOTING.activeShooter = shooter
+    callHandler("aggiornaLinee")
+
+    return true
+end
+-- ============================================================
+-- FUNZIONE: lionheart_shootResetLines
+-- ============================================================
+function lionheart_shootResetLines(player, value, id)
+        
+        if LIONHEART_SHOOTING.activeShooter then
+            LIONHEART_SHOOTING.activeShooter.setVectorLines({})
+        end
+
+        LIONHEART_SHOOTING.activeLines = nil
+        if LIONHEART_SHOOT_STATE.target then
+            LIONHEART_SHOOT_STATE.target.highlightOff()
+        end
+        UI.setAttribute("confirm_panel", "active", "false")
+        callHandler("aggiornaLinee")
+end
+-- ============================================================
+-- FUNZIONE: lionheart_trovaBersaglio
+-- ============================================================
+function lionheart_trovaBersaglio(shooter, nemici, rangeUnits, angoloGradi, puntiArco, puntiSinistro, puntiDestro)
+    local validi = {}
+    local posA   = shooter.getPosition()
+
+    for _, nemico in ipairs(nemici) do
+        if nemico and nemico ~= shooter then
+            local posB = nemico.getPosition()
+            if lionheart_isDentroCono(shooter, nemico, posB, angoloGradi, rangeUnits, puntiArco, puntiSinistro, puntiDestro) then
+                if lionheart_checkLOS(shooter, posA, posB) then
+                    local dist = (posB - posA):magnitude()
+                    table.insert(validi, { obj = nemico, dist = dist })
+                end
+            end
+        end
+    end
+
+    table.sort(validi, function(a, b) return a.dist < b.dist end)
+    return validi[1] and validi[1].obj or nil
+end
+-- ============================================================
+-- FUNZIONE: lionheart_isDentroCono
+-- ============================================================
+function lionheart_isDentroCono(shooter, nemico, targetPos, angoloGradi, maxDist, puntiArco, puntiSinistro, puntiDestro)
+    if lionheart_isToccata(shooter, puntiArco,     nemico) then return true end
+    if lionheart_isToccata(shooter, puntiSinistro, nemico) then return true end
+    if lionheart_isToccata(shooter, puntiDestro,   nemico) then return true end
+
+    local pos   = shooter.getPosition()
+    local dir   = targetPos - pos
+    local dist  = dir:magnitude()
+    if dist > maxDist then return false end
+
+    local fwd   = shooter.getTransformForward()
+    local fwdXZ = Vector(fwd.x, 0, fwd.z):normalized()
+    local dirXZ = Vector(dir.x, 0, dir.z):normalized()
+    local dot   = math.max(-1, math.min(1, fwdXZ:dot(dirXZ)))
+    local ang   = math.deg(math.acos(dot))
+
+    return ang <= angoloGradi
+end
+-- ============================================================
+-- FUNZIONE: lionheart_isToccata
+-- ============================================================
+function lionheart_isToccata(shooter, punti, nemico)
+    if not nemico or not nemico.getBounds then return false end
+    local bounds = nemico.getBounds()
+    if not bounds or not bounds.size then return false end
+
+    local pos  = nemico.getPosition()
+    local xmin = pos.x - bounds.size.x / 2
+    local xmax = pos.x + bounds.size.x / 2
+    local zmin = pos.z - bounds.size.z / 2
+    local zmax = pos.z + bounds.size.z / 2
+
+    for _, p in ipairs(punti) do
+        local pw = shooter.positionToWorld(p)
+        if pw.x >= xmin and pw.x <= xmax and pw.z >= zmin and pw.z <= zmax then
+            return true
+        end
+    end
+    return false
+end
+-- ============================================================
+-- FUNZIONE: lionheart_checkLOS
+-- ============================================================
+
+function lionheart_checkLOS(shooter, fromPos, toPos)
+    local dir       = toPos - fromPos
+    local enemyTag  = shooter.hasTag("Army1") and "Army2" or "Army1"
+    local friendTag = shooter.hasTag("Army1") and "Army1" or "Army2"
+
+    local hits = Physics.cast({
+        origin    = fromPos,
+        direction = dir:normalized(),
+        distance  = dir:magnitude(),
+        type      = 1
+    })
+
+    for _, hit in ipairs(hits) do
+        if hit.hit_object then
+            if hit.hit_object.hasTag(enemyTag) then
+                return true
+            elseif hit.hit_object.hasTag(friendTag) then
+                return false
+            end
+        end
+    end
+    return true
+end
+-- ============================================================
+-- FUNZIONE: lionheart_getNemici
+-- ============================================================
+function lionheart_getNemici(shooter, shooterSlot)
+    local nemici   = {}
+    local enemyTag = shooterSlot == 1 and "Army2" or "Army1"
+    for _, obj in ipairs(getAllObjects()) do
+        if obj ~= shooter and obj.hasTag and obj.hasTag(enemyTag) then
+            table.insert(nemici, obj)
+        end
+    end
+    return nemici
+end
+-- ============================================================
+-- FUNZIONE: lionheart_fire()
+-- ============================================================
+function lionheart_fire(player, value, id, buttonConfig)
+
+    local selected = lionheart_getSelectedObjects(player)
+    if selected == nil or #selected < 1 then
+        printToAll("[TIRO] Seleziona una base", {r=1,g=0.6,b=0})
+        return false
+    end
+
+
+    local shooter = selected[1]
+    if LIONHEART_SHOOTING.activeAnimation ~= nil then LIONHEART_SHOOTING.activeAnimation.active = false end
+
+    local enemyTag = "Army1"
+    if shooter.hasTag ~= nil and shooter.hasTag("Army1") then enemyTag = "Army2" end
+
+    local target = nil
+    local bestDist = 999999
+    for _, obj in ipairs(getAllObjects()) do
+        if obj ~= shooter and obj.hasTag ~= nil and obj.hasTag(enemyTag) then
+            local dist = (obj.getPosition() - shooter.getPosition()):magnitude()
+            if dist < bestDist then
+                bestDist = dist
+                target = obj
+            end
+        end
+    end
+
+    if target == nil then
+        printToAll("[TIRO] Nessun target", {r=1,g=0.6,b=0})
+        return false
+    end
+
+    if LIONHEART_SHOOTING.activeTarget ~= nil then LIONHEART_SHOOTING.activeTarget.highlightOff() end
+    target.highlightOn({1,0.1,0.1}, 10)
+
+    LIONHEART_SHOOTING.activeTarget = target
+    LIONHEART_SHOOTING.activeShooter = shooter
+
+    local state = { active = true }
+    LIONHEART_SHOOTING.activeAnimation = state
+
+    local function loop()
+        if not state.active then
+            if shooter ~= nil then shooter.setVectorLines({}) end
+            return
+        end
+        if shooter == nil or target == nil then return end
+
+        shooter.setVectorLines({{points = {shooter.positionToLocal(shooter.getPosition()), shooter.positionToLocal(target.getPosition())}, color = {1, 0.8, 0.1}, thickness = 0.25}})
+        Wait.frames(loop, 5)
+    end
+
+    loop()
+    return true
+end
+-- ============================================================
+-- FUNZIONE: lionheart_stopFire()
+-- ============================================================
+function lionheart_stopFire(player, value, id, buttonConfig)
+    if LIONHEART_SHOOTING.activeAnimation ~= nil then LIONHEART_SHOOTING.activeAnimation.active = false end
+    if LIONHEART_SHOOTING.activeShooter ~= nil then LIONHEART_SHOOTING.activeShooter.setVectorLines({}) end
+    if LIONHEART_SHOOTING.activeTarget ~= nil then LIONHEART_SHOOTING.activeTarget.highlightOff() end
+
+    LIONHEART_SHOOTING.activeAnimation = nil
+    LIONHEART_SHOOTING.activeShooter = nil
+    LIONHEART_SHOOTING.activeTarget = nil
+    return true
+end

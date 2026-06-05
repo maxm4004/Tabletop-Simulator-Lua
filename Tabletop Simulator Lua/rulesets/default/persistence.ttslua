@@ -1,0 +1,40 @@
+function default_onSave()
+
+    local saveData = {
+        engine = {
+            phase = ENGINE and ENGINE.phase or nil,
+            turn = ENGINE and ENGINE.turn or nil
+        },
+        default = DEFAULT
+    }
+
+    return JSON.encode(saveData)
+end
+
+function restoreState(save_state)
+
+    if not save_state or save_state == "" then
+        return false
+    end
+
+    local ok, data = pcall(JSON.decode, save_state)
+    if not ok or not data then
+        return false
+    end
+
+    ENGINE = ENGINE or {}
+
+    if data.engine and data.engine.phase and ENGINE.phases[data.engine.phase] then
+        ENGINE.phase = data.engine.phase
+    end
+
+    if data.engine and data.engine.turn then
+        ENGINE.turn = data.engine.turn
+    end
+
+    DEFAULT = data.default or {
+        confirmed = false
+    }
+
+    return true
+end

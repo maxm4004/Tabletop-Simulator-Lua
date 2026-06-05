@@ -1,0 +1,9 @@
+-- ============================================================
+-- MORALE — Callbacks bottoni fase
+-- ============================================================
+function morale_btn_single(player, value, id)
+    UI.setAttribute("iconMoveArmy1", "active", "false")
+    UI.setAttribute("iconMoveArmy2", "active", "false")
+    if DEBUG then print("morale_btn_single") end
+    return true
+end

@@ -1,0 +1,58 @@
+-- ============================================================
+-- WARFORGE ENGINE / BUTTONBAR STATE
+-- 12 slot neutri. Nessun riferimento a ruleset o URL remoti.
+-- ============================================================
+
+ENGINE_BUTTONBAR = ENGINE_BUTTONBAR or {
+    initialized = false,
+    slots = {},
+    slotCount = 9,
+    xmlPrefix = "WF_BAR_"
+}
+
+function engine_buttonBarEmptySlot()
+    return {
+        label = "",
+        onClick = nil,
+        tooltip = "",
+        visible = false,
+        enabled = false,
+        color = "rgba(0.15,0.15,0.15,1)",
+        textColor = "White"
+    }
+end
+
+function engine_buttonBarInit()
+
+    if DEBUG then print("engine_buttonBarInit") end
+
+    if ENGINE_BUTTONBAR.initialized then
+        return true
+    end
+
+    ENGINE_BUTTONBAR.slots = {}
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+        ENGINE_BUTTONBAR.slots[i] = engine_buttonBarEmptySlot()
+    end
+
+    ENGINE_BUTTONBAR.initialized = true
+    return true
+end
+
+function engine_buttonBarSlotId(slot)
+    return ENGINE_BUTTONBAR.xmlPrefix .. string.format("%02d", tonumber(slot))
+end
+
+function engine_buttonBarParseSlotFromId(id)
+    if id == nil then return nil end
+
+    local n = string.match(id, "(%d+)$")
+    if n == nil then return nil end
+
+    local slot = tonumber(n)
+    if slot == nil then return nil end
+    if slot < 1 or slot > ENGINE_BUTTONBAR.slotCount then return nil end
+
+    return slot
+end

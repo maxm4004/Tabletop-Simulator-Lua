@@ -1,0 +1,104 @@
+-- ============================================================
+-- FUNZIONE: engine_canUseButton() — implementazione default
+-- FIX G3: spostata logica inputMode da rulesets/lionheart/lib.ttslua
+-- I ruleset possono fare override registrando "canUseButton" handler.
+-- ============================================================
+function engine_canUseButton(slot, player, value, id, button, phase)
+
+    local mode = phase and phase.inputMode or "FREE"
+
+    if mode == "FREE" then
+        return true
+    end
+
+    if mode == "OWNER" then
+        if slot == BUTTONS.BTN_ARMY1 then
+            if not player or player.color ~= COLOR.ARMY1 then
+                return false
+            end
+        end
+        if slot == BUTTONS.BTN_ARMY2 then
+            if not player or player.color ~= COLOR.ARMY2 then
+                return false
+            end
+        end
+        return true
+    end
+
+    if mode == "INITIATIVE" then
+        if TURN and TURN.activeArmy then
+            local activeColor = (TURN.activeArmy == "Army1") and COLOR.ARMY1 or COLOR.ARMY2
+            if not player or player.color ~= activeColor then
+                return false
+            end
+        end
+        return true
+    end
+
+    return true
+end
+
+-- ============================================================
+-- FUNZIONE: engine_handleButton()
+-- ============================================================
+function engine_handleButton(slot, player, value, id)
+
+    if DEBUG then print("engine_handleButton") end
+
+    local phase = ENGINE.phases[ENGINE.phase]
+    if not phase or not phase.buttons then return end
+
+    local button = phase.buttons[slot]
+    if not button then return end
+
+    if phase.enforceOwnership then
+        local ok = callHandler("canUseButton", slot, player, value, id, button, phase)
+        if ok == false then
+            return
+        end
+    end
+
+    local allowed = true
+
+    if button.callback then
+        local result = callHandler(button.callback, player, value, id, button)
+
+        if result == false then
+            allowed = false
+        end
+    end
+
+    if not allowed then
+        return
+    end
+
+    if button.action then
+        engine_handleAction({
+            type = button.action,
+            player = player
+        })
+    end
+
+    --callHandler("updateCenterPanel")
+    --callHandler("aggiornaLinee")
+end
+-- ============================================================
+-- FUNZIONE: onBtnArmy1()
+-- ============================================================
+function onBtnArmy1(player, value, id)
+    engine_handleButton("BTN_ARMY1", player, value, id)
+end
+
+-- ============================================================
+-- FUNZIONE: onBtnArmy2()
+-- ============================================================
+function onBtnArmy2(player, value, id)
+    engine_handleButton("BTN_ARMY2", player, value, id)
+end
+
+-- ============================================================
+-- FUNZIONE: onBtnScelta()
+-- ============================================================
+function onBtnScelta(player, value, id)
+    engine_handleButton("BTN_SINGLE", player, value, id)
+end

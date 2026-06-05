@@ -1,0 +1,26 @@
+-- ============================================================
+-- DEPLOY — Phase Hooks
+-- ============================================================
+function before_deploy_spawn(phaseName, phase)
+    TURN.phase = phaseName
+    TURN.completed = { Army1 = false, Army2 = false }
+    linee_deploy = true
+    callHandler("deployment_init")
+    callHandler("aggiornaLinee")
+end
+
+function after_deploy_spawn(phaseName, phase)
+    TURN.completed = { Army1 = false, Army2 = false }
+end
+
+function before_deploy_position(phaseName, phase)
+    TURN.phase = phaseName
+    TURN.completed = { Army1 = false, Army2 = false }
+end
+
+function after_deploy_position(phaseName, phase)
+    linee_deploy = false
+    callHandler("deployment_revealAllSpawned")
+    callHandler("deployment_scanTable")
+    callHandler("aggiornaSchedeUnita")
+end

@@ -1,0 +1,27 @@
+-- ============================================================
+-- WARFORGE ENGINE / BUTTONBAR UI
+-- Aggiorna 12 Button XML esistenti: WF_BAR_01 ... WF_BAR_12
+-- ============================================================
+
+function engine_buttonBarRender()
+ 
+    if UI == nil then
+        return false
+    end
+
+    for i = 1, ENGINE_BUTTONBAR.slotCount do
+
+        local slot = ENGINE_BUTTONBAR.slots[i]
+        local id = engine_buttonBarSlotId(i)
+
+        UI.setAttribute(id, "text", slot.label or "")
+        UI.setAttribute(id, "tooltip", slot.tooltip or "")
+        UI.setAttribute(id, "active", slot.visible and "true" or "false")
+        UI.setAttribute(id, "interactable", slot.enabled and "true" or "false")
+        UI.setAttribute(id, "colors", slot.colors)
+        UI.setAttribute(id, "textColor", slot.textColor)
+
+    end
+
+    return true
+end

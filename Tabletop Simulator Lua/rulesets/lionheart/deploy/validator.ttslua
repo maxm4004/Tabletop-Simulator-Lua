@@ -1,0 +1,138 @@
+-- ============================================================
+-- LIONHEART DEPLOYMENT / VALIDATOR
+-- Porting diretto di verificaDeploy
+-- ============================================================
+function deployment_validateDeploy(player)
+
+    local slot = getArmyByColor(player)
+    if not slot then
+        printToAll("[DEPLOY] Player non associato ad un esercito", {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    printToAll("[DEPLOY] verificaDeploy Army" .. slot, {r=0.9,g=0.8,b=0.1})
+
+    local zone  = LIONHEART_DATA.deployment.zone or {}
+    local X_MAX = zone.xMax
+    local Z_NEAR = zone.zNear
+    local Z_FAR  = zone.zFar
+
+    local fuori     = {}
+    local sbagliata = {}
+    local basi_errate = {}
+
+    for _, obj in ipairs(getAllObjects()) do
+        local objSlot = deployment_getObjectArmySlot(obj)
+        if objSlot == slot then
+            local pos   = obj.getPosition()
+            local z_abs = math.abs(pos.z)
+            local x_abs = math.abs(pos.x)
+            local z_ok      = z_abs >= Z_NEAR and z_abs <= Z_FAR
+            local x_ok      = x_abs <= X_MAX
+            local z_sign_ok = (slot == 1 and pos.z < 0) or (slot == 2 and pos.z > 0)
+            local nome = obj.getName()
+            if not z_ok or not x_ok then
+                table.insert(fuori, nome)
+                table.insert(basi_errate, obj)
+            elseif not z_sign_ok then
+                table.insert(sbagliata, nome)
+                table.insert(basi_errate, obj)
+            end
+        end
+    end
+
+    for _, obj in ipairs(basi_errate) do
+        if obj then obj.highlightOn({r=1,g=0.1,b=0.1}, 15) end
+    end
+
+    local armyName = (DEPLOYMENT.armies[slot] and DEPLOYMENT.armies[slot].displayName) or ("Army"..slot)
+    local totale   = #fuori + #sbagliata
+
+    if totale > 0 then
+        printToAll("── Army "..slot.." ("..armyName..") ──", {r=1,g=0.8,b=0.2})
+        for _, nn in ipairs(fuori)     do printToColor("[DEPLOY] Fuori zona: "..nn, player.color, {r=1,g=0.7,b=0.3}) end
+        for _, nn in ipairs(sbagliata) do printToColor("[DEPLOY] Zona sbagliata: "..nn, player.color, {r=1,g=0.4,b=0.4}) end
+        return false
+    end
+
+    -- Verifica che ci siano basi
+    local basi_trovate = 0
+    for _, obj in ipairs(getAllObjects()) do
+        if deployment_getObjectArmySlot(obj) == slot then
+            basi_trovate = basi_trovate + 1
+        end
+    end
+
+    if basi_trovate == 0 then
+        printToAll("[DEPLOY] Nessuna base trovata per Army"..slot, {r=1,g=0.3,b=0.3})
+        return false
+    end
+
+    printToAll("[DEPLOY] Army"..slot.." OK — tutte le basi nelle zone corrette!", {r=0.4,g=0.9,b=0.4})
+    return true
+end
+-- ============================================================
+-- FUNZIONE: deployment_confirmDeploy
+-- ============================================================
+function deployment_confirmDeploy(player)
+
+    if not deployment_areBothArmiesLoaded() then
+        fadeOut("Devi caricare entrambi gli eserciti prima di confermare.", nil)
+        return false
+    end
+
+    if not LIONHEART_DATA.deployment.positioningOnTable then
+        if not deployment_validateDeploy(player) then
+            fadeOut("Correggi il posizionamento e premi di nuovo Confirm Deploy.", nil)
+            return false
+        end
+    end
+
+    return true
+end
+
+function deployment_debugDrawDeployArea()
+    local zone = LIONHEART_DATA.deployment.zone or {}
+
+    local X_MAX  = zone.xMax
+    local Z_NEAR = zone.zNear
+    local Z_FAR  = zone.zFar
+    local Y      = zone.y or 3
+
+    local colorArmy1 = {1, 0, 0}
+    local colorArmy2 = {0, 0.4, 1}
+
+    -- Army1: zona z negativa
+    deployment_debugDrawRect(
+        -X_MAX, -Z_FAR,
+         X_MAX, -Z_NEAR,
+         Y,
+         colorArmy1
+    )
+
+    -- Army2: zona z positiva
+    deployment_debugDrawRect(
+        -X_MAX, Z_NEAR,
+         X_MAX, Z_FAR,
+         Y,
+         colorArmy2
+    )
+
+    printToAll("[DEPLOY DEBUG] Aree deploy tracciate", {r=0.8,g=0.8,b=0.2})
+end
+
+function deployment_debugDrawRect(x1, z1, x2, z2, y, color)
+    local p1 = {x=x1, y=y, z=z1}
+    local p2 = {x=x2, y=y, z=z1}
+    local p3 = {x=x2, y=y, z=z2}
+    local p4 = {x=x1, y=y, z=z2}
+
+    Global.setVectorLines({
+        {
+            points = {p1, p2, p3, p4, p1},
+            color = color,
+            thickness = 0.15,
+            rotation = {0,0,0}
+        }
+    })
+end
