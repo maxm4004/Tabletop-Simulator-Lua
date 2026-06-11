@@ -27,7 +27,7 @@
                 },
                 {
                     "nickname": "ENG_UI1",
-                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 0.67,
+                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 1.0,
                     "base": {
                         "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
                         "diffuseURL": "erba_verde", "colliderURL": "", "material": 3, "type": 0
@@ -39,7 +39,7 @@
                 },
                 {
                     "nickname": "ENG_UI2",
-                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 0.67,
+                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 1.0,
                     "base": {
                         "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
                         "diffuseURL": "erba_verde", "colliderURL": "", "material": 3, "type": 0
@@ -120,7 +120,7 @@
                 },
                 {
                     "nickname": "FRA_UI1",
-                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 0.67,
+                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 1.0,
                     "base": {
                         "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
                         "diffuseURL": "erba_verde", "colliderURL": "", "material": 3, "type": 0
@@ -136,7 +136,7 @@
                 },
                 {
                     "nickname": "FRA_UI2",
-                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 0.67,
+                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 1.0,
                     "base": {
                         "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
                         "diffuseURL": "erba_verde", "colliderURL": "", "material": 3, "type": 0
@@ -231,7 +231,7 @@
                 },
                 {
                     "nickname": "FRA_SK",
-                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 0.67,
+                    "scaleX": 1.0, "scaleY": 1.0, "scaleZ": 1.0,
                     "base": {
                         "meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
                         "diffuseURL": "erba_verde", "colliderURL": "", "material": 3, "type": 0
