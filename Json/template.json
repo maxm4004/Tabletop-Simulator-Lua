@@ -1,4 +1,4 @@
-{
+{{
 	"versione": "2.0",
 	"terrains": {
 		"terra_fango": "https://steamusercontent-a.akamaihd.net/ugc/1014942732523998487/F1855119665D8199F8E2AD87F6C8DB9ADEC7E6F9/",
@@ -198,6 +198,12 @@
 						"colliderURL": "", "diffuseURL": "erba_verde", "material": 3,
 						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/10759047602059441406/CE2D181F991141D7F469A96044F155C85A4BCCC4/",
 						"type": 0
+					},
+					"miniature": {
+						"colliderURL": "",
+						"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/1463059647358842297/AAF73C3D45ED6561F5EB49572F78EDE2F4D60F66/",
+						"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1171446847681437733/67201FA24E040FBD316D57AF3C68526369990E6D/",
+						"material": 3, "type": 0
 					},
 					"miniature": {
 						"colliderURL": "",
