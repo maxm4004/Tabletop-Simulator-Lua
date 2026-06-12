@@ -48,18 +48,6 @@
 									}
 								}
 							]
-						},
-						{
-							"customMesh": {
-								"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/1021698887366621756/EC503A887849BC8C1452C867713A54C17B14DE51/",
-								"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1459680593836443155/70056D4FA91A2F52022BAA9C8839EFD34A359036/",
-								"colliderURL": "",
-								"material": 3,
-								"type": 0,
-								"scaleX": 1.0,
-								"scaleY": 1.0,
-								"scaleZ": 1.0
-							}
 						}
 					]
 				},
