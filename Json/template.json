@@ -33,34 +33,8 @@
 								"scaleX": 0.7,
 								"scaleY": 0.7,
 								"scaleZ": 0.7
-							},
-							"children": [
-								{
-									"customMesh": {
-										"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/1463059365830620999/EEFB61D8DB03D249B5943676C6DE5351B845DC2C/",
-										"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1459680593836442312/A6175268B3F30224AF6507AC544DAEEEC76CEB5F/",
-										"colliderURL": "https://steamusercontent-a.akamaihd.net/ugc/1463059789662124820/5189A9FCA67335B1D44A347278200698C7F5CEB1/",
-										"material": 3,
-										"type": 0,
-										"scaleX": 0.7,
-										"scaleY": 0.7,
-										"scaleZ": 0.7
-									}
-								}
-							]
-						},
-						{
-							"customMesh": {
-								"meshURL": "https://steamusercontent-a.akamaihd.net/ugc/1021698887366621756/EC503A887849BC8C1452C867713A54C17B14DE51/",
-								"diffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1459680593836443155/70056D4FA91A2F52022BAA9C8839EFD34A359036/",
-								"colliderURL": "https://steamusercontent-a.akamaihd.net/ugc/1021699036697204067/F6F46F1D14A96E65F1923807607A950D85D156BE/",
-								"material": 3,
-								"type": 0,
-								"scaleX": 1.0,
-								"scaleY": 1.0,
-								"scaleZ": 1.0
 							}
-						}
+						}	
 					]
 				},
 				{
