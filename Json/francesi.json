@@ -8,81 +8,81 @@
             "tipo": "CinC", "nome_display": "Generale", "modificatore": null,
             "model": "FRA_CinC", "guid": "5e197d",
             "basi": [
-                {"id":1,"seq":0,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-0.54,"y":2.36,"z":5.18}}
+                {"id":1,"seq":0,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":0.21,"y":2.36,"z":41.08}}
             ]
         },
         {
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S",
             "model": null, "guid": null,
             "basi": [
-                {"id":1,"seq":1,"model":"FRA_ACGen","guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":0.0}},
-                {"id":2,"seq":2,"model":"FRA_AC1","guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":-20.0,"y":2.36,"z":-2.43}}
+                {"id":1,"seq":1,"model":"FRA_ACGen","guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":20.10,"y":2.36,"z":45.22}},
+                {"id":2,"seq":2,"model":"FRA_AC1","guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":20.10,"y":2.36,"z":47.65}}
             ]
         },
         {
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S",
             "model": null, "guid": null,
             "basi": [
-                {"id":1,"seq":3,"model":"FRA_ACGen","guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":-13.6,"y":2.36,"z":0.0}},
-                {"id":2,"seq":4,"model":"FRA_AC1","guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":-13.6,"y":2.36,"z":-2.43}}
+                {"id":1,"seq":3,"model":"FRA_ACGen","guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":26.50,"y":2.36,"z":45.22}},
+                {"id":2,"seq":4,"model":"FRA_AC1","guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":26.50,"y":2.36,"z":47.65}}
             ]
         },
         {
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S",
             "model": "FRA_AC2", "guid": "263bf1",
             "basi": [
-                {"id":1,"seq":5,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-7.2,"y":2.36,"z":0.0}},
-                {"id":2,"seq":6,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-7.2,"y":2.36,"z":-2.43}}
+                {"id":1,"seq":5,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":32.91,"y":2.36,"z":45.22}},
+                {"id":2,"seq":6,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":32.91,"y":2.36,"z":47.65}}
             ]
         },
         {
             "tipo": "UI", "nome_display": "Genovesi", "modificatore": null,
             "model": "FRA_UI1", "guid": "e87d0e",
             "basi": [
-                {"id":1,"seq":7,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":0.0}},
-                {"id":2,"seq":8,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-2.43}},
-                {"id":3,"seq":9,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-4.86}},
-                {"id":4,"seq":10,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":-0.8,"y":2.36,"z":-7.29}}
+                {"id":1,"seq":7,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":2.76,"y":2.36,"z":45.22}},
+                {"id":2,"seq":8,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.94,"y":2.36,"z":45.22}},
+                {"id":3,"seq":9,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":9.12,"y":2.36,"z":45.22}},
+                {"id":4,"seq":10,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":12.30,"y":2.36,"z":45.22}}
             ]
         },
         {
             "tipo": "UI", "nome_display": "Genovesi", "modificatore": null,
             "model": "FRA_UI1", "guid": "e87d0e",
             "basi": [
-                {"id":1,"seq":11,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":0.0}},
-                {"id":2,"seq":12,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-2.43}},
-                {"id":3,"seq":13,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-4.86}},
-                {"id":4,"seq":14,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.6,"y":2.36,"z":-7.29}}
+                {"id":1,"seq":11,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":2.76,"y":2.36,"z":48.92}},
+                {"id":2,"seq":12,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.94,"y":2.36,"z":48.92}},
+                {"id":3,"seq":13,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":9.12,"y":2.36,"z":48.92}},
+                {"id":4,"seq":14,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":12.30,"y":2.36,"z":48.92}}
             ]
         },
         {
             "tipo": "UI", "nome_display": "Fanteria", "modificatore": "I",
             "model": "FRA_UI2", "guid": "251178",
             "basi": [
-                {"id":1,"seq":15,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":0.0}},
-                {"id":2,"seq":16,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-2.43}},
-                {"id":3,"seq":17,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-4.86}},
-                {"id":4,"seq":18,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":12.0,"y":2.36,"z":-7.29}}
+                {"id":1,"seq":15,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-11.53,"y":2.36,"z":45.22}},
+                {"id":2,"seq":16,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.35,"y":2.36,"z":45.22}},
+                {"id":3,"seq":17,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-5.17,"y":2.36,"z":45.22}},
+                {"id":4,"seq":18,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-1.99,"y":2.36,"z":45.22}}
             ]
         },
         {
             "tipo": "UI", "nome_display": "Fanteria", "modificatore": "I",
             "model": "FRA_UI2", "guid": "251178",
             "basi": [
-                {"id":1,"seq":19,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":0.0}},
-                {"id":2,"seq":20,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-2.43}},
-                {"id":3,"seq":21,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-4.86}},
-                {"id":4,"seq":22,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":18.4,"y":2.36,"z":-7.29}}
+                {"id":1,"seq":19,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-11.53,"y":2.36,"z":48.92}},
+                {"id":2,"seq":20,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.35,"y":2.36,"z":48.92}},
+                {"id":3,"seq":21,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-5.17,"y":2.36,"z":48.92}},
+                {"id":4,"seq":22,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-1.99,"y":2.36,"z":48.92}}
             ]
         },
         {
             "tipo": "SK", "nome_display": "Bretoni", "modificatore": null,
             "model": "FRA_SK", "guid": "8eb82f",
             "basi": [
-                {"id":1,"seq":23,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":0.0}},
-                {"id":2,"seq":24,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-2.43}},
-                {"id":3,"seq":25,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-4.86}},
-                {"id":4,"seq":26,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":24.8,"y":2.36,"z":-7.29}}
+                {"id":1,"seq":23,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":-37.37,"y":2.36,"z":46.50}},
+                {"id":2,"seq":24,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":-30.98,"y":2.36,"z":46.50}},
+                {"id":3,"seq":25,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":-24.59,"y":2.36,"z":46.50}},
+                {"id":4,"seq":26,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":-18.2,"y":2.36,"z":46.50}}
             ]
         }
     ]
