@@ -32,7 +32,8 @@
 								"type": 0,
 								"scaleX": 0.7,
 								"scaleY": 0.7,
-								"scaleZ": 0.7
+								"scaleZ": 0.7,
+								"offsetZ": -0.3
 							}
 						}	
 					]
