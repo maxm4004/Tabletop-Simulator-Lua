@@ -15,8 +15,8 @@
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": null,
             "model": null, "guid": null,
             "basi": [
-                {"id":1,"seq":1,"model":"ENG_ACGen","guid":"62c7d4","arma":null,"ferite":0,"posizione":{"x":-23.74,"y":2.36,"z":-45.21}},
-                {"id":2,"seq":2,"model":"ENG_AC1","guid":"d3b1df","arma":null,"ferite":0,"posizione":{"x":-23.74,"y":2.36,"z":-47.63}}
+                {"id":1,"seq":1,"model":"ENG_AC1","guid":"62c7d4","arma":null,"ferite":0,"posizione":{"x":-23.74,"y":2.36,"z":-45.21}},
+                {"id":2,"seq":2,"model":"ENG_AC2","guid":"d3b1df","arma":null,"ferite":0,"posizione":{"x":-23.74,"y":2.36,"z":-47.63}}
             ]
         },
         {
