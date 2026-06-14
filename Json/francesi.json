@@ -46,8 +46,8 @@
             ]
         },
         {
-            "tipo": "UI", "nome_display": "Genovesi", "modificatore": null,
-            "model": "FRA_UI1", "guid": "e87d0e",
+            "tipo": "UI", "nome_display": "Crossbowmen", "modificatore": null,
+            "model": "FRA_UI3", "guid": "e87d0e",
             "basi": [
                 {"id":1,"seq":11,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":2.76,"y":2.36,"z":48.92}},
                 {"id":2,"seq":12,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.94,"y":2.36,"z":48.92}},
