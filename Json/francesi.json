@@ -47,7 +47,7 @@
         },
         {
             "tipo": "UI", "nome_display": "Crossbowmen", "modificatore": null,
-            "model": "FRA_UI3", "guid": "e87d0e",
+            "model": "FRA_UI2", "guid": "e87d0e",
             "basi": [
                 {"id":1,"seq":11,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":2.76,"y":2.36,"z":48.92}},
                 {"id":2,"seq":12,"model":null,"guid":null,"arma":"BAL","ferite":0,"posizione":{"x":5.94,"y":2.36,"z":48.92}},
@@ -57,7 +57,7 @@
         },
         {
             "tipo": "UI", "nome_display": "Fanteria", "modificatore": "I",
-            "model": "FRA_UI2", "guid": "251178",
+            "model": "FRA_UI3", "guid": "251178",
             "basi": [
                 {"id":1,"seq":15,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-11.53,"y":2.36,"z":45.22}},
                 {"id":2,"seq":16,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.35,"y":2.36,"z":45.22}},
@@ -67,7 +67,7 @@
         },
         {
             "tipo": "UI", "nome_display": "Fanteria", "modificatore": "I",
-            "model": "FRA_UI2", "guid": "251178",
+            "model": "FRA_UI3", "guid": "251178",
             "basi": [
                 {"id":1,"seq":19,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-11.53,"y":2.36,"z":48.92}},
                 {"id":2,"seq":20,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":-8.35,"y":2.36,"z":48.92}},
