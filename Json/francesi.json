@@ -77,7 +77,7 @@
         },
         {
             "tipo": "SK", "nome_display": "Bretoni", "modificatore": null,
-            "model": "FRA_SK", "guid": "8eb82f",
+            "model": "FRA_SK1", "guid": "8eb82f",
             "basi": [
                 {"id":1,"seq":23,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":-37.37,"y":2.36,"z":46.50}},
                 {"id":2,"seq":24,"model":null,"guid":null,"arma":"GIAV","ferite":0,"posizione":{"x":-30.98,"y":2.36,"z":46.50}},
