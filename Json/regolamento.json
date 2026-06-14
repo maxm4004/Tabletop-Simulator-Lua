@@ -23,8 +23,8 @@
         }
     ],
     "dati_unita": {
-        "AI":   { "basi": 3, "fpb": 4, "dado_tiro_div": 3   },
-        "UI":   { "basi": 4, "fpb": 3, "dado_tiro_div": 3   },
+        "AI":   { "basi": 3, "fpb": 8, "dado_tiro_div": 3   },
+        "UI":   { "basi": 4, "fpb": 6, "dado_tiro_div": 3   },
         "SK":   { "basi": 4, "fpb": 2, "dado_tiro_div": 4   },
         "AC":   { "basi": 2, "fpb": 3, "dado_tiro_div": null },
         "UC":   { "basi": 2, "fpb": 3, "dado_tiro_div": null },
