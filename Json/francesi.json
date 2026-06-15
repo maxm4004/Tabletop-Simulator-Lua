@@ -13,18 +13,18 @@
         },
         {
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S",
-            "model": null, "guid": null,
+            "model": "FRA_AC1", "guid": null,
             "basi": [
-                {"id":1,"seq":1,"model":"FRA_ACGen","guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":20.10,"y":2.36,"z":45.22}},
-                {"id":2,"seq":2,"model":"FRA_AC1","guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":20.10,"y":2.36,"z":47.65}}
+                {"id":1,"seq":1,"model":null,"guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":20.10,"y":2.36,"z":45.22}},
+                {"id":2,"seq":2,"model":null,"guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":20.10,"y":2.36,"z":47.65}}
             ]
         },
         {
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S",
-            "model": null, "guid": null,
+            "model": "FRA_AC1", "guid": null,
             "basi": [
-                {"id":1,"seq":3,"model":"FRA_ACGen","guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":26.50,"y":2.36,"z":45.22}},
-                {"id":2,"seq":4,"model":"FRA_AC1","guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":26.50,"y":2.36,"z":47.65}}
+                {"id":1,"seq":3,"model":null,"guid":"e857c1","arma":null,"ferite":0,"posizione":{"x":26.50,"y":2.36,"z":45.22}},
+                {"id":2,"seq":4,"model":null,"guid":"42a8ed","arma":null,"ferite":0,"posizione":{"x":26.50,"y":2.36,"z":47.65}}
             ]
         },
         {
