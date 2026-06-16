@@ -5,13 +5,6 @@
     "tag": "FRA",
     "unita": [
         {
-            "tipo": "CinC", "nome_display": "Generale", "modificatore": null,
-            "model": "FRA_CinC", "guid": "5e197d",
-            "basi": [
-                {"id":1,"seq":0,"model":null,"guid":null,"arma":null,"ferite":0,"posizione":{"x":0.21,"y":2.36,"z":41.08}}
-            ]
-        },
-        {
             "tipo": "AC", "nome_display": "Cavalieri", "modificatore": "S",
             "model": "FRA_AC1", "guid": null,
             "basi": [
