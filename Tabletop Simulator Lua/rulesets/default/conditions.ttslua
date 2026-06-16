@@ -1,7 +1,0 @@
-function registerDefaultConditions()
-
-    registerCondition("default_confirmed", function(action)
-        return DEFAULT and DEFAULT.confirmed == true
-    end)
-
-end
