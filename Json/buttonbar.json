@@ -34,14 +34,22 @@
         "callBack": "lionheart_lineRight"     
       },
       "5": {
+        "label": "Skirmish", 
+        "tooltip": "skirmish formation",
+        "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
+        "textColor": "#000000",
+        "onClick": "engine_buttonBarClick",
+        "callBack": "lionheart_skirmish"  
+      },
+      "6": {
         "label": "Column Up", 
         "tooltip": "form a column to up",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
         "textColor": "#000000",
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_columnUp"  
-      },
-      "6": {
+      },      
+      "7": {
         "label": "Column Down", 
         "tooltip": "form a column to down",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
@@ -49,7 +57,7 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_columnDown"
       },
-      "7": {
+      "8": {
         "label": "Fire", 
         "tooltip": "Unit open fire",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
@@ -57,7 +65,7 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_range_and_target"
       },
-      "8": {
+      "9": {
         "label": "Melee", 
         "tooltip": "Resolve melee",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
@@ -65,7 +73,7 @@
         "onClick": "engine_buttonBarClick",
         "callBack": "lionheart_melee"
       },
-      "9": {
+      "10": {
         "label": "Measure", 
         "tooltip": "Measuring everything",
         "colors": "#E0E0E0|#B8B8B8|#909090|#FFFFFF",
