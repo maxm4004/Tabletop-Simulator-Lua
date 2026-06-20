@@ -42,7 +42,7 @@ local __bundle_require, __bundle_loaded, __bundle_register, __bundle_modules = (
 	return require, loaded, register, modules
 end)(nil)
 __bundle_register("Global.-1.lua", function(require, _LOADED, __bundle_register, __bundle_modules)
-VERSION = "WARFORGE - v1.35.55"
+VERSION = "WARFORGE - v1.35.56"
 
 ACTIVE_RULESET = "LIONHEART"
 --ACTIVE_RULESET = "DEFAULT"
