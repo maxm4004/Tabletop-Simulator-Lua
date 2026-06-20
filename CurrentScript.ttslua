@@ -53,9 +53,6 @@ DEBUG = false
 DEBUG_CALLBACK = false
 DEBUG_DEPLOY = false
 
-local army1 = "English Army"
-local army2 = "French Army"
-
 require("common.constants")
 require("common.utils")
 
@@ -799,6 +796,10 @@ registerHandler("lionheart_columnDown", function(player, value, id, buttonConfig
     return lionheart_columnDown(player, value, id, buttonConfig)
 end)
 
+registerHandler("lionheart_skirmish", function(player, value, id, buttonConfig)
+    return lionheart_skirmish(player, value, id, buttonConfig)
+end)
+
 registerHandler("lionheart_infoUnita", function(player, value, id, buttonConfig)
     return lionheart_infoUnita(player, value, id, buttonConfig)
 end)
@@ -1423,7 +1424,7 @@ function after_shoot(phaseName, phase)
 end
 end)
 __bundle_register("rulesets.lionheart.shoot.lib", function(require, _LOADED, __bundle_register, __bundle_modules)
--- ============================================================
+                                    -- ============================================================
 -- FUNZIONE: lionheart_range_and_target()
 -- ============================================================
 function lionheart_range_and_target(player, value, id, buttonConfig)
@@ -1582,7 +1583,7 @@ function lionheart_range_and_target(player, value, id, buttonConfig)
     end
 
     local nemici = lionheart_getNemici(shooter, shooterSlot)
-    local target = lionheart_trovaBersaglio(shooter, nemici, rangeUnits, angoloGradi, puntiArco, puntiSinistro, puntiDestro)
+    local target, firingBase = lionheart_trovaBersaglio(basiObjs, nemici, rangeUnits, angoloGradi)
 
     local conoLines = {
         {points = puntiSinistro, color = {1, 0.8, 0.1}, thickness = 0.1},
@@ -1617,6 +1618,8 @@ function lionheart_range_and_target(player, value, id, buttonConfig)
         LIONHEART_SHOOT_STATE.target      = target
         LIONHEART_SHOOT_STATE.shooterUnit = shooterUnit
         LIONHEART_SHOOT_STATE.shooterSlot = shooterSlot
+        LIONHEART_SHOOT_STATE.basiObjs    = basiObjs
+        LIONHEART_SHOOT_STATE.rangeUnits  = rangeUnits
 
         local targetInfo = deployment_parseNickname(target.getName())
         local targetSlot = shooterSlot == 1 and 2 or 1
@@ -1668,24 +1671,50 @@ end
 -- ============================================================
 -- FUNZIONE: lionheart_trovaBersaglio
 -- ============================================================
-function lionheart_trovaBersaglio(shooter, nemici, rangeUnits, angoloGradi, puntiArco, puntiSinistro, puntiDestro)
-    local validi = {}
-    local posA   = shooter.getPosition()
-
-    for _, nemico in ipairs(nemici) do
-        if nemico and nemico ~= shooter then
-            local posB = nemico.getPosition()
-            if lionheart_isDentroCono(shooter, nemico, posB, angoloGradi, rangeUnits, puntiArco, puntiSinistro, puntiDestro) then
-                if lionheart_checkLOS(shooter, posA, posB) then
-                    local dist = (posB - posA):magnitude()
-                    table.insert(validi, { obj = nemico, dist = dist })
+function lionheart_trovaBersaglio(basiObjs, nemici, rangeUnits, angoloGradi)
+    
+    for _, base in ipairs(basiObjs) do
+        local posA = base.getPosition()
+        local fwd  = base.getTransformForward()
+        local fwdXZ = Vector(fwd.x, 0, fwd.z):normalized()
+        
+        local candidati = {}
+        
+        for _, nemico in ipairs(nemici) do
+            if nemico and nemico ~= base then
+                local posB = nemico.getPosition()
+                local dir  = Vector(posB.x - posA.x, 0, posB.z - posA.z)
+                local dist = dir:magnitude()
+                
+                if dist > 0 and dist <= rangeUnits then
+                    local dirNorm = dir:normalized()
+                    local dot     = math.max(-1, math.min(1, fwdXZ.x*dirNorm.x + fwdXZ.z*dirNorm.z))
+                    local ang     = math.deg(math.acos(dot))
+                    
+                    if ang <= angoloGradi then
+                        table.insert(candidati, { obj = nemico, dist = dist })
+                    end
                 end
             end
         end
-    end
+        
+        table.sort(candidati, function(a, b) return a.dist < b.dist end)
 
-    table.sort(validi, function(a, b) return a.dist < b.dist end)
-    return validi[1] and validi[1].obj or nil
+        print("[BERSAGLIO DEBUG] base=" .. base.getName() .. " candidati=" .. #candidati)
+        for _, c in ipairs(candidati) do
+            print("[BERSAGLIO DEBUG]   candidato=" .. c.obj.getName() .. " dist=" .. c.dist)
+        end
+        
+        for _, cand in ipairs(candidati) do
+            local los = lionheart_checkLOS(base, posA, cand.obj.getPosition())
+            print("[BERSAGLIO DEBUG]   checkLOS base=" .. base.getName() .. " -> " .. cand.obj.getName() .. " = " .. tostring(los))
+            if los then
+                return cand.obj, base
+            end
+        end
+    end
+    
+    return nil, nil
 end
 -- ============================================================
 -- FUNZIONE: lionheart_isDentroCono
@@ -1745,12 +1774,30 @@ function lionheart_checkLOS(shooter, fromPos, toPos)
         type      = 1
     })
 
+    print("[LOS DEBUG] PRE-SORT:")
+    for _, hit in ipairs(hits) do
+        local n = hit.hit_object and hit.hit_object.getName() or "?"
+        print("[LOS DEBUG]   " .. n .. " distance=" .. tostring(hit.distance) .. " point=" .. tostring(hit.point))
+    end
+
+    table.sort(hits, function(a, b)
+        return (a.distance or 0) < (b.distance or 0)
+    end)
+
+    print("[LOS DEBUG] POST-SORT:")
+    for _, hit in ipairs(hits) do
+        local n = hit.hit_object and hit.hit_object.getName() or "?"
+        print("[LOS DEBUG]   " .. n .. " distance=" .. tostring(hit.distance))
+    end
+
     for _, hit in ipairs(hits) do
         if hit.hit_object then
-            if hit.hit_object.hasTag(enemyTag) then
-                return true
-            elseif hit.hit_object.hasTag(friendTag) then
+            if hit.hit_object.hasTag(friendTag) then
+                print("[LOS DEBUG] BLOCCATO da amico: " .. hit.hit_object.getName())
                 return false
+            elseif hit.hit_object.hasTag(enemyTag) then
+                print("[LOS DEBUG] OK, nemico trovato per primo: " .. hit.hit_object.getName())
+                return true
             end
         end
     end
@@ -1883,7 +1930,8 @@ function lionheart_shootConfirm(player)
     local soglia      = weapon.min_to_hit[targetUnit.tipo]
 
     -- Calcola figure tiratore attive
-    local fig_att   = lionheart_figureTotaliUnita(shooterUnit)
+    local targetPos = state.target.getPosition()
+    local fig_att   = lionheart_figureValideTiro(shooterUnit, state.basiObjs, targetPos, state.rangeUnits)
     local rules     = LIONHEART_RULES.units[shooterUnit.tipo]
     local div       = rules and rules.shooting_div or 3
     local numDadi   = math.floor(fig_att / div)
@@ -1918,6 +1966,66 @@ function lionheart_shootConfirm(player)
 
     lionheart_shootResetLines(player)
 end
+-- ============================================================
+-- FUNZIONE: lionheart_figureValideTiro(unita, basiObjs, targetPos, rangeUnits)
+-- Conta le figure delle basi che possono effettivamente tirare:
+-- 1. In raggio (gittata)
+-- 2. LOS libera (nessun ostacolo amico/copertura)
+-- 3. Nel rango ammesso (primo rango di norma; SKC con arco: primo+secondo)
+-- ============================================================
+function lionheart_figureValideTiro(unita, basiObjs, targetPos, rangeUnits)
+    if not basiObjs or #basiObjs == 0 then return 0 end
+
+    local fpb = (LIONHEART_DATA.unitTypes[unita.tipo] or {}).fpb or 0
+
+    -- Quanti ranghi possono tirare: SKC con arco = 2, tutti gli altri = 1
+    local maxRanghi = 1
+    if unita.tipo == "SKC" and unita.arma == "ARC" then
+        maxRanghi = 2
+    end
+
+    -- Direzione "fronte" dell'unità (forward della prima base)
+    local fwd   = basiObjs[1].getTransformForward()
+    local fwdXZ = Vector(fwd.x, 0, fwd.z):normalized()
+
+    -- Proietta ogni base sull'asse forward
+    local proiezioni = {}
+    local minProj = nil
+
+    for _, baseObj in ipairs(basiObjs) do
+        local p = baseObj.getPosition()
+        local proj = p.x * fwdXZ.x + p.z * fwdXZ.z
+        proiezioni[baseObj] = proj
+        if minProj == nil or proj < minProj then
+            minProj = proj
+        end
+    end
+
+    -- Profondità di una base, usata come "passo" di rango
+    local sampleBounds = basiObjs[1].getBounds()
+    local rankStep = sampleBounds.size.z
+    local rankTolerance = rankStep * 0.6
+
+    local figure = 0
+
+    for _, baseObj in ipairs(basiObjs) do
+        local offset = proiezioni[baseObj] - minProj
+        local rangoIndex = math.floor((offset + rankTolerance) / rankStep)  -- 0 = primo rango, 1 = secondo...
+
+        if rangoIndex < maxRanghi then
+            local posA = baseObj.getPosition()
+            local dist = (Vector(targetPos.x, 0, targetPos.z) - Vector(posA.x, 0, posA.z)):magnitude()
+
+            if dist <= rangeUnits and lionheart_checkLOS(baseObj, posA, targetPos) then
+                local nickname = baseObj.getName()
+                local wounds = wounds_data and wounds_data[nickname] or 0
+                figure = figure + math.max(0, fpb - wounds)
+            end
+        end
+    end
+
+    return figure
+end
 
 -- ============================================================
 -- FUNZIONE: lionheart_shootCancel()
@@ -1935,9 +2043,14 @@ end
 -- ============================================================
 function lionheart_shootReset()
     LIONHEART_SHOOT_STATE = {
-        shooter=nil, target=nil,
-        shooterUnit=nil, targetUnit=nil,
-        shooterSlot=nil, targetSlot=nil
+        shooter=nil, 
+        target=nil,
+        shooterUnit=nil, 
+        targetUnit=nil,
+        shooterSlot=nil, 
+        targetSlot=nil,
+        basiObjs=nil,
+        rangeUnits=nil
     }
 end
 
@@ -2100,6 +2213,8 @@ LIONHEART_SHOOT_STATE = {
     targetUnit  = nil,   -- dati unità bersaglio
     shooterSlot = nil,   -- slot army tiratore
     targetSlot  = nil,   -- slot army bersaglio
+    basiObjs    = nil,   -- NUOVO
+    rangeUnits  = nil,   -- NUOVO
 }
 
 LIONHEART_FIRED = LIONHEART_FIRED or {}
@@ -4834,6 +4949,7 @@ __bundle_register("rulesets.lionheart.engine.loader", function(require, _LOADED,
 require("rulesets.lionheart.engine.state")
 require("rulesets.lionheart.engine.data")
 require("rulesets.lionheart.engine.conditions")
+require("rulesets.lionheart.engine.i18n")
 require("rulesets.lionheart.engine.phases")
 require("rulesets.lionheart.engine.lib")
 require("rulesets.lionheart.engine.persistence")
@@ -5834,7 +5950,13 @@ function updateCenterPanel()
     -- ========================================================
 
     UI.setAttribute("versione", "text", VERSION.." - "..ACTIVE_RULESET)
-    UI.setAttribute("textFase", "text", phase.title .. " - TURN: " .. ENGINE.turn)
+
+    if LANG == LANG_STRINGS.EN then
+        UI.setAttribute("textFase", "text", phase.title .. " - TURN: " .. ENGINE.turn)
+    else
+        UI.setAttribute("textFase", "text", phase.title .. " - TURNO: " .. ENGINE.turn)
+    end
+
     UI.setAttribute("textDesc", "text", phase.desc or "")
 
     UI.setAttribute("army1", "text", army1)
@@ -5905,15 +6027,24 @@ function updateCenterPanel()
 
     end
 
-    -- ========================================================
-    -- INITIATIVE OUTLINE
-    -- ========================================================
+        -- ===================================================
+    -- INITIATIVE: evidenzia bottone player attivo
+    -- =======================================================
 
     if phase.inputMode == "INITIATIVE" then
+        UI.setAttribute(BUTTONS.BTN_ARMY1, "interactable", "true")
+        UI.setAttribute(BUTTONS.BTN_ARMY2, "interactable", "true")
+
         if TURN and TURN.activeArmy == "Army1" then
-            UI.setAttribute("iconMoveArmy1", "active", "true")
+            UI.setAttribute(BUTTONS.BTN_ARMY1, "textColor", "White")
+            UI.setAttribute(BUTTONS.BTN_ARMY2, "interactable", "false")
+            UI.setAttribute(BUTTONS.BTN_ARMY2, "color", COLOR.NOARMY)
+            UI.setAttribute(BUTTONS.BTN_ARMY2, "textColor", "Black")
         elseif TURN and TURN.activeArmy == "Army2" then
-            UI.setAttribute("iconMoveArmy2", "active", "true")
+            UI.setAttribute(BUTTONS.BTN_ARMY2, "textColor", "White")
+            UI.setAttribute(BUTTONS.BTN_ARMY1, "interactable", "false")
+            UI.setAttribute(BUTTONS.BTN_ARMY1, "color", COLOR.NOARMY)
+            UI.setAttribute(BUTTONS.BTN_ARMY1, "textColor", "Black")
         end
     end
 
@@ -6404,6 +6535,10 @@ function lionheart_columnUp(player, value, id, buttonConfig) return lionheart_ap
 -- ============================================================
 function lionheart_columnDown(player, value, id, buttonConfig) return lionheart_applyFormation("columnDown", player) end
 -- ============================================================
+-- FUNZIONE: lionheart_skirmish()
+-- ============================================================
+function lionheart_skirmish(player, value, id, buttonConfig) return lionheart_applyFormation("skirmish", player) end
+-- ============================================================
 -- FUNZIONE: lionheart_applyFormation()
 -- ============================================================
 function lionheart_applyFormation(mode, player)
@@ -6418,19 +6553,25 @@ function lionheart_applyFormation(mode, player)
     local right = leader.getTransformRight()
     local forward = leader.getTransformForward()
 
+    local leaderBounds = leader.getBounds()
+    local horizontalSpacing = leaderBounds.size.x
+    local verticalSpacing   = leaderBounds.size.z
+
     for i = 2, #selected do
         local obj = selected[i]
         local index = i - 1
         local pos = nil
 
         if mode == "lineLeft" then
-            pos = leader.getPosition() - right * (LIONHEART_FORMATION.horizontalSpacing * index)
+            pos = leader.getPosition() - right * (horizontalSpacing * index)
         elseif mode == "lineRight" then
-            pos = leader.getPosition() + right * (LIONHEART_FORMATION.horizontalSpacing * index)
+            pos = leader.getPosition() + right * (horizontalSpacing * index)
         elseif mode == "columnUp" then
-            pos = leader.getPosition() + forward * (LIONHEART_FORMATION.verticalSpacing * index)
+            pos = leader.getPosition() + forward * (verticalSpacing * index)
         elseif mode == "columnDown" then
-            pos = leader.getPosition() - forward * (LIONHEART_FORMATION.verticalSpacing * index)
+            pos = leader.getPosition() - forward * (verticalSpacing * index)
+        elseif mode == "skirmish" then
+            pos = leader.getPosition() + right * (horizontalSpacing * 2 * index)
         end
 
         if pos ~= nil then
@@ -6576,9 +6717,9 @@ function initPhases()
 
     if DEBUG then print("lionheart_initPhases") end
 
-    local linee_rettangolo = true
-    local linee_deploy     = false
-    local linea_field      = false
+    linee_rettangolo = true
+    linee_deploy     = false
+    linea_field      = false
 
     local phases_json = [[
     {
@@ -6953,12 +7094,32 @@ function initPhases()
     ]]
 
     local decoded = JSON.decode(phases_json)
+    
     if not decoded then
         print("JSON decode FALLITO")
         return
     end
 
     local phasesData = decoded[1] or decoded
+
+    if i18n_t then
+        for phaseKey, phaseData in pairs(phasesData) do
+            local tTitle = i18n_t(phaseKey, "title")
+            local tDesc  = i18n_t(phaseKey, "desc")
+
+            if tTitle ~= "" then phaseData.title = tTitle end
+            if tDesc  ~= "" then phaseData.desc  = tDesc  end
+
+            if phaseData.buttons then
+                for slot, btn in pairs(phaseData.buttons) do
+                    local tLabel = i18n_t(phaseKey, slot)
+                    if tLabel ~= "" then
+                        btn.label = tLabel
+                    end
+                end
+            end
+        end
+    end
     
     if not ENGINE then
         ENGINE = {
@@ -6990,6 +7151,219 @@ function initPhases()
         }
     end
 end
+end)
+__bundle_register("rulesets.lionheart.engine.i18n", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- ============================================================
+-- LIONHEART I18N
+-- Stringhe di traduzione EN/IT per phases.ttslua
+-- Cambia LANG per cambiare lingua attiva.
+-- Placeholder {army1} e {army2} vengono sostituiti a runtime
+-- con i nomi reali degli eserciti (es. "English Army", "French Army").
+-- ============================================================
+
+LANG = "IT"  -- "EN" oppure "IT"
+
+LANG_STRINGS = {
+    EN = {
+        army1 = "English Army",
+        army2 = "French Army",
+        SITTING = {
+            title = "PHASE: SITTING",
+            desc  = "Both players select an Army",
+            BTN_ARMY1 = "Select Red",
+            BTN_ARMY2 = "Select Green"
+        },
+        FIELD = {
+            title = "PHASE: FIELD",
+            desc  = "Roll a dice to see how many terrain elements have to place in your half of the table",
+            BTN_SINGLE = "Roll for terrain elemens number"
+        },
+        FIELD_ROLL = {
+            title = "PHASE: FIELD",
+            desc  = "Roll a dice to see how many terrain elements have to place in your half of the table",
+            BTN_ARMY1 = "Roll for element",
+            BTN_ARMY2 = "Roll for element"
+        },
+        FIELD_DONE = {
+            title = "PHASE: FIELD",
+            desc  = "Roll a dice to see how many terrain elements have to place in your half of the table",
+            BTN_ARMY1 = "Im done",
+            BTN_ARMY2 = "Im done"
+        },
+        DEPLOY_SPAWN = {
+            title = "PHASE: DEPLOY",
+            desc  = "Spawn your units on the table",
+            BTN_ARMY1 = "Spawn {army1}",
+            BTN_ARMY2 = "Spawn {army2}"
+        },
+        DEPLOY_POSITION = {
+            title = "PHASE: DEPLOY",
+            desc  = "Position your units, then confirm when ready",
+            BTN_ARMY1 = "Confirm {army1}",
+            BTN_ARMY2 = "Confirm {army2}"
+        },
+        INITIATIVE_ROLL = {
+            title = "PHASE: INITIATIVE",
+            desc  = "Roll dice",
+            BTN_ARMY1 = "Roll {army1}",
+            BTN_ARMY2 = "Roll {army2}"
+        },
+        INITIATIVE_CHOICE = {
+            title = "PHASE: INITIATIVE",
+            desc  = "Assign initiative",
+            BTN_ARMY1 = "Option 1",
+            BTN_ARMY2 = "Option 2"
+        },
+        MOVE = {
+            title = "PHASE: MOVE",
+            desc  = "Move your army",
+            BTN_ARMY1 = "{army1} Done",
+            BTN_ARMY2 = "{army2} Done"
+        },
+        SHOOT = {
+            title = "PHASE: FIRE",
+            desc  = "Open fire on targets",
+            BTN_ARMY1 = "{army1} Done",
+            BTN_ARMY2 = "{army2} Done"
+        },
+        ATTACK = {
+            title = "PHASE: ATTACK",
+            desc  = "Resolve combat",
+            BTN_ARMY1 = "{army1} Done",
+            BTN_ARMY2 = "{army2} Done"
+        },
+        MORALE = {
+            title = "PHASE: MORALE",
+            desc  = "Test morale",
+            BTN_SINGLE = "Next Turn"
+        }
+    },
+    IT = {
+        army1 = "Esercito Inglese",
+        army2 = "Esercito Francese",
+        SITTING = {
+            title = "FASE: SCELTA ESERCITI",
+            desc  = "Entrambi i giocatori scelgono un esercito",
+            BTN_ARMY1 = "Scegli",
+            BTN_ARMY2 = "Scegli"
+        },
+        FIELD = {
+            title = "FASE: TERRENO",
+            desc  = "Tira un dado per sapere quanti elementi di terreno posizionare nella tua metà tavolo",
+            BTN_SINGLE = "Tira dado"
+        },
+        FIELD_ROLL = {
+            title = "FASE: TERRENO",
+            desc  = "Un ulteriore tiro di dado per sapere quale esercito si aggiudicherà un elemento in più",
+            BTN_ARMY1 = "Tira dado",
+            BTN_ARMY2 = "Tira dado"
+        },
+        FIELD_DONE = {
+            title = "FASE: TERRENO",
+            desc  = "Posiziona nella tua mtà di tavolo gli elementi assegnati al tuo esercito",
+            BTN_ARMY1 = "Posizionato",
+            BTN_ARMY2 = "Posizionato"
+        },
+        DEPLOY_SPAWN = {
+            title = "FASE: SCHIERAMENTO",
+            desc  = "Genera le tue unità nell'area di stage del tavolo",
+            BTN_ARMY1 = "Genera",
+            BTN_ARMY2 = "Genera"
+        },
+        DEPLOY_POSITION = {
+            title = "FASE: SCHIERAMENTO",
+            desc  = "Schiera le tue unità entro e non oltre la linea di deployment sul campo di battaglia",
+            BTN_ARMY1 = "Schierato",
+            BTN_ARMY2 = "Schierato"
+        },
+        INITIATIVE_ROLL = {
+            title = "FASE: INIZIATIVA",
+            desc  = "Tira un dado per decretare chi avrà l'iniziativa",
+            BTN_ARMY1 = "Tira dado",
+            BTN_ARMY2 = "Tira dado"
+        },
+        INITIATIVE_CHOICE = {
+            title = "FASE: INIZIATIVA",
+            desc  = "Chi ha vinto l'iniziativa può scegliere se tenerla o cederla",
+            BTN_ARMY1 = "Iniziativa",
+            BTN_ARMY2 = "Iniziativa"
+        },
+        MOVE = {
+            title = "FASE: MOVIMENTO",
+            desc  = "Muovi le unità del tuo esercito",
+            BTN_ARMY1 = "Fatto",
+            BTN_ARMY2 = "Fatto"
+        },
+        SHOOT = {
+            title = "FASE: TIRO",
+            desc  = "Colpisci a distanza i nemici",
+            BTN_ARMY1 = "Fatto",
+            BTN_ARMY2 = "Fatto"
+        },
+        ATTACK = {
+            title = "FASE: MISCHIA",
+            desc  = "Risolvi i combattimenti corpo a corpo",
+            BTN_ARMY1 = "Fatto",
+            BTN_ARMY2 = "Fatto"
+        },
+        MORALE = {
+            title = "FASE: MORALE",
+            desc  = "Verifica morale",
+            BTN_SINGLE = "Fine Turno"
+        }
+    }
+}
+
+-- ============================================================
+-- FUNZIONE: i18n_applyArmyNames(str)
+-- Sostituisce {army1} e {army2} con i nomi reali degli eserciti.
+-- Le variabili army1/army2 sono definite altrove (es. Global.-1.lua
+-- o deployment_applyArmyMeta) e contengono i nomi visualizzati
+-- (es. "English Army", "French Army").
+-- ============================================================
+function i18n_applyArmyNames(str)
+
+    if not str then return str end
+
+    local lang = LANG_STRINGS[LANG] or LANG_STRINGS.EN
+
+    army1 = lang.army1 or "Army1"
+    army2 = lang.army2 or "Army2"
+
+    str = string.gsub(str, "{army1}", army1)
+    str = string.gsub(str, "{army2}", army2)
+
+    return str
+end
+
+-- ============================================================
+-- FUNZIONE: i18n_t(phaseKey, field)
+-- Ritorna la stringa tradotta per la fase/campo richiesto,
+-- con fallback su EN se manca nella lingua attiva, e con
+-- sostituzione automatica dei placeholder {army1}/{army2}.
+-- ============================================================
+function i18n_t(phaseKey, field)
+
+    local lang = LANG_STRINGS[LANG] or LANG_STRINGS.EN
+    local phaseStrings = lang[phaseKey]
+
+    local result = nil
+
+    if phaseStrings and phaseStrings[field] then
+        result = phaseStrings[field]
+    else
+        -- fallback EN
+        local fallback = LANG_STRINGS.EN[phaseKey]
+        if fallback and fallback[field] then
+            result = fallback[field]
+        end
+    end
+
+    if result == nil then return "" end
+
+    return i18n_applyArmyNames(result)
+end
+
 end)
 __bundle_register("rulesets.lionheart.engine.conditions", function(require, _LOADED, __bundle_register, __bundle_modules)
 function registerDefaultConditions()
@@ -7337,7 +7711,7 @@ __bundle_register("engine.buttonbar.state", function(require, _LOADED, __bundle_
 ENGINE_BUTTONBAR = ENGINE_BUTTONBAR or {
     initialized = false,
     slots = {},
-    slotCount = 9,
+    slotCount = 10,
     xmlPrefix = "WF_BAR_"
 }
 
@@ -7387,7 +7761,6 @@ function engine_buttonBarParseSlotFromId(id)
 
     return slot
 end
-
 end)
 __bundle_register("engine.buttonbar.ui", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- ============================================================
